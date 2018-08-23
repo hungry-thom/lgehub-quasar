@@ -1,0 +1,4 @@
+{"email":"thom2@gmail.com","password":"$2a$13$JEhKNSuxrKzSCq5cKRHvQObawtQXe2D6VWmXFsbx9t.G0RW6IredO","avatar":"https://s.gravatar.com/avatar/30c5fe55af5d598479552830bbb6c1c8?s=60","_id":"1AzsbWAxDqMZADf3"}
+{"email":"thom@gmail.com","password":"$2a$13$cr9sOXEMwbRA24h3TwbfWOHu301iR5rCDv4.XQNwOVS/r.CP6e9wm","_id":"JMsd5wUdQGATi20U"}
+{"email":"office","password":"$2a$13$LXFGXYFtihULEp6ruOfwoeVwYd36FEYEe1DgmLRFcUqQb.1Z.6ZDq","avatar":"https://www.gravatar.com/avatar/205e460b479e2e5b48aec07710c08d50?s=60","_id":"qQnuNxmdSkSVx1q2"}
+{"$$indexCreated":{"fieldName":"email","unique":true,"sparse":false}}
