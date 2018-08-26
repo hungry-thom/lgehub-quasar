@@ -15,7 +15,9 @@
     "@feathersjs/feathers": "^3.1.7",
     "@feathersjs/socketio-client": "^1.1.0",
     "axios": "^0.18.0",
+    "feathers-rethinkdb": "^0.5.2",
     "moment": "^2.22.2",
+    "rethinkdbdash": "^2.3.31",
     "socket.io-client": "^2.1.1"
   },
   "devDependencies": {
