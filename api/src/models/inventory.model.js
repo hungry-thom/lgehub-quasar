@@ -1,12 +1,14 @@
-const NeDB = require('nedb');
-const path = require('path');
+const r = require('rethinkdbdash')({
+  db: 'test', 
+  servers: [{
+    host: 'ec2-52-86-240-100.compute-1.amazonaws.com',
+    port:28015
+  }],
+  password:'lifeinthewoods'
+});
 
 module.exports = function (app) {
-  const dbPath = app.get('nedb');
-  const Model = new NeDB({
-    filename: path.join(dbPath, 'messages.db'),
-    autoload: true
-  });
+  const Model = r;
 
   return Model;
 };

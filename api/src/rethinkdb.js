@@ -1,4 +1,4 @@
-const rethinkdbdash = require('rethinkdbdash');
+const rethinkdbdash = require('rethinkdbdash')({pool:false});
 
 module.exports = function (app) {
   const config = app.get('rethinkdb');
