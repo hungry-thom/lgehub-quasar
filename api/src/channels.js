@@ -42,6 +42,10 @@ module.exports = function(app) {
     // To publish only for a specific event use `app.publish(eventname, () => {})`
 
     console.log('Publishing all events to all authenticated users. See `channels.js` and https://docs.feathersjs.com/api/channels.html for more information.'); // eslint-disable-line
+    // eslint-disable-next-line no-console
+    console.log(data);
+    // eslint-disable-next-line no-console
+    console.log(hook);
 
     // e.g. to publish all service events to all authenticated users use
     return app.channel('authenticated');

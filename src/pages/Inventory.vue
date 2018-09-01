@@ -108,6 +108,10 @@ export default {
       console.log('user received')
       this.$data.users = this.$data.users.concat(user)
     })
+    inventory.on('created', inv => {
+      console.log('item received')
+      this.$data.inventory.push(inv)
+    })
   },
   beforeDestroy () {
   }
