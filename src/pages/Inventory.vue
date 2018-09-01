@@ -1,34 +1,28 @@
 
 <template>
-  <q-page class="flex flex-center">
-      <div class="row full-width">
-        <div class="layout-padding col-8" >
-          <q-chat-message v-for="item in inventory" :key="item.id"
-            :text="[item.item]"
-          /> <!-- :avatar="message.avatar" -->
-        </div>
-        <q-list highlight class="col-auto">
-          <q-list-header>People</q-list-header>
-          <q-item v-for="user in users" :key="user.id">
-            <q-item-side :avatar="user.avatar" />
-            <q-item-main>
-              <q-item-tile label>{{user.email}}</q-item-tile>
-            </q-item-main>
-            <q-item-side right>
-              <q-item-tile icon="chat_bubble" color="green" />
-            </q-item-side>
-          </q-item>
-        </q-list>
+  <q-page>
+      <div>
+        <br>
+        <q-table
+          :data="inventory"
+          :columns="columns"
+          :visible-columns="visibleColumns"
+          row-key="id"
+          :pagination.sync="pagination"
+          hide-bottom >
+          <q-tr slot="body" slot-scope="props" :props="props">
+            <q-td key="item" :props="props">{{ props.row.item }}</q-td>
+            <!--<q-tooltip>I'd like to eat "{{ props.row.name }}"</q-tooltip>-->
+            <q-td key="stock" :props="props">
+              <div class="row items-center justify-between no-wrap">
+                <div v-for="unit in props.row.stock" :key="unit.unit">{{ unit.unit }}:<br>&nbsp;&nbsp;<strong><font size="4">{{ unit.qty }}</font></strong></div>
+                <q-btn size="sm" round dense color="secondary" icon="delete" class="q-mr-xs" />
+              </div>
+            </q-td>
+          </q-tr>
+        </q-table>
+        <br>
       </div>
-    <q-input
-        class="row col-12 fixed-bottom chat-message"
-        style="z-index: 1001; margin-top: 16px; margin-bottom: 8px;"
-        v-model="message"
-        v-on:keyup.enter="send"
-        type="textarea"
-        float-label="Enter your message"
-        :min-rows="1"
-      />
   </q-page>
 </template>
 
@@ -36,13 +30,19 @@
 import moment from 'moment'
 import api from 'src/api'
 import {
-  QChatMessage
+  QChatMessage,
+  QTable,
+  QTr,
+  QTd
 } from 'quasar'
 
 export default {
   name: 'chat',
   components: {
-    QChatMessage
+    QChatMessage,
+    QTable,
+    QTr,
+    QTd
   },
   props: ['user'],
   data () {
@@ -50,7 +50,38 @@ export default {
       message: '',
       messages: [],
       users: [],
-      inventory: []
+      inventory: [],
+      pagination: {
+        sortBy: name, // String, column "item" property value
+        descending: true,
+        page: 1,
+        rowsPerPage: 0 // current rows per page being displayed,
+      },
+      columns: [
+        {
+          name: 'id',
+          required: false,
+          label: 'Id',
+          align: 'left',
+          field: 'id'
+        },
+        {
+          name: 'item',
+          required: true,
+          label: 'Item',
+          align: 'left',
+          field: 'item',
+          sortable: true
+        },
+        {
+          name: 'stock',
+          required: true,
+          label: 'Stock',
+          align: 'left',
+          field: 'stock'
+        }
+      ],
+      visibleColumns: ['item', 'stock']
     }
   },
   computed: {
@@ -122,5 +153,14 @@ export default {
   .chat-message .q-input-area {
     min-height: 19px !important;
     height: 19px !important;
+  }
+  .h4 { 
+    display: block;
+    font-size: 1em;
+    margin-top: 1.33em;
+    margin-bottom: 1.33em;
+    margin-left: 0;
+    margin-right: 0;
+    font-weight: bold;
   }
 </style>
