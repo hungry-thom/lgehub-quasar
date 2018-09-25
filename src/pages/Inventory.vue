@@ -6,17 +6,29 @@
         <q-table
           :data="inventory"
           :columns="columns"
+          :filter="filter"
           :visible-columns="visibleColumns"
-          row-key="id"
+          row-key="item"
           :pagination.sync="pagination"
           hide-bottom >
+          <template slot="top-left" slot-scope="props">
+            <q-search
+              hide-underline
+              color="secondary"
+              v-model="filter"
+              class="col-6"
+            />
+          </template>
           <q-tr slot="body" slot-scope="props" :props="props">
             <q-td key="item" :props="props">{{ props.row.item }}</q-td>
             <!--<q-tooltip>I'd like to eat "{{ props.row.name }}"</q-tooltip>-->
             <q-td key="stock" :props="props">
               <div class="row items-center justify-between no-wrap">
                 <div v-for="unit in props.row.stock" :key="unit.unit">{{ unit.unit }}:<br>&nbsp;&nbsp;<strong><font size="4">{{ unit.qty }}</font></strong></div>
-                <q-btn size="sm" round dense color="secondary" icon="delete" class="q-mr-xs" />
+                <div>
+                  <q-btn size="sm" round dense color="secondary" icon="edit" class="q-mr-xs" />
+                  <q-btn size="sm" round dense color="secondary" icon="shopping_cart" class="q-mr-xs" />
+                </div>
               </div>
             </q-td>
           </q-tr>
@@ -33,7 +45,8 @@ import {
   QChatMessage,
   QTable,
   QTr,
-  QTd
+  QTd,
+  QSearch
 } from 'quasar'
 
 export default {
@@ -42,7 +55,8 @@ export default {
     QChatMessage,
     QTable,
     QTr,
-    QTd
+    QTd,
+    QSearch
   },
   props: ['user'],
   data () {
@@ -51,6 +65,7 @@ export default {
       messages: [],
       users: [],
       inventory: [],
+      filter: '',
       pagination: {
         sortBy: name, // String, column "item" property value
         descending: true,
@@ -143,6 +158,7 @@ export default {
       console.log('item received')
       this.$data.inventory.push(inv)
     })
+    //inventory.on('updated')
   },
   beforeDestroy () {
   }
