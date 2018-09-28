@@ -24,9 +24,13 @@
             <!--<q-tooltip>I'd like to eat "{{ props.row.name }}"</q-tooltip>-->
             <q-td key="stock" :props="props">
               <div class="row items-center justify-between no-wrap">
-                <div v-for="unit in props.row.stock" :key="unit.unit">{{ unit.unit }}:<br>&nbsp;&nbsp;<strong><font size="4">{{ unit.qty }}</font></strong></div>
+                <div v-for="unit in props.row.stock" :key="unit.unit">{{ unit.unit }}:<br>&nbsp;&nbsp;<strong><font size="4">{{ unit.qty }}</font></strong>
+                  <q-popup-edit v-model="unit.qty" title="Update count" @save="updateCount(props.row)" buttons>
+                    <q-input type="number" v-model="unit.qty" />
+                  </q-popup-edit>
+            </div>
                 <div>
-                  <q-btn size="sm" round dense color="secondary" icon="edit" class="q-mr-xs" />
+                  <q-btn size="sm" round dense color="secondary" icon="edit" class="q-mr-xs" @click="submitEdit(props.row.id)" />
                   <q-btn size="sm" round dense color="secondary" icon="shopping_cart" class="q-mr-xs" />
                 </div>
               </div>
@@ -46,7 +50,8 @@ import {
   QTable,
   QTr,
   QTd,
-  QSearch
+  QSearch,
+  QPopupEdit
 } from 'quasar'
 
 export default {
@@ -56,7 +61,8 @@ export default {
     QTable,
     QTr,
     QTd,
-    QSearch
+    QSearch,
+    QPopupEdit
   },
   props: ['user'],
   data () {
@@ -114,6 +120,20 @@ export default {
           this.$data.message = ''
         })
       }
+    },
+    updateCount (item) {
+      console.log(item)
+      api.service('inventory').update(item.id, {
+        item: item.item,
+        stock: item.stock
+      })
+      /* if (!isNaN(newVal)) {
+        // api.service('inventory').
+        console.log(oldVal)
+      } */
+    },
+    submitEdit (itemId) {
+      console.log(itemId)
     }
   },
   mounted () {
