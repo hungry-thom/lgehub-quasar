@@ -30,7 +30,7 @@
                   </q-popup-edit>
             </div>
                 <div>
-                  <q-btn size="sm" round dense color="secondary" icon="edit" class="q-mr-xs" @click="submitEdit(props.row.id)" />
+                  <q-btn size="sm" round dense color="secondary" icon="playlist_add" class="q-mr-xs" @click="addStockUnit(props.row.id)" />
                   <q-btn size="sm" round dense color="secondary" icon="shopping_cart" class="q-mr-xs" />
                 </div>
               </div>
@@ -45,6 +45,7 @@
 <script>
 import moment from 'moment'
 import api from 'src/api'
+import _ from 'lodash'
 import {
   QChatMessage,
   QTable,
@@ -127,12 +128,13 @@ export default {
         item: item.item,
         stock: item.stock
       })
+      // move validate to native qpopupedit validate function 
       /* if (!isNaN(newVal)) {
         // api.service('inventory').
         console.log(oldVal)
       } */
     },
-    submitEdit (itemId) {
+    addStockUnit (itemId) {
       console.log(itemId)
     }
   },
@@ -178,7 +180,11 @@ export default {
       console.log('item received')
       this.$data.inventory.push(inv)
     })
-    //inventory.on('updated')
+    inventory.on('updated', item => {
+      console.log('item updated')
+      let dex = _.findIndex(this.$data.inventory, {id: item.id})
+      this.$data.inventory[dex].stock = item.stock
+    })
   },
   beforeDestroy () {
   }

@@ -65,6 +65,11 @@
           <q-item-main label="Chat" />
         </q-item>
 
+        <q-item to="/inventory">
+          <q-item-side icon="list_alt" />
+          <q-item-main label="Inventory" />
+        </q-item>
+
         <q-collapsible icon="info" label="About">
           <p style="padding: 25px;" class="text-grey-7">
             This is a template project combining the power of Quasar and Feathers to create real-time web apps.
