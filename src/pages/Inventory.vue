@@ -25,7 +25,7 @@
             <q-td key="stock" :props="props">
               <div class="row items-center justify-between no-wrap">
                 <div v-for="unit in props.row.stock" :key="unit.unit">{{ unit.unit }}:<br>&nbsp;&nbsp;<strong><font size="4">{{ unit.qty }}</font></strong>
-                  <q-popup-edit v-model="unit.qty" title="Update count" @save="updateCount(props.row)" buttons>
+                  <q-popup-edit v-model="unit.qty" title="Update count" @save="updateCount(props.row)" validate="checkNumber(val)" buttons>
                     <q-input type="number" v-model="unit.qty" />
                   </q-popup-edit>
             </div>
@@ -138,6 +138,9 @@ export default {
         // api.service('inventory').
         console.log(oldVal)
       } */
+    },
+    checkNumber (number) {
+      console.log(number)
     },
     addStockUnit (itemId) {
       console.log(itemId)

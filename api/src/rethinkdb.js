@@ -1,4 +1,4 @@
-const rethinkdbdash = require('rethinkdbdash')({pool:false});
+const rethinkdbdash = require('rethinkdbdash')({pool:false, pingInterval:600});
 
 module.exports = function (app) {
   const config = app.get('rethinkdb');
