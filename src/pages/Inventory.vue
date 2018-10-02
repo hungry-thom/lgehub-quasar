@@ -25,11 +25,12 @@
             <q-td key="stock" :props="props">
               <div class="row items-center justify-between no-wrap">
                 <div v-for="unit in props.row.stock" :key="unit.unit">{{ unit.unit }}:<br>&nbsp;&nbsp;<strong><font size="4">{{ unit.qty }}</font></strong>
-                  <q-popup-edit v-model="unit.qty" title="Update count" @save="updateCount(props.row)" validate="checkNumber(val)" buttons>
+                  <q-popup-edit v-model="unit.qty" title="Update count" @save="updateCount(props.row)" buttons>
                     <q-input type="number" v-model="unit.qty" />
                   </q-popup-edit>
             </div>
                 <div>
+                  <!-- <q-checkbox v-model="inventory[props.row.__index].confirmed" checked-icon="check_circle" unchecked-icon="remove_circle_outline" class="q-mr-md" /> -->
                   <q-checkbox v-model="confirmations[props.row.__index].confirmed" checked-icon="check_circle" unchecked-icon="remove_circle_outline" class="q-mr-md" />
                   <q-btn size="sm" round dense color="secondary" icon="playlist_add" class="q-mr-xs" @click="addStockUnit(props.row)" />
                   <q-btn size="sm" round dense color="secondary" icon="shopping_cart" class="q-mr-xs" />
@@ -129,6 +130,7 @@ export default {
     },
     updateCount (item) {
       console.log(item)
+      this.$data.confirmations[item.__index].newStock = item.stock
       api.service('inventory').update(item.id, {
         item: item.item,
         stock: item.stock
@@ -138,9 +140,6 @@ export default {
         // api.service('inventory').
         console.log(oldVal)
       } */
-    },
-    checkNumber (number) {
-      console.log(number)
     },
     addStockUnit (itemId) {
       console.log(itemId)
@@ -179,7 +178,7 @@ export default {
           console.log(item)
           console.log('----------')
           item.confirmed = false
-          this.$data.confirmations.push( {item: item.item, confirmed: false})
+          this.$data.confirmations.push( {item: item.item, confirmed: false, originalStock: item.stock})
         }, this) // this necessary?
         console.log(this.$data.confirmations)
       })
