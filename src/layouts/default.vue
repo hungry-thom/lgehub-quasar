@@ -71,7 +71,7 @@
         </q-item>
 
         <q-item to="/pricelist">
-          <q-item-side icon="list_alt" />
+          <q-item-side icon="attach_money" />
           <q-item-main label="PriceList" />
         </q-item>
 

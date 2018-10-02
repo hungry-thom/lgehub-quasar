@@ -30,7 +30,8 @@
                   </q-popup-edit>
             </div>
                 <div>
-                  <q-btn size="sm" round dense color="secondary" icon="playlist_add" class="q-mr-xs" @click="addStockUnit(props.row.id)" />
+                  <q-checkbox v-model="confirmations[props.row.__index].confirmed" checked-icon="check_circle" unchecked-icon="remove_circle_outline" class="q-mr-md" />
+                  <q-btn size="sm" round dense color="secondary" icon="playlist_add" class="q-mr-xs" @click="addStockUnit(props.row)" />
                   <q-btn size="sm" round dense color="secondary" icon="shopping_cart" class="q-mr-xs" />
                 </div>
               </div>
@@ -52,7 +53,8 @@ import {
   QTr,
   QTd,
   QSearch,
-  QPopupEdit
+  QPopupEdit,
+  QCheckbox
 } from 'quasar'
 
 export default {
@@ -63,7 +65,8 @@ export default {
     QTr,
     QTd,
     QSearch,
-    QPopupEdit
+    QPopupEdit,
+    QCheckbox
   },
   props: ['user'],
   data () {
@@ -73,6 +76,8 @@ export default {
       users: [],
       inventory: [],
       filter: '',
+      checked: false,
+      confirmations : [],
       pagination: {
         sortBy: name, // String, column "item" property value
         descending: true,
@@ -136,6 +141,8 @@ export default {
     },
     addStockUnit (itemId) {
       console.log(itemId)
+      console.log('////////')
+      console.log(this.$data.confirmations)
     }
   },
   mounted () {
@@ -165,6 +172,13 @@ export default {
       .then((response) => {
         // We want the latest inventory but in the reversed order
         this.$data.inventory = response.data.reverse()
+        this.$data.inventory.forEach(item => {
+          console.log(item)
+          console.log('----------')
+          item.confirmed = false
+          this.$data.confirmations.push( {item: item.item, confirmed: false})
+        }, this) // this necessary?
+        console.log(this.$data.confirmations)
       })
     // Add new messages to the message list
     messages.on('created', message => {
@@ -181,7 +195,8 @@ export default {
       this.$data.inventory.push(inv)
     })
     inventory.on('updated', item => {
-      console.log('item updated')
+      console.log('item updated-feathers')
+      console.log(item)
       let dex = _.findIndex(this.$data.inventory, {id: item.id})
       this.$data.inventory[dex].stock = item.stock
     })
