@@ -41,6 +41,9 @@
         </q-table>
         <br>
       </div>
+      <div>
+        &nbsp;&nbsp;<q-btn size="md" color="primary" label="confirm" @click="confirmInv" /> <!-- :disable not reading var -->
+      </div>
   </q-page>
 </template>
 
@@ -55,7 +58,8 @@ import {
   QTd,
   QSearch,
   QPopupEdit,
-  QCheckbox
+  QCheckbox,
+  QBtn
 } from 'quasar'
 
 export default {
@@ -67,7 +71,8 @@ export default {
     QTd,
     QSearch,
     QPopupEdit,
-    QCheckbox
+    QCheckbox,
+    QBtn
   },
   props: ['user'],
   data () {
@@ -145,6 +150,22 @@ export default {
       console.log(itemId)
       console.log('////////')
       console.log(this.$data.confirmations)
+    },
+    confirmInv () {
+      let test = this.$data.confirmations.every(item => {
+        console.log(item.item, item.confirmed)
+        // this.$data.conf = item.confirmed
+        return item.confirmed
+      })
+      if (test) {
+        // submit inv
+      } else {
+        this.$q.notify({
+          message: 'Not all inventory items confirmed',
+          timeout: 3000,
+          position: 'center'
+        })
+      }
     }
   },
   mounted () {
@@ -168,7 +189,7 @@ export default {
       })
     inventory.find({
       query: {
-        $limit: 25
+        $sort: { item: -1}
       }
     })
       .then((response) => {
