@@ -178,7 +178,8 @@ export default {
           console.log(item)
           console.log('----------')
           item.confirmed = false
-          this.$data.confirmations.push( {item: item.item, confirmed: false, originalStock: item.stock})
+          let og = JSON.parse(JSON.stringify(item.stock))
+          this.$data.confirmations.push( {item: item.item, confirmed: false, originalStock: og} )
         }, this) // this necessary?
         console.log(this.$data.confirmations)
       })
@@ -196,12 +197,14 @@ export default {
       console.log('item received')
       this.$data.inventory.push(inv)
     })
+    /*
     inventory.on('updated', item => {
       console.log('item updated-feathers')
       console.log(item)
       let dex = _.findIndex(this.$data.inventory, {id: item.id})
       this.$data.inventory[dex].stock = item.stock
     })
+    */
   },
   beforeDestroy () {
   }
