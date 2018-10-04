@@ -28,7 +28,7 @@
                   <q-popup-edit v-model="unit.qty" title="Update count" @save="updateCount(props.row)" buttons>
                     <q-input type="number" v-model="unit.qty" />
                   </q-popup-edit>
-            </div>
+                </div>
                 <div>
                   <!-- <q-checkbox v-model="inventory[props.row.__index].confirmed" checked-icon="check_circle" unchecked-icon="remove_circle_outline" class="q-mr-md" /> -->
                   <q-checkbox v-model="confirmations[props.row.__index].confirmed" checked-icon="check_circle" unchecked-icon="remove_circle_outline" class="q-mr-md" />
@@ -134,7 +134,7 @@ export default {
       }
     },
     updateCount (item) {
-      console.log(item)
+      console.log(';;;;',item)
       this.$data.confirmations[item.__index].newStock = item.stock
       api.service('inventory').update(item.id, {
         item: item.item,

@@ -19,9 +19,12 @@
               class="col-6"
             />
           </template>
-          
           <q-tr slot="body" slot-scope="props" :props="props">
-            <q-td key="item" :props="props">{{ props.row.item }}</q-td>
+            <q-td key="item" :props="props">{{ props.row.item }}
+              <q-popup-edit @save="updateCount(props.row.item)" buttons>
+                <q-input v-model="props.row.item" />
+              </q-popup-edit>
+            </q-td>
             <q-td key="mon" :props="props">
               <!--
               <div class="row no-wrap">
@@ -32,74 +35,48 @@
                 </div>
               </div>
               -->
-              <div>
-                {{ props.row.mon.total || '-' }}
-                <q-popup-edit @save="updateCount(props.row)" buttons>
-                  <div>
-                    <q-input type="number" v-model="props.row.mon.total" />
-                  <!--
-                  <div class="row no-wrap" v-for="(loop,index) in props.row.mon.units" :key="loop.unit">
-                    <q-field class="q-pt-xs">{{ loop.unit }}:</q-field>&nbsp;&nbsp;
-                  -->
-                    <!-- <q-input type="number" v-model="dailyTransfers[props.row.__index].mon.units" /> -->
-                    <!-- <q-input type="number" v-model="loop.qty" /> -->
-                    <!-- <q-input type="number" v-model="inventory[props.row.__index].mon.units[index].qty" /> -->
-                  </div>
+                {{ props.row.mon || '-' }}
+                 <q-popup-edit @save="updateCount(props.row)" buttons>
+                  <q-input type="number" v-model="props.row.mon" />
                 </q-popup-edit>
-              </div>
             </q-td>
             <q-td key="tue" :props="props">
               <div>
-                {{ props.row.tue.total || '-' }}
-                <q-popup-edit @show="($event, save) => { updateCount($event) }" buttons>
-                  <div class="row no-wrap" v-for="units in props.row.tue.units" :key="units.unit">
-                    <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
-                    <q-input type="number" v-model="units.qty" />
-                  </div>
+                {{ props.row.tue || '-' }}
+                 <q-popup-edit @save="updateCount(props.row)" buttons>
+                  <q-input type="number" v-model="props.row.tue" />
                 </q-popup-edit>
               </div>
             </q-td>
             <q-td key="wed" :props="props">
               <div>
-                {{ props.row.wed.total || '-' }}
-                <q-popup-edit @cancel="updateCount(props.row)" buttons>
-                  <div class="row no-wrap" v-for="units in props.row.wed.units" :key="units.unit">
-                    <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
-                    <q-input type="number" v-model="units.qty" />
-                  </div>
+                {{ props.row.wed || '-' }}
+                 <q-popup-edit @save="updateCount(props.row)" buttons>
+                  <q-input type="number" v-model="props.row.wed" />
                 </q-popup-edit>
               </div>
             </q-td>
             <q-td key="thu" :props="props">
               <div>
-                {{ props.row.thu.total || '-' }}
-                <q-popup-edit @save="updateCount(props.row)" buttons>
-                  <div class="row no-wrap" v-for="units in props.row.thu.units" :key="units.unit">
-                    <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
-                    <q-input type="number" v-model="units.qty" />
-                  </div>
+                {{ props.row.thu || '-' }}
+                 <q-popup-edit @save="updateCount(props.row)" buttons>
+                  <q-input type="number" v-model="props.row.thu" />
                 </q-popup-edit>
               </div>
             </q-td>
             <q-td key="fri" :props="props">
               <div>
-                {{ props.row.fri.total || '-' }}
-                <q-popup-edit @save="updateCount(props.row)" buttons>
-                  <div class="row no-wrap" v-for="units in props.row.fri.units" :key="units.unit">
-                    <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
-                    <q-input type="number" v-model="units.qty" />
-                  </div>
+                {{ props.row.fri || '-' }}
+                 <q-popup-edit @save="updateCount(props.row)" buttons>
+                  <q-input type="number" v-model="props.row.fri" />
                 </q-popup-edit>
               </div>
             </q-td>
             <q-td key="sat" :props="props">
               <div>
-                {{ props.row.sat.total || '-' }}
+                {{ props.row.sat || '-' }}
                 <q-popup-edit @save="updateCount(props.row)" buttons>
-                  <div class="row no-wrap" v-for="units in props.row.sat.units" :key="units.unit">
-                    <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
-                    <q-input type="number" v-model="units.qty" />
-                  </div>
+                  <q-input type="number" v-model="props.row.sat" />
                 </q-popup-edit>
               </div>
             </q-td>
@@ -405,9 +382,7 @@ export default {
           }, this)
           let days = ['mon','tue','wed','thu','fri','sat']
           days.forEach(day => {
-            item[day] = {}
-            item[day].total = 0
-            item[day].units = cleanStock
+            item[day] = 0
             console.log('!!!',day,'!!!',item[day],'!!!')
           }, this)
           // this.$data.dailyTransfers.push()
