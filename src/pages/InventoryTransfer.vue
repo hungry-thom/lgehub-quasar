@@ -1,10 +1,10 @@
-
+<!-- InventoryTransfer.vue -->
 <template>
   <q-page>
       <div>
         <br>
         <q-table
-          :data="inventory"
+          :data="inventory2"
           :columns="columns"
           :filter="filter"
           :visible-columns="visibleColumns"
@@ -19,46 +19,26 @@
               class="col-6"
             />
           </template>
-          
           <q-tr slot="body" slot-scope="props" :props="props">
             <q-td key="item" :props="props">{{ props.row.item }}</q-td>
             <q-td key="mon" :props="props">
-              <!--
-              <div class="row no-wrap">
-                <div v-for="unit in props.row.mon.units" :key="unit.unit" class="col">{{ unit.unit }}:<br>&nbsp;&nbsp;<strong><font size="4">{{ unit.qty || '-' }}</font></strong>
-                  <q-popup-edit v-model="unit.qty" title="Update count" buttons>
-                    <q-input type="number" v-model="unit.qty" />
-                  </q-popup-edit>
-                </div>
-              </div>
-              -->
-              <div>
-                {{ props.row.mon.total || '-' }}
-                <q-popup-edit @save="updateCount(props.row)" buttons>
-                  <div>
+              {{ props.row.mon.total || '-' }}
+                <q-popup-edit v-model="props.row.mon" @save="updateCount('save1')" buttons>
                     <q-input type="number" v-model="props.row.mon.total" />
-                  <!--
-                  <div class="row no-wrap" v-for="(loop,index) in props.row.mon.units" :key="loop.unit">
-                    <q-field class="q-pt-xs">{{ loop.unit }}:</q-field>&nbsp;&nbsp;
-                  -->
-                    <!-- <q-input type="number" v-model="dailyTransfers[props.row.__index].mon.units" /> -->
-                    <!-- <q-input type="number" v-model="loop.qty" /> -->
-                    <!-- <q-input type="number" v-model="inventory[props.row.__index].mon.units[index].qty" /> -->
-                  </div>
                 </q-popup-edit>
-              </div>
             </q-td>
             <q-td key="tue" :props="props">
               <div>
                 {{ props.row.tue.total || '-' }}
-                <q-popup-edit @show="($event, save) => { updateCount($event) }" buttons>
-                  <div class="row no-wrap" v-for="units in props.row.tue.units" :key="units.unit">
+                <q-popup-edit v-model="props.row.tue" @save="updateCount(props.row.tue)" buttons>
+                  <div class="row no-wrap" v-for="units in props.row.tue.transfers" :key="units.unit">
                     <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
                     <q-input type="number" v-model="units.qty" />
                   </div>
                 </q-popup-edit>
               </div>
             </q-td>
+            <!--
             <q-td key="wed" :props="props">
               <div>
                 {{ props.row.wed.total || '-' }}
@@ -103,6 +83,7 @@
                 </q-popup-edit>
               </div>
             </q-td>
+            -->
               <!--
               <div class="row items-center justify-between no-wrap">
                 <div v-for="unit in props.row.stock" :key="unit.unit">{{ unit.unit }}:<br>&nbsp;&nbsp;<strong><font size="4">{{ unit.qty }}</font></strong>
@@ -122,7 +103,7 @@
         <br>
       </div>
       <div>
-        &nbsp;&nbsp;<q-btn size="md" color="primary" disable label="confirm" @click="confirmInv" /> <!-- :disable not reading var -->
+        &nbsp;&nbsp;<q-btn size="md" color="primary" label="confirm" @click="confirmInv" /> <!-- :disable not reading var -->
       </div>
   </q-page>
 </template>
@@ -167,18 +148,7 @@ export default {
         {
           "id":"dd6741ca-c588-4b57-9b59-596e4eb720d8",
           "item":"ChocolateSyrup",
-          "stock":[
-            {
-              "qty":4,
-              "unit":"48-oz"
-            },
-            {
-              "qty":2,
-              "unit":"32-oz"
-            }
-          ],
-          "mon": 1,
-          "tue": {
+          "mon": {
             "total": 1,
             "transfers": [
               {
@@ -191,13 +161,36 @@ export default {
               }
             ]
           },
-          thu: 2
+          "tue": {
+            "total": 0,
+            "transfers": [
+              {
+                "qty": 0,
+                "unit": "48-oz"
+              },
+              {
+                "qty": 0,
+                "unit": "32-oz"
+              }
+            ]
+          }
         },
         {
           "id":"0863516e-d831-4423-9308-65f64d272248",
           "item":"Tofu",
-          "stock":[{"qty":5,"unit":"12.3-oz"}],
-          mon: 0,
+          "mon": {
+            "total": 2,
+            "transfers": [
+              {
+                "qty": 1,
+                "unit": "48-oz"
+              },
+              {
+                "qty": 1,
+                "unit": "32-oz"
+              }
+            ]
+          },
           "tue": {
             "total": 1,
             "transfers": [
@@ -215,35 +208,21 @@ export default {
         {
           "id":"2784970a-cd8a-4241-9c33-ccd2a1856486",
           "item":"Toothpicks",
-          "stock":[{"qty":3,"unit":"1000-ea"}],
-          "tue": {
-            "total": 1,
+          "mon": {
+            "total": 3,
             "transfers": [
               {
-                "qty": 1,
+                "qty": 31,
                 "unit": "48-oz"
-              },
-              {
-                "qty": 0,
-                "unit": "32-oz"
               }
             ]
-          }
-        },
-        {
-          "id":"a11198d0-37a3-4c75-893e-41b35663ae08",
-          "item":"Cherries",
-          "stock":[{"qty":2,"unit":"72-oz"}],
+          },
           "tue": {
-            "total": 0,
+            "total": 3,
             "transfers": [
               {
-                "qty": 0,
+                "qty": 3,
                 "unit": "48-oz"
-              },
-              {
-                "qty": 0,
-                "unit": "32-oz"
               }
             ]
           }
@@ -336,8 +315,14 @@ export default {
         })
       }
     },
-    updateCount (one, item) {
-      console.log('?????')
+    updateCount (item) {
+      console.log('?????',item)
+      // props.row.tue
+      let t = 0
+      item.transfers.forEach(unit => {
+        t += unit.qty
+      })
+      item.total = t
       /*
       this.$data.confirmations[item.__index].newStock = item.stock
       api.service('inventory').update(item.id, {

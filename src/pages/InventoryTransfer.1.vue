@@ -1,4 +1,4 @@
-
+<!-- InventoryTrnasfer.1.vue -->
 <template>
   <q-page>
       <div>

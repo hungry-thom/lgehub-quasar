@@ -1,4 +1,4 @@
-<!-- InventoryCheck.vue -->
+<!-- inventoryTemp.vue -->
 <template>
   <q-page>
       <div>
@@ -21,22 +21,16 @@
           </template>
           <q-tr slot="body" slot-scope="props" :props="props">
             <q-td key="item" :props="props">{{ props.row.item }}</q-td>
-            <!--<q-tooltip>I'd like to eat "{{ props.row.name }}"</q-tooltip>-->
-            <q-td key="stock" :props="props">
-              <div class="row items-center justify-between no-wrap">
-                <div v-for="unit in props.row.stock" :key="unit.unit">{{ unit.unit }}:<br>&nbsp;&nbsp;<strong><font size="4">{{ unit.qty }}</font></strong>
-                  <q-popup-edit v-model="unit.qty" title="Update count" @save="updateCount(props.row)" buttons>
-                    <q-input type="number" v-model="unit.qty" />
-                  </q-popup-edit>
-                </div>
-                <div>
-                  <!-- <q-checkbox v-model="inventory[props.row.__index].confirmed" checked-icon="check_circle" unchecked-icon="remove_circle_outline" class="q-mr-md" /> -->
-                  <q-checkbox v-model="confirmations[props.row.__index].confirmed" checked-icon="check_circle" unchecked-icon="remove_circle_outline" class="q-mr-md" />
-                  <q-btn size="sm" round dense color="secondary" icon="playlist_add" class="q-mr-xs" @click="addStockUnit(props.row)" />
-                  <q-btn size="sm" round dense color="secondary" icon="shopping_cart" class="q-mr-xs" />
-                </div>
-              </div>
+            <q-td key="stock" :props="props" >{{ props.row.stock[0].qty }}
+              <q-popup-edit v-model="props.row.stock[0].qty" title="edit" @save="updateCount(props.row)" buttons >
+                <q-input type="number" v-model="props.row.stock[0].qty" />
+              </q-popup-edit>
             </q-td>
+            <q-td key="tue" :props="props" ><span @click="addStockUnit(props.row.__index,'tue')">{{ props.row.tue || '-' }}</span></q-td>
+            <q-td key="wed" :props="props">{{ props.row.wed || '-' }}</q-td>
+            <q-td key="thu" :props="props">{{ props.row.thu || '-' }}</q-td>
+            <q-td key="fri" :props="props">{{ props.row.fri || '-' }}</q-td>
+            <q-td key="sat" :props="props">{{ props.row.sat || '-' }}</q-td>
           </q-tr>
         </q-table>
         <br>
@@ -59,7 +53,8 @@ import {
   QSearch,
   QPopupEdit,
   QCheckbox,
-  QBtn
+  QBtn,
+  Dialog
 } from 'quasar'
 
 export default {
@@ -72,7 +67,8 @@ export default {
     QSearch,
     QPopupEdit,
     QCheckbox,
-    QBtn
+    QBtn,
+    Dialog
   },
   props: ['user'],
   data () {
@@ -109,12 +105,47 @@ export default {
         {
           name: 'stock',
           required: true,
-          label: 'Stock',
+          label: 'Mon',
           align: 'left',
-          field: 'stock'
+          field: 'mon'
+        },
+        {
+          name: 'tue',
+          required: true,
+          label: 'Tue',
+          align: 'left',
+          field: 'tue'
+        },
+        {
+          name: 'wed',
+          required: true,
+          label: 'Wed',
+          align: 'left',
+          field: 'wed'
+        },
+        {
+          name: 'thu',
+          required: true,
+          label: 'Thu',
+          align: 'left',
+          field: 'thu'
+        },
+        {
+          name: 'fri',
+          required: true,
+          label: 'Fri',
+          align: 'left',
+          field: 'fri'
+        },
+        {
+          name: 'sat',
+          required: true,
+          label: 'Sat',
+          align: 'left',
+          field: 'sat'
         }
       ],
-      visibleColumns: ['item', 'stock']
+      visibleColumns: ['item', 'stock', 'tue', 'wed', 'thur', 'fri', 'sat']
     }
   },
   computed: {
@@ -134,22 +165,28 @@ export default {
       }
     },
     updateCount (item) {
-      console.log(';;;;',item)
-      this.$data.confirmations[item.__index].newStock = item.stock
-      api.service('inventory').update(item.id, {
-        item: item.item,
-        stock: item.stock
-      })
+      console.log('!!!!',item)
       // move validate to native qpopupedit validate function 
       /* if (!isNaN(newVal)) {
         // api.service('inventory').
         console.log(oldVal)
       } */
     },
-    addStockUnit (itemId) {
-      console.log(itemId)
-      console.log('////////')
-      console.log(this.$data.confirmations)
+    addStockUnit (dex,day) {
+      this.$q.dialog({
+          message: 'Not all inventory items confirmed',
+          prompt: {
+            model: '',
+            type: 'number' // optional
+          },
+          // position: 'center'
+        }).then((data) => {
+          // Picked "OK"
+          console.log(data,'----',day)
+          console.log(this.$data.inventory[dex][day])
+          this.$data.inventory[dex][day] = data
+        })
+        
     },
     confirmInv () {
       let test = this.$data.confirmations.every(item => {
@@ -190,6 +227,7 @@ export default {
         this.$data.users = response.data
       })
     inventory.find({
+      // get inventory transfers for this week
       query: {
         $sort: { item: -1}
       }
@@ -200,11 +238,16 @@ export default {
         this.$data.inventory.forEach(item => {
           console.log(item)
           console.log('----------')
-          item.confirmed = false
-          let og = JSON.parse(JSON.stringify(item.stock))
-          this.$data.confirmations.push( {item: item.item, confirmed: false, originalStock: og} )
+          item.mon = 0
+          item.tue = 0
+          item.wed = 0
+          item.thu = 0
+          item.fri = 0
+          item.sat = 0
+          // let og = JSON.parse(JSON.stringify(item.stock))
+          // this.$data.confirmations.push( {item: item.item, confirmed: false, originalStock: og} )
         }, this) // this necessary?
-        console.log(this.$data.confirmations)
+        //console.log(this.$data.confirmations)
       })
     // Add new messages to the message list
     messages.on('created', message => {

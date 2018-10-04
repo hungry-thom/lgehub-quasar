@@ -94,14 +94,16 @@
 import auth from 'src/auth'
 import {
   QCollapsible,
-  QTooltip
+  QTooltip,
+  QPopupEdit
 } from 'quasar'
 
 export default {
   name: 'index',
   components: {
     QCollapsible,
-    QTooltip
+    QTooltip,
+    QPopupEdit
   },
   data () {
     return {
