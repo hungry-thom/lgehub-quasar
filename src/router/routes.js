@@ -11,7 +11,8 @@ const routes = [
       { path: '/register', name: 'register', component: () => import('pages/SignIn') },
       { path: '/chat', name: 'chat', component: () => import('pages/Chat'), meta: { requiresAuth: true } },
       { path: '/inventory', name: 'inventory', component: () => import('pages/Inventory'), meta: { requiresAuth: true } },
-      { path: '/pricelist', name: 'pricelist', component: () => import('pages/PriceList'), meta: { requiresAuth: true } }
+      { path: '/pricelist', name: 'pricelist', component: () => import('pages/PriceList'), meta: { requiresAuth: true } },
+      { path: '/transfers', name: 'transfers', component: () => import('pages/Transfers'), meta: { requiresAuth: true } }
     ]
   }
 ]

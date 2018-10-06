@@ -1,10 +1,10 @@
-<!-- InventoryTransfer.vue -->
+<!-- InventoryCheck.vue -->
 <template>
   <q-page>
       <div>
         <br>
         <q-table
-          :data="inventory2"
+          :data="inventory"
           :columns="columns"
           :filter="filter"
           :visible-columns="visibleColumns"
@@ -21,83 +21,22 @@
           </template>
           <q-tr slot="body" slot-scope="props" :props="props">
             <q-td key="item" :props="props">{{ props.row.item }}</q-td>
-            <q-td key="mon" :props="props">
-              {{ props.row.mon.total || '-' }}
-                <q-popup-edit v-model="props.row.mon" @save="updateCount('save1')" buttons>
-                    <q-input type="number" v-model="props.row.mon.total" />
-                </q-popup-edit>
-            </q-td>
-            <q-td key="tue" :props="props">
-              <div>
-                {{ props.row.tue.total || '-' }}
-                <q-popup-edit v-model="props.row.tue" @save="updateCount(props.row.tue)" buttons>
-                  <div class="row no-wrap" v-for="units in props.row.tue.transfers" :key="units.unit">
-                    <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
-                    <q-input type="number" v-model="units.qty" />
-                  </div>
-                </q-popup-edit>
-              </div>
-            </q-td>
-            <!--
-            <q-td key="wed" :props="props">
-              <div>
-                {{ props.row.wed.total || '-' }}
-                <q-popup-edit @cancel="updateCount(props.row)" buttons>
-                  <div class="row no-wrap" v-for="units in props.row.wed.units" :key="units.unit">
-                    <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
-                    <q-input type="number" v-model="units.qty" />
-                  </div>
-                </q-popup-edit>
-              </div>
-            </q-td>
-            <q-td key="thu" :props="props">
-              <div>
-                {{ props.row.thu.total || '-' }}
-                <q-popup-edit @save="updateCount(props.row)" buttons>
-                  <div class="row no-wrap" v-for="units in props.row.thu.units" :key="units.unit">
-                    <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
-                    <q-input type="number" v-model="units.qty" />
-                  </div>
-                </q-popup-edit>
-              </div>
-            </q-td>
-            <q-td key="fri" :props="props">
-              <div>
-                {{ props.row.fri.total || '-' }}
-                <q-popup-edit @save="updateCount(props.row)" buttons>
-                  <div class="row no-wrap" v-for="units in props.row.fri.units" :key="units.unit">
-                    <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
-                    <q-input type="number" v-model="units.qty" />
-                  </div>
-                </q-popup-edit>
-              </div>
-            </q-td>
-            <q-td key="sat" :props="props">
-              <div>
-                {{ props.row.sat.total || '-' }}
-                <q-popup-edit @save="updateCount(props.row)" buttons>
-                  <div class="row no-wrap" v-for="units in props.row.sat.units" :key="units.unit">
-                    <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
-                    <q-input type="number" v-model="units.qty" />
-                  </div>
-                </q-popup-edit>
-              </div>
-            </q-td>
-            -->
-              <!--
+            <!--<q-tooltip>I'd like to eat "{{ props.row.name }}"</q-tooltip>-->
+            <q-td key="stock" :props="props">
               <div class="row items-center justify-between no-wrap">
                 <div v-for="unit in props.row.stock" :key="unit.unit">{{ unit.unit }}:<br>&nbsp;&nbsp;<strong><font size="4">{{ unit.qty }}</font></strong>
                   <q-popup-edit v-model="unit.qty" title="Update count" @save="updateCount(props.row)" buttons>
                     <q-input type="number" v-model="unit.qty" />
                   </q-popup-edit>
-            </div>
+                </div>
                 <div>
+                  <!-- <q-checkbox v-model="inventory[props.row.__index].confirmed" checked-icon="check_circle" unchecked-icon="remove_circle_outline" class="q-mr-md" /> -->
+                  <q-checkbox v-model="confirmations[props.row.__index].confirmed" checked-icon="check_circle" unchecked-icon="remove_circle_outline" class="q-mr-md" />
                   <q-btn size="sm" round dense color="secondary" icon="playlist_add" class="q-mr-xs" @click="addStockUnit(props.row)" />
                   <q-btn size="sm" round dense color="secondary" icon="shopping_cart" class="q-mr-xs" />
                 </div>
               </div>
             </q-td>
-            -->
           </q-tr>
         </q-table>
         <br>
@@ -120,8 +59,7 @@ import {
   QSearch,
   QPopupEdit,
   QCheckbox,
-  QBtn,
-  QField
+  QBtn
 } from 'quasar'
 
 export default {
@@ -134,8 +72,7 @@ export default {
     QSearch,
     QPopupEdit,
     QCheckbox,
-    QBtn,
-    QField
+    QBtn
   },
   props: ['user'],
   data () {
@@ -144,93 +81,9 @@ export default {
       messages: [],
       users: [],
       inventory: [],
-      inventory2: [
-        {
-          "id":"dd6741ca-c588-4b57-9b59-596e4eb720d8",
-          "item":"ChocolateSyrup",
-          "mon": {
-            "total": 1,
-            "transfers": [
-              {
-                "qty": 1,
-                "unit": "48-oz"
-              },
-              {
-                "qty": 0,
-                "unit": "32-oz"
-              }
-            ]
-          },
-          "tue": {
-            "total": 0,
-            "transfers": [
-              {
-                "qty": 0,
-                "unit": "48-oz"
-              },
-              {
-                "qty": 0,
-                "unit": "32-oz"
-              }
-            ]
-          }
-        },
-        {
-          "id":"0863516e-d831-4423-9308-65f64d272248",
-          "item":"Tofu",
-          "mon": {
-            "total": 2,
-            "transfers": [
-              {
-                "qty": 1,
-                "unit": "48-oz"
-              },
-              {
-                "qty": 1,
-                "unit": "32-oz"
-              }
-            ]
-          },
-          "tue": {
-            "total": 1,
-            "transfers": [
-              {
-                "qty": 1,
-                "unit": "48-oz"
-              },
-              {
-                "qty": 0,
-                "unit": "32-oz"
-              }
-            ]
-          }
-        },
-        {
-          "id":"2784970a-cd8a-4241-9c33-ccd2a1856486",
-          "item":"Toothpicks",
-          "mon": {
-            "total": 3,
-            "transfers": [
-              {
-                "qty": 31,
-                "unit": "48-oz"
-              }
-            ]
-          },
-          "tue": {
-            "total": 3,
-            "transfers": [
-              {
-                "qty": 3,
-                "unit": "48-oz"
-              }
-            ]
-          }
-        }
-      ],
       filter: '',
       checked: false,
-      dailyTransfers : [],
+      confirmations : [],
       pagination: {
         sortBy: name, // String, column "item" property value
         descending: true,
@@ -254,49 +107,14 @@ export default {
           sortable: true
         },
         {
-          name: 'mon',
+          name: 'stock',
           required: true,
-          label: 'Mon',
+          label: 'Stock',
           align: 'left',
-          field: 'mon'
-        },
-        {
-          name: 'tue',
-          required: true,
-          label: 'Tue',
-          align: 'left',
-          field: 'tue'
-        },
-        {
-          name: 'wed',
-          required: true,
-          label: 'Wed',
-          align: 'left',
-          field: 'wed'
-        },
-        {
-          name: 'thu',
-          required: true,
-          label: 'Thu',
-          align: 'left',
-          field: 'thu'
-        },
-        {
-          name: 'fri',
-          required: true,
-          label: 'Fri',
-          align: 'left',
-          field: 'fri'
-        },
-        {
-          name: 'sat',
-          required: true,
-          label: 'Sat',
-          align: 'left',
-          field: 'sat'
+          field: 'stock'
         }
       ],
-      visibleColumns: ['item', 'mon', 'tue', 'wed', 'thur', 'fri', 'sat']
+      visibleColumns: ['item', 'stock']
     }
   },
   computed: {
@@ -316,20 +134,17 @@ export default {
       }
     },
     updateCount (item) {
-      console.log('?????',item)
-      // props.row.tue
-      let t = 0
-      item.transfers.forEach(unit => {
-        t += unit.qty
-      })
-      item.total = t
-      /*
+      console.log(';;;;',item)
       this.$data.confirmations[item.__index].newStock = item.stock
       api.service('inventory').update(item.id, {
         item: item.item,
         stock: item.stock
       })
-      */
+      // move validate to native qpopupedit validate function 
+      /* if (!isNaN(newVal)) {
+        // api.service('inventory').
+        console.log(oldVal)
+      } */
     },
     addStockUnit (itemId) {
       console.log(itemId)
@@ -376,30 +191,20 @@ export default {
       })
     inventory.find({
       query: {
-        $sort: { item: 1}
+        $sort: { item: -1}
       }
     })
       .then((response) => {
-        this.$data.inventory = response.data
+        // We want the latest inventory but in the reversed order
+        this.$data.inventory = response.data.reverse()
         this.$data.inventory.forEach(item => {
           console.log(item)
           console.log('----------')
-          let cleanStock = []
-          item.stock.forEach(unit => {
-            cleanStock.push({ unit: unit.unit, qty: 0})
-          }, this)
-          let days = ['mon','tue','wed','thu','fri','sat']
-          days.forEach(day => {
-            item[day] = {}
-            item[day].total = 0
-            item[day].units = cleanStock
-            console.log('!!!',day,'!!!',item[day],'!!!')
-          }, this)
-          // this.$data.dailyTransfers.push()
-          // let og = JSON.parse(JSON.stringify(item.stock))
-          // this.$data.confirmations.push( {item: item.item, confirmed: false, originalStock: og} )
+          item.confirmed = false
+          let og = JSON.parse(JSON.stringify(item.stock))
+          this.$data.confirmations.push( {item: item.item, confirmed: false, originalStock: og} )
         }, this) // this necessary?
-        console.log(this.$data.inventory)
+        console.log(this.$data.confirmations)
       })
     // Add new messages to the message list
     messages.on('created', message => {

@@ -65,14 +65,35 @@
           <q-item-main label="Chat" />
         </q-item>
 
+        <q-item to="/pricelist">
+          <!-- <q-item-side icon="list_alt" /> -->
+          <q-item-side icon="attach_money" />
+          <q-item-main label="PriceList" />
+        </q-item>
+
+        <q-item to="/shoppingList" disable>
+          <q-item-side icon="shopping_cart" />
+          <q-item-main label="Shopping list" />
+        </q-item>        
+
         <q-item to="/inventory">
-          <q-item-side icon="list_alt" />
+          <q-item-side icon="assignment" />
           <q-item-main label="Inventory" />
         </q-item>
 
-        <q-item to="/pricelist">
-          <q-item-side icon="attach_money" />
-          <q-item-main label="PriceList" />
+        <q-item to="/transfers">
+          <q-item-side icon="swap_horiz" />
+          <q-item-main label="Transfers" />
+        </q-item>
+
+        <q-item to="/expenses">
+          <q-item-side icon="receipt" />
+          <q-item-main label="Expenses" />
+        </q-item>
+
+        <q-item to="/sales">
+          <q-item-side icon="monetization_on" />
+          <q-item-main label="Sales" />
         </q-item>
 
         <q-collapsible icon="info" label="About">
