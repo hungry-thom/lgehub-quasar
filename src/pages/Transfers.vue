@@ -4,7 +4,7 @@
       <div>
         <br>
         <q-table
-          :data="inventory2"
+          :data="inventory.items"
           :columns="columns"
           :filter="filter"
           :visible-columns="visibleColumns"
@@ -21,86 +21,70 @@
           </template>
           <q-tr slot="body" slot-scope="props" :props="props">
             <q-td key="item" :props="props">{{ props.row.item }}</q-td>
-            <q-td key="mon" :props="props">
-              {{ props.row.mon.total || '-' }}
-                <q-popup-edit v-model="props.row.mon" @save="updateCount(props.row.mon)" buttons>
-                  <div class="row no-wrap" v-for="units in props.row.mon.transfers" :key="units.unit">
+            <q-td key="Mon" :props="props">
+              {{ props.row.Mon.total || '-' }}
+                <q-popup-edit v-model="props.row.Mon" @save="updateCount(props.row.Mon)" buttons>
+                  <div class="row no-wrap" v-for="units in props.row.Mon.transfers" :key="units.unit">
                     <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
                     <q-input type="number" v-model="units.qty" />
                   </div>
                 </q-popup-edit>
             </q-td>
-            <q-td key="tue" :props="props">
+            <q-td key="Tue" :props="props">
               <div>
-                {{ props.row.tue.total || '-' }}
-                <q-popup-edit v-model="props.row.tue" @save="updateCount(props.row.tue)" buttons>
-                  <div class="row no-wrap" v-for="units in props.row.tue.transfers" :key="units.unit">
+                {{ props.row.Tue.total || '-' }}
+                <q-popup-edit v-model="props.row.Tue" @save="updateCount(props.row.Tue)" buttons>
+                  <div class="row no-wrap" v-for="units in props.row.Tue.transfers" :key="units.unit">
                     <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
                     <q-input type="number" v-model="units.qty" />
                   </div>
                 </q-popup-edit>
               </div>
             </q-td>
-            <!--
-            <q-td key="wed" :props="props">
+            <q-td key="Wed" :props="props">
               <div>
-                {{ props.row.wed.total || '-' }}
-                <q-popup-edit @cancel="updateCount(props.row)" buttons>
-                  <div class="row no-wrap" v-for="units in props.row.wed.units" :key="units.unit">
+                {{ props.row.Wed.total || '-' }}
+                <q-popup-edit v-model="props.row.Wed" @save="updateCount(props.row.Wed)" buttons>
+                  <div class="row no-wrap" v-for="units in props.row.Wed.transfers" :key="units.unit">
                     <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
                     <q-input type="number" v-model="units.qty" />
                   </div>
                 </q-popup-edit>
               </div>
             </q-td>
-            <q-td key="thu" :props="props">
+            <q-td key="Thu" :props="props">
               <div>
-                {{ props.row.thu.total || '-' }}
-                <q-popup-edit @save="updateCount(props.row)" buttons>
-                  <div class="row no-wrap" v-for="units in props.row.thu.units" :key="units.unit">
+                {{ props.row.Thu.total || '-' }}
+                <q-popup-edit v-model="props.row.Thu" @save="updateCount(props.row.Thu)" buttons>
+                  <div class="row no-wrap" v-for="units in props.row.Thu.transfers" :key="units.unit">
                     <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
                     <q-input type="number" v-model="units.qty" />
                   </div>
                 </q-popup-edit>
               </div>
             </q-td>
-            <q-td key="fri" :props="props">
+            <q-td key="Fri" :props="props">
               <div>
-                {{ props.row.fri.total || '-' }}
-                <q-popup-edit @save="updateCount(props.row)" buttons>
-                  <div class="row no-wrap" v-for="units in props.row.fri.units" :key="units.unit">
+                {{ props.row.Fri.total || '-' }}
+                <q-popup-edit v-model="props.row.Fri" @save="updateCount(props.row.Fri)" buttons>
+                  <div class="row no-wrap" v-for="units in props.row.Fri.transfers" :key="units.unit">
                     <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
                     <q-input type="number" v-model="units.qty" />
                   </div>
                 </q-popup-edit>
               </div>
             </q-td>
-            <q-td key="sat" :props="props">
+            <q-td key="Sat" :props="props">
               <div>
-                {{ props.row.sat.total || '-' }}
-                <q-popup-edit @save="updateCount(props.row)" buttons>
-                  <div class="row no-wrap" v-for="units in props.row.sat.units" :key="units.unit">
+                {{ props.row.Sat.total || '-' }}
+                <q-popup-edit v-model="props.row.Sat" @save="updateCount(props.row.Sat)" buttons>
+                  <div class="row no-wrap" v-for="units in props.row.Sat.transfers" :key="units.unit">
                     <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
                     <q-input type="number" v-model="units.qty" />
                   </div>
                 </q-popup-edit>
               </div>
             </q-td>
-            -->
-              <!--
-              <div class="row items-center justify-between no-wrap">
-                <div v-for="unit in props.row.stock" :key="unit.unit">{{ unit.unit }}:<br>&nbsp;&nbsp;<strong><font size="4">{{ unit.qty }}</font></strong>
-                  <q-popup-edit v-model="unit.qty" title="Update count" @save="updateCount(props.row)" buttons>
-                    <q-input type="number" v-model="unit.qty" />
-                  </q-popup-edit>
-            </div>
-                <div>
-                  <q-btn size="sm" round dense color="secondary" icon="playlist_add" class="q-mr-xs" @click="addStockUnit(props.row)" />
-                  <q-btn size="sm" round dense color="secondary" icon="shopping_cart" class="q-mr-xs" />
-                </div>
-              </div>
-            </q-td>
-            -->
           </q-tr>
         </q-table>
         <br>
@@ -151,7 +135,7 @@ export default {
         {
           "id":"dd6741ca-c588-4b57-9b59-596e4eb720d8",
           "item":"ChocolateSyrup",
-          "mon": {
+          "Mon": {
             "total": 1,
             "transfers": [
               {
@@ -164,7 +148,7 @@ export default {
               }
             ]
           },
-          "tue": {
+          "Tue": {
             "total": 0,
             "transfers": [
               {
@@ -181,7 +165,7 @@ export default {
         {
           "id":"0863516e-d831-4423-9308-65f64d272248",
           "item":"Tofu",
-          "mon": {
+          "Mon": {
             "total": 2,
             "transfers": [
               {
@@ -194,7 +178,7 @@ export default {
               }
             ]
           },
-          "tue": {
+          "Tue": {
             "total": 1,
             "transfers": [
               {
@@ -211,7 +195,7 @@ export default {
         {
           "id":"2784970a-cd8a-4241-9c33-ccd2a1856486",
           "item":"Toothpicks",
-          "mon": {
+          "Mon": {
             "total": 3,
             "transfers": [
               {
@@ -220,7 +204,7 @@ export default {
               }
             ]
           },
-          "tue": {
+          "Tue": {
             "total": 3,
             "transfers": [
               {
@@ -257,49 +241,49 @@ export default {
           sortable: true
         },
         {
-          name: 'mon',
+          name: 'Mon',
           required: true,
           label: 'Mon',
           align: 'left',
-          field: 'mon'
+          field: 'Mon'
         },
         {
-          name: 'tue',
+          name: 'Tue',
           required: true,
           label: 'Tue',
           align: 'left',
-          field: 'tue'
+          field: 'Tue'
         },
         {
-          name: 'wed',
+          name: 'Wed',
           required: true,
           label: 'Wed',
           align: 'left',
-          field: 'wed'
+          field: 'Wed'
         },
         {
-          name: 'thu',
+          name: 'Thu',
           required: true,
           label: 'Thu',
           align: 'left',
-          field: 'thu'
+          field: 'Thu'
         },
         {
-          name: 'fri',
+          name: 'Fri',
           required: true,
           label: 'Fri',
           align: 'left',
-          field: 'fri'
+          field: 'Fri'
         },
         {
-          name: 'sat',
+          name: 'Sat',
           required: true,
           label: 'Sat',
           align: 'left',
-          field: 'sat'
+          field: 'Sat'
         }
       ],
-      visibleColumns: ['item', 'mon', 'tue', 'wed', 'thur', 'fri', 'sat']
+      visibleColumns: ['item', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
     }
   },
   computed: {
@@ -359,16 +343,67 @@ export default {
       }
     },
     loadTransferData() {
-      
       // find transfer record (week) using this monday's date
       let days = ['Mon','Tue','Wed','Thu','Fri','Sat']
       let today = moment()
-      let dex = days.indexOf(moment.format('ddd'))
+      let dex = days.indexOf(today.format('ddd'))
       let currentMonday = today.subtract(dex, 'days')
-      transfers.find({
+      let qDate = currentMonday.format('DD-MMM-YYYY')
+      // qDate = '01-Oct-2018'
+      console.log(qDate)
+      api.service('transfers').find({
         query: {
+          week: {
+            $search: qDate
+          }
         }
-    })
+      })
+        .then((response) => {
+          if (response.data.length > 0) {
+            // what if more than 1 record found?
+            console.log('record found', response)
+            this.$data.inventory = response.data[0]
+            console.log('inventory',this.$data.inventory)
+          } else {
+            // createBlankTransferRec()
+            console.log('no record', response)
+            api.service('inventory').find({
+              query: {
+                $sort: { item: 1}
+              }
+            })
+              .then((response2) => {
+                let tempWeekTransfers = {}
+                tempWeekTransfers.week = currentMonday.format('DD-MMM-YYYY')
+                tempWeekTransfers.items = []
+                console.log('call2 inventory',response2.data)
+                response2.data.forEach(item => {
+                  // find base units
+                  let tempItem = {}
+                  tempItem.item = item.item
+                  tempItem.id = item.id
+                  let tempStock = []
+                  item.stock.forEach(stock => {
+                    let tempUnit = {}
+                    tempUnit.unit = stock.unit
+                    tempUnit.qty = 0
+                    tempStock.push(tempUnit) 
+                  }, this)
+                  // for each day add empty base units
+                  days.forEach(day => {
+                    let tmp = {}
+                    let cleanStock = JSON.parse(JSON.stringify(tempStock))
+                   tempItem[day] = { total: 0, transfers: cleanStock }
+                   // tempWeekTransfers.items[day] = {total:0 , transfers: tempStock }
+                  }, this)
+                  tempWeekTransfers.items.push(tempItem)
+                }, this)
+                console.log('NewTransferWeek', tempWeekTransfers)
+                this.$data.inventory = tempWeekTransfers
+              }) 
+            // this.$data.inventory = this.$data.inventory2
+          }
+        })
     },
     generateColumns() {
       let setColumns = []
@@ -431,7 +466,8 @@ export default {
         this.$data.users = response.data
       })
     //load tranfer data (api.service('transfers'))
-    this.loadTransferData ()
+    this.loadTransferData()
+    /*
     inventory.find({
       query: {
         $sort: { item: 1}
@@ -459,6 +495,7 @@ export default {
         }, this) // this necessary?
         console.log(this.$data.inventory)
       })
+    */
     // Add new messages to the message list
     messages.on('created', message => {
       console.log('message received')
