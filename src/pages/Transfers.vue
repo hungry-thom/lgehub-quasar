@@ -23,7 +23,7 @@
             <q-td key="item" :props="props">{{ props.row.item }}</q-td>
             <q-td key="Mon" :props="props">
               {{ props.row.Mon.total || '-' }}
-                <q-popup-edit v-model="props.row.Mon" @save="updateCount(props.row.Mon)" buttons>
+                <q-popup-edit v-model="props.row.Mon" @save="updateCount(props.row, 'Mon')" buttons>
                   <div class="row no-wrap" v-for="units in props.row.Mon.transfers" :key="units.unit">
                     <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
                     <q-input type="number" v-model="units.qty" />
@@ -33,7 +33,7 @@
             <q-td key="Tue" :props="props">
               <div>
                 {{ props.row.Tue.total || '-' }}
-                <q-popup-edit v-model="props.row.Tue" @save="updateCount(props.row.Tue)" buttons>
+                <q-popup-edit v-model="props.row.Tue" @save="updateCount(props.row, 'Tue')" buttons>
                   <div class="row no-wrap" v-for="units in props.row.Tue.transfers" :key="units.unit">
                     <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
                     <q-input type="number" v-model="units.qty" />
@@ -44,7 +44,7 @@
             <q-td key="Wed" :props="props">
               <div>
                 {{ props.row.Wed.total || '-' }}
-                <q-popup-edit v-model="props.row.Wed" @save="updateCount(props.row.Wed)" buttons>
+                <q-popup-edit v-model="props.row.Wed" @save="updateCount(props.row, 'Wed')" buttons>
                   <div class="row no-wrap" v-for="units in props.row.Wed.transfers" :key="units.unit">
                     <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
                     <q-input type="number" v-model="units.qty" />
@@ -55,7 +55,7 @@
             <q-td key="Thu" :props="props">
               <div>
                 {{ props.row.Thu.total || '-' }}
-                <q-popup-edit v-model="props.row.Thu" @save="updateCount(props.row.Thu)" buttons>
+                <q-popup-edit v-model="props.row.Thu" @save="updateCount(props.row, 'Thu')" buttons>
                   <div class="row no-wrap" v-for="units in props.row.Thu.transfers" :key="units.unit">
                     <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
                     <q-input type="number" v-model="units.qty" />
@@ -66,7 +66,7 @@
             <q-td key="Fri" :props="props">
               <div>
                 {{ props.row.Fri.total || '-' }}
-                <q-popup-edit v-model="props.row.Fri" @save="updateCount(props.row.Fri)" buttons>
+                <q-popup-edit v-model="props.row.Fri" @save="updateCount(props.row, 'Fri')" buttons>
                   <div class="row no-wrap" v-for="units in props.row.Fri.transfers" :key="units.unit">
                     <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
                     <q-input type="number" v-model="units.qty" />
@@ -77,7 +77,7 @@
             <q-td key="Sat" :props="props">
               <div>
                 {{ props.row.Sat.total || '-' }}
-                <q-popup-edit v-model="props.row.Sat" @save="updateCount(props.row.Sat)" buttons>
+                <q-popup-edit v-model="props.row.Sat" @save="updateCount(props.row, 'Sat')" buttons>
                   <div class="row no-wrap" v-for="units in props.row.Sat.transfers" :key="units.unit">
                     <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
                     <q-input type="number" v-model="units.qty" />
@@ -131,93 +131,7 @@ export default {
       messages: [],
       users: [],
       inventory: [],
-      inventory2: [
-        {
-          "id":"dd6741ca-c588-4b57-9b59-596e4eb720d8",
-          "item":"ChocolateSyrup",
-          "Mon": {
-            "total": 1,
-            "transfers": [
-              {
-                "qty": 1,
-                "unit": "48-oz"
-              },
-              {
-                "qty": 0,
-                "unit": "32-oz"
-              }
-            ]
-          },
-          "Tue": {
-            "total": 0,
-            "transfers": [
-              {
-                "qty": 0,
-                "unit": "48-oz"
-              },
-              {
-                "qty": 0,
-                "unit": "32-oz"
-              }
-            ]
-          }
-        },
-        {
-          "id":"0863516e-d831-4423-9308-65f64d272248",
-          "item":"Tofu",
-          "Mon": {
-            "total": 2,
-            "transfers": [
-              {
-                "qty": 1,
-                "unit": "48-oz"
-              },
-              {
-                "qty": 1,
-                "unit": "32-oz"
-              }
-            ]
-          },
-          "Tue": {
-            "total": 1,
-            "transfers": [
-              {
-                "qty": 1,
-                "unit": "48-oz"
-              },
-              {
-                "qty": 0,
-                "unit": "32-oz"
-              }
-            ]
-          }
-        },
-        {
-          "id":"2784970a-cd8a-4241-9c33-ccd2a1856486",
-          "item":"Toothpicks",
-          "Mon": {
-            "total": 3,
-            "transfers": [
-              {
-                "qty": 31,
-                "unit": "48-oz"
-              }
-            ]
-          },
-          "Tue": {
-            "total": 3,
-            "transfers": [
-              {
-                "qty": 3,
-                "unit": "48-oz"
-              }
-            ]
-          }
-        }
-      ],
       filter: '',
-      checked: false,
-      dailyTransfers : [],
       pagination: {
         sortBy: name, // String, column "item" property value
         descending: true,
@@ -289,42 +203,18 @@ export default {
   computed: {
   },
   methods: {
-    isSent (message) {
-      return (message.userId === this.user._id)
-    },
-    messageDate (message) {
-      return moment(message.createdAt).format('MMM Do, hh:mm:ss')
-    },
-    send () {
-      if (this.$data.message) {
-        api.service('messages').create({ text: this.$data.message }).then(() => {
-          this.$data.message = ''
-        })
-      }
-    },
-    updateCount (item) {
+    updateCount (item, day) {
       console.log('?????',item)
       // props.row.tue
       let t = 0
-      item.transfers.forEach(unit => {
+      item[day].transfers.forEach(unit => {
         t += unit.qty
       })
-      item.total = t
-      // t1.slice(0,-10) //for date.toLocaleString('en-GB')
-      /*
-      this.$data.confirmations[item.__index].newStock = item.stock
-      api.service('inventory').update(item.id, {
-        item: item.item,
-        stock: item.stock
-      })
-      */
-    },
-    addStockUnit (itemId) {
-      console.log(itemId)
-      console.log('////////')
-      console.log(this.$data.confirmations)
+      item[day].total = t
+      // api.service('tranfers').update(item.id, item[day] = )
     },
     confirmInv () {
+      // .every() cycles through until first false encountered
       let test = this.$data.confirmations.every(item => {
         console.log(item.item, item.confirmed)
         // this.$data.conf = item.confirmed
@@ -400,117 +290,21 @@ export default {
                 }, this)
                 console.log('NewTransferWeek', tempWeekTransfers)
                 this.$data.inventory = tempWeekTransfers
+                api.service('transfers').create(tempWeekTransfers)
               }) 
             // this.$data.inventory = this.$data.inventory2
           }
         })
-    },
-    generateColumns() {
-      let setColumns = []
-      // let visColumns = ['item']
-      setColumns.push({
-        name: 'id',
-        required: false,
-        label: 'Id',
-        align: 'left',
-        field: 'id'
-      })
-      setColumns.push({
-        name: 'item',
-        required: false,
-        label: 'Item',
-        align: 'left',
-        field: 'item'
-      })
-      let week = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat']
-      let today = new Date()
-      for (var i = 0; i < 6; i++) {
-        if (i < today.getDate()) {
-          setColumns.push({
-            name: week[i],
-            required: true,
-            label: week[i],
-            align: 'left',
-            field: week[i]
-          })
-        } else {
-          console.log('blank day')
-        }
-        // visColumns.push(week[i])
-      }
-      console.log(setColumns)
-      // console.log('!?',visColumns)
-      this.$data.columns = setColumns
-      // this.$data.visibleColumns = visColumns
     }
   },
   mounted () {
-    const messages = api.service('messages')
-    const users = api.service('users')
-    const inventory = api.service('inventory')
-    // generate columns
-    // this.generateColumns()
-    // Get all users and messages
-    messages.find({
-      query: {
-        $sort: { createdAt: -1 },
-        $limit: 25
-      }
-    })
-      .then((response) => {
-        // We want the latest messages but in the reversed order
-        this.$data.messages = response.data.reverse()
-      })
-    users.find()
-      .then((response) => {
-        this.$data.users = response.data
-      })
     //load tranfer data (api.service('transfers'))
     this.loadTransferData()
     /*
-    inventory.find({
-      query: {
-        $sort: { item: 1}
-      }
-    })
-      .then((response) => {
-        this.$data.inventory = response.data
-        this.$data.inventory.forEach(item => {
-          console.log(item)
-          console.log('----------')
-          let cleanStock = []
-          item.stock.forEach(unit => {
-            cleanStock.push({ unit: unit.unit, qty: 0})
-          }, this)
-          let days = ['mon','tue','wed','thu','fri','sat']
-          days.forEach(day => {
-            item[day] = {}
-            item[day].total = 0
-            item[day].units = cleanStock
-            console.log('!!!',day,'!!!',item[day],'!!!')
-          }, this)
-          // this.$data.dailyTransfers.push()
-          // let og = JSON.parse(JSON.stringify(item.stock))
-          // this.$data.confirmations.push( {item: item.item, confirmed: false, originalStock: og} )
-        }, this) // this necessary?
-        console.log(this.$data.inventory)
-      })
-    */
-    // Add new messages to the message list
-    messages.on('created', message => {
-      console.log('message received')
-      this.$data.messages.unshift(message)
-    })
-    // Add new users to the user list
-    users.on('created', user => {
-      console.log('user received')
-      this.$data.users = this.$data.users.concat(user)
-    })
     inventory.on('created', inv => {
       console.log('item received')
       this.$data.inventory.push(inv)
     })
-    /*
     inventory.on('updated', item => {
       console.log('item updated-feathers')
       console.log(item)
