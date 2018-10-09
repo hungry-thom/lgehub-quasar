@@ -211,7 +211,18 @@ export default {
         t += unit.qty
       })
       item[day].total = t
-      // api.service('tranfers').update(item.id, item[day] = )
+      // api.service('transfers').update(item.id, item[day] = )
+      /*
+        r.db('test').table('transfers').get('0c3ac6e3-3b09-46b5-9e36-df8e725abe33').update( {
+          items: r.row("items").map((item) => {
+            return r.branch(
+              item("id").eq('cded527a-8ee5-4d3a-8f1f-8ad2f55ca240'),
+              item.merge({Fri:  {total: 0, transfers:[{qty: 99, unit:'10-gal'}]}}),
+              item.merge(item)
+            );
+          })
+        })
+   */
     },
     confirmInv () {
       // .every() cycles through until first false encountered
