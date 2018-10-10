@@ -12,13 +12,38 @@
           :pagination.sync="pagination"
           hide-bottom >
           <template slot="top-left" slot-scope="props">
+            <q-btn icon="navigate_before" color="secondary" :disable="disablePrevWeek" />&nbsp;&nbsp;
+            <q-btn icon="navigate_next" color="secondary"  :disable="disableNextWeek" />&nbsp;&nbsp;
             <q-search
-              hide-underline
+              clearable
               color="secondary"
               v-model="filter"
               class="col-6"
             />
           </template>
+          <tr slot="header" slot-scope="props">
+            <q-th key="item" :props="props">
+              <u>Item</u>
+            </q-th>
+            <q-th key="Mon" :props="props">
+              {{ startingDate.format('DD-MMM') }} <br> Mon 
+            </q-th>
+            <q-th key="Tue" :props="props">
+              {{ startingDate.add(1, 'days').format('DD-MMM') }} <br> Tue
+            </q-th>
+            <q-th key="Wed" :props="props">
+              {{ startingDate.add(1, 'days').format('DD-MMM') }} <br> Wed
+            </q-th>
+            <q-th key="Thu" :props="props">
+              {{ startingDate.add(1, 'days').format('DD-MMM') }} <br> Thu
+            </q-th>
+            <q-th key="Fri" :props="props">
+              {{ startingDate.add(1, 'days').format('DD-MMM') }} <br> Fri
+            </q-th>
+            <q-th key="Sat" :props="props">
+              {{ startingDate.add(1, 'days').format('DD-MMM') }} <br> Sat
+            </q-th>
+          </tr>
           <q-tr slot="body" slot-scope="props" :props="props">
             <q-td key="item" :props="props">{{ props.row.item }}</q-td>
             <q-td key="Mon" :props="props">
@@ -104,6 +129,7 @@ import {
   QTable,
   QTr,
   QTd,
+  QTh,
   QSearch,
   QPopupEdit,
   QCheckbox,
@@ -118,6 +144,7 @@ export default {
     QTable,
     QTr,
     QTd,
+    QTh,
     QSearch,
     QPopupEdit,
     QCheckbox,
@@ -127,6 +154,9 @@ export default {
   props: ['user'],
   data () {
     return {
+      startingDate: moment(),
+      disablePrevWeek: true,
+      disableNextWeek: true,
       message: '',
       messages: [],
       users: [],
@@ -159,42 +189,42 @@ export default {
           name: 'Mon',
           required: true,
           label: 'Mon',
-          align: 'left',
+          align: 'center',
           field: 'Mon'
         },
         {
           name: 'Tue',
           required: true,
           label: 'Tue',
-          align: 'left',
+          align: 'center',
           field: 'Tue'
         },
         {
           name: 'Wed',
           required: true,
           label: 'Wed',
-          align: 'left',
+          align: 'center',
           field: 'Wed'
         },
         {
           name: 'Thu',
           required: true,
           label: 'Thu',
-          align: 'left',
+          align: 'center',
           field: 'Thu'
         },
         {
           name: 'Fri',
           required: true,
           label: 'Fri',
-          align: 'left',
+          align: 'center',
           field: 'Fri'
         },
         {
           name: 'Sat',
           required: true,
           label: 'Sat',
-          align: 'left',
+          align: 'center',
           field: 'Sat'
         }
       ],
@@ -230,7 +260,6 @@ export default {
       api.service('transfers').patch(this.$data.inventory.id, {
         items: this.$data.inventory.items
       })
-      // @save doesn't trigger if value is same, but if value changes stock change is repeated. reather, neeed diff from prev value (eg. 1->2 = -1; 2-> = +1;)
       api.service('inventory').get(item.id)
         .then((invItem) => {
           let updatedStock = []
@@ -341,12 +370,46 @@ export default {
             // this.$data.inventory = this.$data.inventory2
             // end createBlankTransferRec
           }
+          // createOriginalValueCopy ()
+          this.$data.startingDate = moment(this.$data.inventory.week)
           this.$data.originalTransferVals = JSON.parse(JSON.stringify(this.$data.inventory))
           console.log('originalVals Empty', this.$data.originalTransferVals)
+          // check for previous and next week
+          let nWeek = moment(this.$data.startingDate).add(7, 'days').format('DD-MMM-YYYY')
+          api.service('transfers').find({
+            query: {
+              week: {
+                $search: nWeek
+              }
+            }
+          })
+            .then((response) => {
+              if (response.data.length > 0) {
+                this.$data.disableNextWeek = false
+              } else {
+                this.$data.disableNextWeek = true
+              }
+            })
+          // check next week
+          let pWeek = moment(this.$data.startingDate).subtract(7, 'days').format('DD-MMM-YYYY')
+          api.service('transfers').find({
+            query: {
+              week: {
+                $search: nWeek
+              }
+            }
+          })
+            .then((response) => {
+              if (response.data.length > 0) {
+                this.$data.disablePrevWeek = false
+              } else {
+                this.$data.disablePrevWeek = true
+              }
+            })
         })
-      // createOriginalValueCopy ()
-      this.$data.originalTransferVals = JSON.parse(JSON.stringify(this.$data.inventory))
-      console.log('originalVals Created', this.$data.originalTransferVals)
+      // vvv-- the following code is not executed for some reason --vvv
+      // this.$data.originalTransferVals = JSON.parse(JSON.stringify(this.$data.inventory))
+      // console.log('originalVals Created', this.$data.originalTransferVals)
     } // endof loadTransferData()
   },
   mounted () {
