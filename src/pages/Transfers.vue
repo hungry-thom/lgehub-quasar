@@ -211,7 +211,46 @@ export default {
         t += unit.qty
       })
       item[day].total = t
-      // api.service('transfers').update(item.id, item[day] = )
+      const params = {
+        query: {
+          items: {
+            $search: item.id
+          }
+        }
+      }
+      console.log(this.$data.inventory.id)
+      /*
+      api.service('mesages').hooks({
+        before: {
+          find(context) {
+            const query = context.service.createQuery(context.params.query);
+            console.log('1111',query)
+            const searchString = "my search string";
+            
+            hook.params.rethinkdb = query.filter(function(doc) {
+              return doc.coerceTo('string').match('(?i)' + searchString);
+            })
+            console.log('2222',hook.params.rethinkdb)
+          }
+        }
+      })
+      */
+      api.service('transfers').find({
+        query: {
+          id: this.$data.inventory.id,
+          items: {
+            $contains: {item}
+          }
+        }
+      })
+        .then((response) => {
+          console.log('query', response.data)
+        })
+      
+      api.service('transfers').patch(this.$data.inventory.id, {
+        items: this.$data.inventory.items
+      })
+      
       /*
         r.db('test').table('transfers').get('0c3ac6e3-3b09-46b5-9e36-df8e725abe33').update( {
           items: r.row("items").map((item) => {
