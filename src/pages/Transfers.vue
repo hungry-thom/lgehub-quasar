@@ -207,49 +207,28 @@ export default {
       console.log('?????',item)
       // props.row.tue
       let t = 0
+      let transferUnit = {}
       item[day].transfers.forEach(unit => {
         t += unit.qty
+        transferUnit[unit.unit] = unit.qty
       })
+      console.log('loadTransferQty', transferUnit)
       item[day].total = t
-      const params = {
-        query: {
-          items: {
-            $search: item.id
-          }
-        }
-      }
-      console.log(this.$data.inventory.id)
-      /*
-      api.service('mesages').hooks({
-        before: {
-          find(context) {
-            const query = context.service.createQuery(context.params.query);
-            console.log('1111',query)
-            const searchString = "my search string";
-            
-            hook.params.rethinkdb = query.filter(function(doc) {
-              return doc.coerceTo('string').match('(?i)' + searchString);
-            })
-            console.log('2222',hook.params.rethinkdb)
-          }
-        }
-      })
-      */
-      api.service('transfers').find({
-        query: {
-          id: this.$data.inventory.id,
-          items: {
-            $contains: {item}
-          }
-        }
-      })
-        .then((response) => {
-          console.log('query', response.data)
-        })
-      
       api.service('transfers').patch(this.$data.inventory.id, {
         items: this.$data.inventory.items
       })
+      // neeed a way to check if transfer value changes on @save to trigger inventory update
+      api.service('inventory').get(item.id)
+        .then((invItem) => {
+          let updatedStock = []
+          invItem.stock.forEach(unit => {
+            let newUnitQty = unit.qty - transferUnit[unit.unit]
+            // console.log('mathCheck', unit.qty, transferUnit[unit.unit],)
+            updatedStock.push({unit: unit.unit, qty: newUnitQty})
+          })
+          console.log('patchInv', updatedStock)
+          api.service('inventory').patch(invItem.id, {stock: updatedStock})
+        })
       
       /*
         r.db('test').table('transfers').get('0c3ac6e3-3b09-46b5-9e36-df8e725abe33').update( {
@@ -341,6 +320,10 @@ export default {
                 console.log('NewTransferWeek', tempWeekTransfers)
                 this.$data.inventory = tempWeekTransfers
                 api.service('transfers').create(tempWeekTransfers)
+                  .then((response) => {
+                    console.log('created week', response.id)
+                    this.$data.inventory.id = response.id
+                  })
               }) 
             // this.$data.inventory = this.$data.inventory2
           }
