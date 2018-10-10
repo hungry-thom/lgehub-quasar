@@ -131,6 +131,7 @@ export default {
       messages: [],
       users: [],
       inventory: [],
+      originalTransferVals: {},
       filter: '',
       pagination: {
         sortBy: name, // String, column "item" property value
@@ -208,16 +209,28 @@ export default {
       // props.row.tue
       let t = 0
       let transferUnit = {}
+      let checkTransferVals = this.$data.originalTransferVals.items
       item[day].transfers.forEach(unit => {
         t += unit.qty
-        transferUnit[unit.unit] = unit.qty
+        // amount to change inventory stock = originalQty - this.unit.qty
+        // get itemIndex of this.item in original.items
+        let itemIndex = _.findIndex(checkTransferVals, {id: item.id})
+        // get Unitindex of this.item.unit in original.items[itemIndex][day].transfers
+        let unitIndex = _.findIndex(checkTransferVals[itemIndex][day].transfers, {unit: unit.unit})
+        // transferValue = original.items[itemIndex][day].transfers[unitIndex].qty - unit.qty
+        let transferValue =  unit.qty - checkTransferVals[itemIndex][day].transfers[unitIndex].qty
+        // transferUnit[unit.unit] = transferValue
+        transferUnit[unit.unit] = transferValue
+        // OLD: transferUnit[unit.unit] = unit.qty
+        // need to update originalTansferVals with new value
+        this.$data.originalTransferVals.items[itemIndex][day].transfers[unitIndex].qty
       })
       console.log('loadTransferQty', transferUnit)
       item[day].total = t
       api.service('transfers').patch(this.$data.inventory.id, {
         items: this.$data.inventory.items
       })
-      // neeed a way to check if transfer value changes on @save to trigger inventory update
+      // @save doesn't trigger if value is same, but if value changes stock change is repeated. reather, neeed diff from prev value (eg. 1->2 = -1; 2-> = +1;)
       api.service('inventory').get(item.id)
         .then((invItem) => {
           let updatedStock = []
@@ -326,9 +339,15 @@ export default {
                   })
               }) 
             // this.$data.inventory = this.$data.inventory2
+            // end createBlankTransferRec
           }
+          this.$data.originalTransferVals = JSON.parse(JSON.stringify(this.$data.inventory))
+          console.log('originalVals Empty', this.$data.originalTransferVals)
         })
-    }
+      // createOriginalValueCopy ()
+      this.$data.originalTransferVals = JSON.parse(JSON.stringify(this.$data.inventory))
+      console.log('originalVals Created', this.$data.originalTransferVals)
+    } // endof loadTransferData()
   },
   mounted () {
     //load tranfer data (api.service('transfers'))
