@@ -26,22 +26,22 @@
               <u>Item</u>
             </q-th>
             <q-th key="Mon" :props="props">
-              {{ startingDate.format('DD-MMM') }} <br> Mon 
+              {{ weekDates[0] }} <br> Mon 
             </q-th>
             <q-th key="Tue" :props="props">
-              {{ startingDate.add(1, 'days').format('DD-MMM') }} <br> Tue
+              {{ weekDates[1] }} <br> Tue
             </q-th>
             <q-th key="Wed" :props="props">
-              {{ startingDate.add(1, 'days').format('DD-MMM') }} <br> Wed
+              {{ weekDates[2] }} <br> Wed
             </q-th>
             <q-th key="Thu" :props="props">
-              {{ startingDate.add(1, 'days').format('DD-MMM') }} <br> Thu
+              {{ weekDates[3] }} <br> Thu
             </q-th>
             <q-th key="Fri" :props="props">
-              {{ startingDate.add(1, 'days').format('DD-MMM') }} <br> Fri
+              {{ weekDates[4] }} <br> Fri
             </q-th>
             <q-th key="Sat" :props="props">
-              {{ startingDate.add(1, 'days').format('DD-MMM') }} <br> Sat
+              {{ weekDates[5] }} <br> Sat
             </q-th>
           </tr>
           <q-tr slot="body" slot-scope="props" :props="props">
@@ -155,6 +155,8 @@ export default {
   data () {
     return {
       startingDate: moment(),
+      days: ['Mon','Tue','Wed','Thu','Fri','Sat'],
+      weekDates: [],
       disablePrevWeek: true,
       disableNextWeek: true,
       message: '',
@@ -317,113 +319,127 @@ export default {
         this.$data.inventory = response.data[0]
       })
     },
-    loadTransferData() {
-      // find transfer record (week) using this monday's date
+    currentMonday() {
       let days = ['Mon','Tue','Wed','Thu','Fri','Sat']
       let today = moment()
       let dex = days.indexOf(today.format('ddd'))
-      let currentMonday = today.subtract(dex, 'days')
-      let qDate = currentMonday.format('DD-MMM-YYYY')
-      // qDate = '01-Oct-2018'
-      console.log('current Monday', qDate)
-      // this.$data.startingDate = moment(qDate)
+      let cMon = today.subtract(dex, 'days')
+      return cMon
+    },
+    createBlankTransferRec() {
+      // get all items for inventory to create transfer list
+      api.service('inventory').find({
+        query: {
+          $sort: { item: 1}
+        }
+      }).then((response2) => {
+        let tempWeekTransfers = {}
+        tempWeekTransfers.week = this.currentMonday().format('DD-MMM-YYYY')
+        tempWeekTransfers.items = []
+        console.log('call2 inventory',response2.data)
+        response2.data.forEach(item => {
+          // find base units
+          let tempItem = {}
+          tempItem.item = item.item
+          tempItem.id = item.id
+          let tempStock = []
+          item.stock.forEach(stock => {
+            let tempUnit = {}
+            tempUnit.unit = stock.unit
+            tempUnit.qty = 0
+            tempStock.push(tempUnit) 
+          }, this)
+          // for each day add empty base units
+          this.$data.days.forEach(day => {
+            let tmp = {}
+            let cleanStock = JSON.parse(JSON.stringify(tempStock))
+            tempItem[day] = { total: 0, transfers: cleanStock }
+            // tempWeekTransfers.items[day] = {total:0 , transfers: tempStock }
+          }, this)
+          tempWeekTransfers.items.push(tempItem)
+        }, this)
+        console.log('NewTransferWeek', tempWeekTransfers)
+        this.$data.inventory = tempWeekTransfers
+        api.service('transfers').create(tempWeekTransfers).then((response) => {
+          console.log('created week', response.id)
+          this.$data.inventory.id = response.id
+        })
+      })
+      // this.$data.inventory = this.$data.inventory2
+      // end createBlankTransferRec
+    },
+    loadTransferData() {
+      // find transfer record (week) using this monday's date
+      let cMonday = this.currentMonday()
+      // cMonday = '01-Oct-2018'
+      console.log('current Monday', cMonday)
+      // this.$data.startingDate = moment(cMonday)
       // find transfer record of current week
       api.service('transfers').find({
         query: {
           week: {
-            $search: qDate
+            $search: cMonday.format('DD-MMM-YYYY')
           }
         }
-      })
-        .then((response) => {
-          if (response.data.length > 0) {
-            // what if more than 1 record found?
-            console.log('record found', response)
-            this.$data.inventory = response.data[0]
-            console.log('inventory',this.$data.inventory)
-          } else {
-            // createBlankTransferRec()
-            console.log('no record', response)
-            api.service('inventory').find({
-              query: {
-                $sort: { item: 1}
-              }
-            })
-              .then((response2) => {
-                let tempWeekTransfers = {}
-                tempWeekTransfers.week = currentMonday.format('DD-MMM-YYYY')
-                tempWeekTransfers.items = []
-                console.log('call2 inventory',response2.data)
-                response2.data.forEach(item => {
-                  // find base units
-                  let tempItem = {}
-                  tempItem.item = item.item
-                  tempItem.id = item.id
-                  let tempStock = []
-                  item.stock.forEach(stock => {
-                    let tempUnit = {}
-                    tempUnit.unit = stock.unit
-                    tempUnit.qty = 0
-                    tempStock.push(tempUnit) 
-                  }, this)
-                  // for each day add empty base units
-                  days.forEach(day => {
-                    let tmp = {}
-                    let cleanStock = JSON.parse(JSON.stringify(tempStock))
-                   tempItem[day] = { total: 0, transfers: cleanStock }
-                   // tempWeekTransfers.items[day] = {total:0 , transfers: tempStock }
-                  }, this)
-                  tempWeekTransfers.items.push(tempItem)
-                }, this)
-                console.log('NewTransferWeek', tempWeekTransfers)
-                this.$data.inventory = tempWeekTransfers
-                api.service('transfers').create(tempWeekTransfers)
-                  .then((response) => {
-                    console.log('created week', response.id)
-                    this.$data.inventory.id = response.id
-                  })
-              }) 
-            // this.$data.inventory = this.$data.inventory2
-            // end createBlankTransferRec
-          }
-          this.$data.startingDate = moment(this.$data.inventory.week) // set starting date
-          // create copy of loaded data for original Values
-          this.$data.originalTransferVals = JSON.parse(JSON.stringify(this.$data.inventory))
-          // check for previous and next week
-          let nWeek = moment(this.$data.startingDate).add(7, 'days')
-          api.service('transfers').find({
-            query: {
-              week: {
-                $search: nWeek.format('DD-MMM-YYYY')
-              }
-            }
-          })
-            .then((response) => {
-              this.$data.disableNextWeek = (response.data.length > 0) ? false : true // if record found, do not disable button
-            })
-          // check next week
-          let pWeek = moment(this.$data.startingDate).subtract(7, 'days')
-          api.service('transfers').find({
-            query: {
-              week: {
-                $search: pWeek.format('DD-MMM-YYYY')
-              }
-            }
-          })
-            .then((response) => {
-              this.$data.disablePrevWeek = (response.data.length > 0) ? false : true // if record found, do not disable button
-            })
+      }).then((response) => {
+        if (response.data.length > 0) {
+          // what if more than 1 record found?
+          console.log('record found', response)
+          this.$data.inventory = response.data[0]
+          console.log('inventory',this.$data.inventory)
+        } else {
+          console.log('no record', response)
+          createBlankTransferRec()
+        }
+        // set starting date
+        let d = new Date(this.$data.inventory.week)
+        this.$data.startingDate = moment(d)
+        let dateDay = moment(d)
+        let dateWeek = []
+        this.$data.days.forEach(day =>{
+          dateWeek.push(dateDay.format('DD-MMM'))
+          dateDay.add(1, 'days')
         })
-      // vvv-- the following code is not executed for some reason --vvv
-      // this.$data.originalTransferVals = JSON.parse(JSON.stringify(this.$data.inventory))
-      // console.log('originalVals Created', this.$data.originalTransferVals)
-    }, // endof loadTransferData(),
-    checkPastPresentButtons () {
-
+        this.$data.weekDates = dateWeek
+        console.log('dateWeek', dateWeek)
+        // create copy of loaded data for original Values
+        console.log('creating copy of data for og vals')
+        this.$data.originalTransferVals = JSON.parse(JSON.stringify(this.$data.inventory))
+        console.log('st date',this.$data.startingDate.format('DD-MMM-YYYY'))
+        // check for previous and next week
+        this.checkPrevNextButtons()
+      })
+      // vvv-- the following code is executed while waiting for response from database --vvv
+      // doesn't execute on hot reload
+      console.log('async code (waiting on db response)')
+    }, 
+    checkPrevNextButtons () {
+      let nWeek = moment(this.$data.startingDate).add(7, 'days')
+      api.service('transfers').find({
+        query: {
+          week: {
+            $search: nWeek.format('DD-MMM-YYYY')
+          }
+        }
+      }).then((response) => {
+        this.$data.disableNextWeek = (response.data.length > 0) ? false : true // if record found, do not disable button
+      })
+      // check next week
+      let pWeek = moment(this.$data.startingDate).subtract(7, 'days')
+      api.service('transfers').find({
+        query: {
+          week: {
+            $search: pWeek.format('DD-MMM-YYYY')
+          }
+        }
+      }).then((response) => {
+        this.$data.disablePrevWeek = (response.data.length > 0) ? false : true // if record found, do not disable button
+      })
     }
   },
   mounted () {
     //load tranfer data (api.service('transfers'))
+    //this.$data.startingDate = this.currentMonday()
     this.loadTransferData()
     /*
     inventory.on('created', inv => {
