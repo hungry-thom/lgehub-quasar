@@ -12,8 +12,8 @@
           :pagination.sync="pagination"
           hide-bottom >
           <template slot="top-left" slot-scope="props">
-            <q-btn icon="navigate_before" color="secondary" :disable="disablePrevWeek" />&nbsp;&nbsp;
-            <q-btn icon="navigate_next" color="secondary"  :disable="disableNextWeek" />&nbsp;&nbsp;
+            <q-btn icon="navigate_before" color="secondary" :disable="disablePrevWeek" @click="clickPrevWeek"/>&nbsp;&nbsp;
+            <q-btn icon="navigate_next" color="secondary"  :disable="disableNextWeek" @click="clickNextWeek" />&nbsp;&nbsp;
             <q-search
               clearable
               color="secondary"
@@ -305,9 +305,16 @@ export default {
         })
       }
     },
+    clickNextWeek() {
+      let nWeek = moment(this.$data.inventory.week) //change
+      nWeek.add(7,'days')
+      this.loadTransferData(nWeek.format('DD-MMM-YYYY'))
+    },
     clickPrevWeek() {
-      let pWeek = moment(this.$data.inventory.week)
+      let pWeek = moment(this.$data.inventory.week) //change
       pWeek.subtract(7,'days')
+      this.loadTransferData(pWeek.format('DD-MMM-YYYY'))
+     /*
       api.service('transfers').find({
         query: {
           week: {
@@ -317,7 +324,18 @@ export default {
       }).then((response) =>{
         console.log('prevWeek loaded')
         this.$data.inventory = response.data[0]
+        // set starting date
+        let d = new Date(this.$data.inventory.week)
+        this.$data.startingDate = moment(d)
+        let dateDay = moment(d)
+        let dateWeek = []
+        this.$data.days.forEach(day =>{
+          dateWeek.push(dateDay.format('DD-MMM'))
+          dateDay.add(1, 'days')
+        })
+        this.$data.weekDates = dateWeek
       })
+      */
     },
     currentMonday() {
       let days = ['Mon','Tue','Wed','Thu','Fri','Sat']
@@ -368,17 +386,37 @@ export default {
       // this.$data.inventory = this.$data.inventory2
       // end createBlankTransferRec
     },
-    loadTransferData() {
+    initializeData () {
       // find transfer record (week) using this monday's date
       let cMonday = this.currentMonday()
       // cMonday = '01-Oct-2018'
       console.log('current Monday', cMonday)
       // this.$data.startingDate = moment(cMonday)
       // find transfer record of current week
+      // set starting date
+      let d = new Date(this.$data.inventory.week)
+      this.$data.startingDate = moment(d)
+      let dateDay = moment(cMonday)
+      let dateWeek = []
+      this.$data.days.forEach(day =>{
+        dateWeek.push(dateDay.format('DD-MMM'))
+        dateDay.add(1, 'days')
+      })
+      this.$data.weekDates = dateWeek
+      console.log('dateWeek', dateWeek)
+      this.loadTransferData(cMonday.format('DD-MMM-YYYY'))
+    },
+    loadTransferData(lookupDate) {
+      // find transfer record (week) using this monday's date
+      //let cMonday = this.currentMonday()
+      // cMonday = '01-Oct-2018'
+      console.log('looking up ', lookupDate, 'in transfers')
+      // this.$data.startingDate = moment(cMonday)
+      // find transfer record of current week
       api.service('transfers').find({
         query: {
           week: {
-            $search: cMonday.format('DD-MMM-YYYY')
+            $search: lookupDate
           }
         }
       }).then((response) => {
@@ -389,7 +427,7 @@ export default {
           console.log('inventory',this.$data.inventory)
         } else {
           console.log('no record', response)
-          createBlankTransferRec()
+          this.createBlankTransferRec()
         }
         // set starting date
         let d = new Date(this.$data.inventory.week)
@@ -440,7 +478,8 @@ export default {
   mounted () {
     //load tranfer data (api.service('transfers'))
     //this.$data.startingDate = this.currentMonday()
-    this.loadTransferData()
+    this.initializeData()
+    // this.loadTransferData()
     /*
     inventory.on('created', inv => {
       console.log('item received')
