@@ -86,7 +86,7 @@
           <q-item-main label="Transfers" />
         </q-item>
 
-        <q-item to="/expenses">
+        <q-item to="/expense">
           <q-item-side icon="receipt" />
           <q-item-main label="Expenses" />
         </q-item>

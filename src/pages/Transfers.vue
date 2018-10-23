@@ -346,6 +346,7 @@ export default {
     },
     createBlankTransferRec() {
       // get all items for inventory to create transfer list
+      console.log('creating new blank week')
       api.service('inventory').find({
         query: {
           $sort: { item: 1}
@@ -429,6 +430,7 @@ export default {
           console.log('no record', response)
           this.createBlankTransferRec()
         }
+      }).then((response) => {
         // set starting date
         let d = new Date(this.$data.inventory.week)
         this.$data.startingDate = moment(d)
@@ -439,11 +441,12 @@ export default {
           dateDay.add(1, 'days')
         })
         this.$data.weekDates = dateWeek
+        console.log('response', response)
         console.log('dateWeek', dateWeek)
         // create copy of loaded data for original Values
         console.log('creating copy of data for og vals')
         this.$data.originalTransferVals = JSON.parse(JSON.stringify(this.$data.inventory))
-        console.log('st date',this.$data.startingDate.format('DD-MMM-YYYY'))
+        console.log(this.$data.originalTransferVals)
         // check for previous and next week
         this.checkPrevNextButtons()
       })
