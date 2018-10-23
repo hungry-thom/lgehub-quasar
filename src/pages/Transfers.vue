@@ -306,12 +306,14 @@ export default {
       }
     },
     clickNextWeek() {
-      let nWeek = moment(this.$data.inventory.week) //change
+      let d = new Date(this.$data.inventory.week)
+      let nWeek = moment(d)
       nWeek.add(7,'days')
       this.loadTransferData(nWeek.format('DD-MMM-YYYY'))
     },
     clickPrevWeek() {
-      let pWeek = moment(this.$data.inventory.week) //change
+      let d = new Date(this.$data.inventory.week)
+      let pWeek = moment(d)
       pWeek.subtract(7,'days')
       this.loadTransferData(pWeek.format('DD-MMM-YYYY'))
      /*
@@ -383,6 +385,23 @@ export default {
           console.log('created week', response.id)
           this.$data.inventory.id = response.id
         })
+        // load new starting date
+        let d = new Date(this.$data.inventory.week)
+        this.$data.startingDate = moment(d)
+        let dateDay = moment(d)
+        let dateWeek = []
+        this.$data.days.forEach(day =>{
+          dateWeek.push(dateDay.format('DD-MMM'))
+          dateDay.add(1, 'days')
+        })
+        this.$data.weekDates = dateWeek
+        console.log('dateWeek', dateWeek)
+        // create copy of loaded data for original Values
+        console.log('creating copy of data for og vals')
+        this.$data.originalTransferVals = JSON.parse(JSON.stringify(this.$data.inventory))
+        console.log(this.$data.originalTransferVals)
+        // check for previous and next week
+        this.checkPrevNextButtons()
       })
       // this.$data.inventory = this.$data.inventory2
       // end createBlankTransferRec
@@ -426,34 +445,37 @@ export default {
           console.log('record found', response)
           this.$data.inventory = response.data[0]
           console.log('inventory',this.$data.inventory)
+          // load new starting date
+          let d = new Date(this.$data.inventory.week)
+          this.$data.startingDate = moment(d)
+          let dateDay = moment(d)
+          let dateWeek = []
+          this.$data.days.forEach(day =>{
+            dateWeek.push(dateDay.format('DD-MMM'))
+            dateDay.add(1, 'days')
+          })
+          this.$data.weekDates = dateWeek
+          console.log('dateWeek', dateWeek)
+          // create copy of loaded data for original Values
+          console.log('creating copy of data for og vals')
+          this.$data.originalTransferVals = JSON.parse(JSON.stringify(this.$data.inventory))
+          console.log(this.$data.originalTransferVals)
+          // check for previous and next week
+          this.checkPrevNextButtons()
         } else {
           console.log('no record', response)
           this.createBlankTransferRec()
+          // starting date already set with initialization
+          // original transfer vals and navigation buttons loaded in createBlankTransferRec()
         }
-      }).then((response) => {
-        // set starting date
-        let d = new Date(this.$data.inventory.week)
-        this.$data.startingDate = moment(d)
-        let dateDay = moment(d)
-        let dateWeek = []
-        this.$data.days.forEach(day =>{
-          dateWeek.push(dateDay.format('DD-MMM'))
-          dateDay.add(1, 'days')
-        })
-        this.$data.weekDates = dateWeek
-        console.log('response', response)
-        console.log('dateWeek', dateWeek)
-        // create copy of loaded data for original Values
-        console.log('creating copy of data for og vals')
-        this.$data.originalTransferVals = JSON.parse(JSON.stringify(this.$data.inventory))
-        console.log(this.$data.originalTransferVals)
-        // check for previous and next week
-        this.checkPrevNextButtons()
       })
       // vvv-- the following code is executed while waiting for response from database --vvv
       // doesn't execute on hot reload
       console.log('async code (waiting on db response)')
-    }, 
+    },
+    setStartingDate () {
+
+    },
     checkPrevNextButtons () {
       let nWeek = moment(this.$data.startingDate).add(7, 'days')
       api.service('transfers').find({
