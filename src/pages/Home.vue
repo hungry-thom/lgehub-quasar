@@ -11,14 +11,13 @@
         hide-bottom
         class="col" >
         <tr slot="header" slot-scope="props">
-          <q-th key="paymentAccount" :props="props" class="bg-deep-purple-1">Payment</q-th>
+          <q-th key="inv" :props="props">Inv</q-th>
+          <q-th key="expAccount" :props="props">expAccount</q-th>
           <q-th key="vendor" :props="props" class="bg-deep-purple-1">Vendor</q-th>
-          <q-th key="grandTotal" :props="props" class="bg-deep-purple-1">Total</q-th>
           <q-th key="subTotal" :props="props" class="bg-deep-purple-1">Cost</q-th>
           <q-th key="gstTotal" :props="props" class="bg-deep-purple-1">prepaidGST</q-th>
-          <q-th class="bg-deep-purple-2"></q-th>
-          <q-th key="expAccount" :props="props">expAccount</q-th>
-          <q-th key="inv" :props="props">Inv</q-th>
+          <q-th key="grandTotal" :props="props" class="bg-deep-purple-1">Total</q-th>
+          <q-th key="paymentAccount" :props="props" class="bg-deep-purple-2">Payment</q-th>
         </tr>
       </q-table>
       &nbsp;&nbsp;
@@ -31,14 +30,13 @@
         hide-bottom
         class="col" >
         <tr slot="header" slot-scope="props">
-          <q-th key="inv" :props="props">Inv</q-th>
-          <q-th key="expAccount" :props="props">expAccount</q-th>
-          <q-th :props="props" class="bg-deep-purple-2"></q-th>
+          <q-th key="paymentAccount" :props="props" class="bg-deep-purple-2">Payment</q-th>
+          <q-th key="grandTotal" :props="props" class="bg-deep-purple-1">Total</q-th>
           <q-th key="gstTotal" :props="props" class="bg-deep-purple-1">payableGST</q-th>
           <q-th key="subTotal" :props="props" class="bg-deep-purple-1">Cost</q-th>
-          <q-th key="grandTotal" :props="props" class="bg-deep-purple-1">Total</q-th>
           <q-th key="vendor" :props="props" class="bg-deep-purple-1">Customer</q-th>
-          <q-th key="paymentAccount" :props="props" class="bg-deep-purple-1">Payment</q-th>
+          <q-th key="expAccount" :props="props">expAccount</q-th>
+          <q-th key="inv" :props="props">Inv</q-th>
         </tr>
       </q-table>
       <br>
