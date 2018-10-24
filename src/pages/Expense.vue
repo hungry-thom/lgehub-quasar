@@ -88,12 +88,12 @@
     <br>
     <div class="row no-wrap">
       <q-input class="col" ref="newEntry" float-label="Qty" type="number" v-model="newItem.qty" />&nbsp;&nbsp;
-      <q-input class="col" float-label="Item" v-model="newItem.item" > <q-autocomplete :static-data="{field: 'value', list: itemList}" /> </q-input>&nbsp;&nbsp;
-      <q-input class="col" float-label="Unit" v-model="newItem.unit" @click="popupUnitList" > <q-autocomplete :static-data="{field: 'value', list: this.unitsList}" /> </q-input>&nbsp;&nbsp;
+      <q-input class="col" float-label="Item" v-model="newItem.item" > <q-autocomplete :static-data="{field: 'value', list: itemList}" :filter="myFilter"/> </q-input>&nbsp;&nbsp;
+      <q-input class="col" float-label="Unit" v-model="newItem.unit" @click="popupUnitList" > <q-autocomplete :static-data="{field: 'value', list: this.unitsList}" :filter="myFilter"/> </q-input>&nbsp;&nbsp;
       <q-input class="col" float-label="Cost" type="number" v-model="newItem.amount" />
     </div>
     <div class="row no-wrap">
-      <q-input class="col" float-label="exp Account" v-model="newItem.expAccount" @keyup.enter="addItem"/>&nbsp;&nbsp;
+      <q-input class="col" float-label="exp Account" v-model="newItem.expAccount" @keyup.enter="addItem"> <q-autocomplete :static-data="{field: 'value', list: expAccountList}" :filter="myFilter" /> </q-input>&nbsp;&nbsp;
       <q-input class="col" float-label="Inv Account" v-model="newItem.inv" @keyup.enter="addItem"/>&nbsp;&nbsp;
     </div>
     <br>
@@ -112,6 +112,7 @@
 import moment from 'moment'
 import api from 'src/api'
 import _ from 'lodash'
+import fuzzysearch from 'fuzzysearch'
 import {
   QChatMessage,
   QTable,
@@ -122,7 +123,8 @@ import {
   QPopupEdit,
   QCheckbox,
   QBtn,
-  QDatetime
+  QDatetime,
+  QAutocomplete
 } from 'quasar'
 
 export default {
@@ -137,7 +139,8 @@ export default {
     QPopupEdit,
     QCheckbox,
     QBtn,
-    QDatetime
+    QDatetime,
+    QAutocomplete
   },
   props: ['user'],
   data () {
@@ -151,8 +154,40 @@ export default {
         transItems: [],
       },
       itemList: [],
-      vendors: [],
-      paymentTypes: [],
+      vendors: [
+        {
+          value: 'Helen',
+          label: 'Helen'
+        },
+        { 
+          value: 'Madisco',
+          label: 'Madisco'
+        }
+      ],
+      paymentTypes: [
+        {
+          value: 'cashMS',
+          label: 'cashMS'
+        },
+        {
+          value: 'cashHR',
+          label: 'cashHR'
+        },
+        {
+          value: 'ccardScotia',
+          label: 'ccardScotia'
+        }
+      ],
+      expAccountList: [
+        {
+          value: 'COGS:HR:FOOD',
+          label: 'COGS:HR:FOOD'
+        },
+        { 
+          value: 'OPEXP:MS:CLEANING',
+          label: 'OPEXP:MS:CLEANING'
+        }
+      ],
       checked: false,
       newItem: {
         qty: '',
@@ -296,6 +331,10 @@ export default {
     }
   },
   methods: {
+    myFilter(terms, { field, list }) {
+      const token = terms.toLowerCase();
+      return list.filter(item => fuzzysearch(token, item[field].toLowerCase()));
+    },
     deleteItemRow(row) {
       console.log('delete')
       console.log(row)
@@ -373,7 +412,8 @@ export default {
         this.$data.inventory.forEach(item => {
           console.log(item)
           console.log('----------')
-          item.confirmed = false
+          let o = { value: item.item, label: item.item}
+          this.$data.itemList.push(o)
           let og = JSON.parse(JSON.stringify(item.stock))
           // this.$data.confirmations.push( {item: item.item, confirmed: false, originalStock: og} )
         }, this) // this necessary?
