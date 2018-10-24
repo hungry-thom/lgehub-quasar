@@ -161,6 +161,7 @@ export default {
         // submit inv
         console.log('submitting audit')
         api.service('audit').create(this.$data.confirmations)
+        // ^this create submits as a list, so each item is its own object(document) in table
       } else {
         this.$q.notify({
           message: 'Not all inventory items confirmed',

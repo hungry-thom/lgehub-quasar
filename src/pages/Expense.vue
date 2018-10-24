@@ -103,7 +103,7 @@
     <br>
     <br>
     <div>
-      &nbsp;&nbsp;<q-btn size="md" color="primary" label="add Item" @click="addItem" /> <q-btn size="md" color="primary" label="Submit" class="float-right" /> <!-- :disable not reading var -->
+      &nbsp;&nbsp;<q-btn size="md" color="primary" label="add Item" @click="addItem" /> <q-btn size="md" color="primary" label="Submit" class="float-right" @click="submitExpense"/> <!-- :disable not reading var -->
     </div>
   </q-page>
 </template>
@@ -304,7 +304,7 @@ export default {
         console.log('t', t, item.cost)
         t += item.cost
       })
-      return t
+      return _.round(t,2)
     },
     gstTotal () {
       let g = 0
@@ -312,14 +312,14 @@ export default {
         console.log('g', g, item.gst)
         g += item.gst
       })
-      return g
+      return _.round(g,2)
     },
     grandTotal () {
       let gt = 0
       this.$data.transaction.transItems.forEach(item => {
         gt += item.total
       })
-      return gt
+      return _.round(gt,2)
     },
     gstIncludedVisibility () {
       if (this.$data.taxable == 'yes') {
@@ -371,7 +371,7 @@ export default {
           line.gst = 0
           line.cost = line.amount
         }
-        line.total = line.gst + line.cost
+        line.total = _.round((line.gst + line.cost), 2)
         delete line['amount']
         this.$data.transaction.transItems.push(line)
         for (let v in this.$data.newItem){
@@ -380,6 +380,15 @@ export default {
       } else {
         console.log('expAccount needs value')
       }
+    },
+    submitExpense () {
+      this.$data.transaction.subTotal = this.subTotal
+      this.$data.transaction.gstTotal = this.gstTotal
+      this.$data.transaction.grandTotal = this.grandTotal
+      api.service('expenses').create(this.$data.transaction).then((response) => {
+          console.log('sumbitted expense', response.id)
+          api.service('audit').create(response)
+        })
     }
   },
   mounted () {
