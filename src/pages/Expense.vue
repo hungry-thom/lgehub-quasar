@@ -1,6 +1,6 @@
 <!-- InventoryCheck.vue -->
 <template>
-  <q-page>
+  <q-page class="layout-padding">
     <div class="row no-wrap">
       <q-datetime class= "col" minimal color="orange" v-model="transaction.date1" type="date" float-label="Date" />&nbsp;&nbsp;
       <q-input class= "col" ref="inputVendor" v-model="transaction.vendor" float-label="Vendor"  @blur="validateVendor"> <q-autocomplete :static-data="{field: 'value', list: vendors}" /></q-input>&nbsp;&nbsp;
@@ -16,11 +16,45 @@
         row-key="item"
         :pagination.sync="pagination"
         hide-bottom >
-        <!--
+        <tr slot="header" slot-scope="props">
+          <q-th key="qty" :props="props" class="bg-deep-purple-1">Qty</q-th>
+          <q-th key="item" :props="props" class="bg-deep-purple-1">Item</q-th>
+          <q-th key="unit" :props="props" class="bg-deep-purple-1">Unit</q-th>
+          <q-th key="price" :props="props" class="bg-deep-purple-1">Price</q-th>
+          <q-th key="cost" :props="props" class="bg-deep-purple-1">Cost</q-th>
+          <q-th key="gst" :props="props" class="bg-deep-purple-1">GST</q-th>
+          <q-th key="total" :props="props" class="bg-deep-purple-2">Total</q-th>
+          <q-th key="expAccount" :props="props">expAccount</q-th>
+          <q-th key="inv" :props="props">Inv</q-th>
+          <q-th key="expand" :props="props" width='25px'><q-btn size="sm" round dense color="secondary" icon="code" class="q-mr-xs" @click="expandCols" /></q-th>
+        </tr>
         <q-tr slot="body" slot-scope="props" :props="props">
-          <q-td key="qty" :props="props">{{ props.row.qty }}</q-td>
-          <q-td key="item" :props="props">{{ props.row.item }}</q-td>
-          <q-td key="unit" :props="props">{{ props.row.unit }}</q-td>
+          <q-td key="qty" :props="props" class="bg-deep-purple-1">{{ props.row.qty || '-' }}</q-td>
+          <q-td key="item" :props="props" class="bg-deep-purple-1">{{ props.row.item || '-' }}</q-td>
+          <q-td key="unit" :props="props" class="bg-deep-purple-1" >{{ props.row.unit || '-' }}</q-td>
+          <q-td key="price" :props="props" class="bg-deep-purple-1" >{{ props.row.price || '-' }}</q-td>
+          <q-td key="cost" :props="props" class="bg-deep-purple-1" >{{ props.row.cost || '-' }}</q-td>
+          <q-td key="gst" :props="props" class="bg-deep-purple-1" >{{ props.row.gst || '-' }}</q-td>
+          <q-td key="total" :props="props" class="bg-deep-purple-2" >{{ props.row.total || '-' }}</q-td>
+          <q-td key="expAccount" :props="props">
+            {{ props.row.expAccount || '-' }}
+            <q-popup-edit v-model="props.row.expAccount" title="Update" buttons>
+              <q-input v-model="props.row.expAccount" />
+            </q-popup-edit>
+          </q-td>
+          <q-td key="inv" :props="props">
+            {{ props.row.inv || '-' }}
+            <q-popup-edit v-model="props.row.expAccount" title="Update" buttons>
+              <q-input v-model="props.row.expAccount" />
+            </q-popup-edit>
+          </q-td>
+          <q-td key="expand" :props="props">
+            <div class="row items-center justify-between no-wrap">
+              <q-btn size="sm" round dense color="secondary" icon="delete" @click="deleteItemRow(props.row)" class="q-mr-xs" />
+            </div>
+          </q-td>
+        </q-tr>
+        <!--
           <q-td key="stock" :props="props">
             <div class="row items-center justify-between no-wrap">
               <div v-for="unit in props.row.stock" :key="unit.unit">{{ unit.unit }}:<br>&nbsp;&nbsp;<strong><font size="4">{{ unit.qty }}</font></strong>
@@ -37,6 +71,17 @@
           </q-td>
         </q-tr>
         -->
+        <q-tr slot="bottom-row" slot-scope="props" align="left">
+            <q-td></q-td>
+            <q-td></q-td>
+            <q-td></q-td>
+            <q-td></q-td>
+            <q-td class="bg-deep-purple-2">{{ subTotal || '-' }}</q-td>
+            <q-td class="bg-deep-purple-2">{{ gstTotal || '-' }}</q-td>
+            <q-td class="bg-deep-purple-3">{{ grandTotal || '-' }}</q-td>
+            <q-td></q-td>
+            <q-td></q-td>
+        </q-tr>
       </q-table>
       <br>
     </div>
@@ -45,11 +90,20 @@
       <q-input class="col" ref="newEntry" float-label="Qty" type="number" v-model="newItem.qty" />&nbsp;&nbsp;
       <q-input class="col" float-label="Item" v-model="newItem.item" > <q-autocomplete :static-data="{field: 'value', list: itemList}" /> </q-input>&nbsp;&nbsp;
       <q-input class="col" float-label="Unit" v-model="newItem.unit" @click="popupUnitList" > <q-autocomplete :static-data="{field: 'value', list: this.unitsList}" /> </q-input>&nbsp;&nbsp;
-      <q-input class="col" float-label="Cost" type="number" v-model="newItem.cost" @keyup.enter="addItem"/>
+      <q-input class="col" float-label="Cost" type="number" v-model="newItem.amount" />
+    </div>
+    <div class="row no-wrap">
+      <q-input class="col" float-label="exp Account" v-model="newItem.expAccount" @keyup.enter="addItem"/>&nbsp;&nbsp;
+      <q-input class="col" float-label="Inv Account" v-model="newItem.inv" @keyup.enter="addItem"/>&nbsp;&nbsp;
     </div>
     <br>
+    <q-checkbox v-model="taxable" label="Taxable" true-value="yes" false-value="no"/>
+    <br>
+    <q-checkbox v-model="gstIncluded" label="GST Included" true-value="yes" false-value="no" :disable="gstIncludedVisibility" />
+    <br>
+    <br>
     <div>
-      &nbsp;&nbsp;<q-btn size="md" color="primary" label="confirm" @click="confirmInv" /> <!-- :disable not reading var -->
+      &nbsp;&nbsp;<q-btn size="md" color="primary" label="add Item" @click="addItem" /> <q-btn size="md" color="primary" label="Submit" class="float-right" /> <!-- :disable not reading var -->
     </div>
   </q-page>
 </template>
@@ -63,6 +117,7 @@ import {
   QTable,
   QTr,
   QTd,
+  QTh,
   QSearch,
   QPopupEdit,
   QCheckbox,
@@ -77,6 +132,7 @@ export default {
     QTable,
     QTr,
     QTd,
+    QTh,
     QSearch,
     QPopupEdit,
     QCheckbox,
@@ -102,9 +158,13 @@ export default {
         qty: '',
         item: '',
         unit: '',
-        cost: ''
+        amount: '',
+        expAccount: '',
+        inv: ''
       },
       unitsList: [],
+      taxable: 'yes',
+      gstIncluded: 'yes',
       pagination: {
         sortBy: name, // String, column "item" property value
         descending: true,
@@ -124,7 +184,8 @@ export default {
           required: true,
           label: 'Qty',
           align: 'left',
-          field: 'qty'
+          field: 'qty',
+          classes: "bg-deep-purple-1"
         },
         {
           name: 'item',
@@ -132,86 +193,154 @@ export default {
           label: 'Item',
           align: 'left',
           field: 'item',
-          sortable: true
+          sortable: true,
+          classes: "bg-deep-purple-1"
         },
         {
           name: 'unit',
           required: true,
           label: 'Unit',
           align: 'left',
-          field: 'unit'
+          field: 'unit',
+          classes: "bg-deep-purple-1"
         },
         {
           name: 'price',
           required: false,
           label: 'Price',
           align: 'left',
-          field: 'price'
+          field: 'price',
+          classes: "bg-deep-purple-1"
         },
         {
-          name: 'amount',
+          name: 'cost',
           required: false,
-          label: 'Amount',
+          label: 'Cost',
           align: 'left',
-          field: 'amount'
+          field: 'cost',
+          classes: "bg-deep-purple-1"
         },
         {
           name: 'gst',
           required: false,
           label: 'GST',
           align: 'left',
-          field: 'gst'
+          field: 'gst',
+          classes: "bg-deep-purple-1"
         },
         {
           name: 'total',
           required: false,
           label: 'Total',
           align: 'left',
-          field: 'total'
+          field: 'total',
+          classes: "bg-deep-purple-2"
         },
         {
           name: 'expAccount',
           required: false,
           label: 'expAccount',
-          align: 'left',
+          align: 'center',
           field: 'expAccount'
         },
         {
           name: 'inv',
           required: false,
           label: 'Inv',
-          align: 'left',
+          align: 'center',
           field: 'inv'
+        },
+        {
+          name: 'expand',
+          required: false,
+          label: 'Expand',
+          align: 'center',
+          field: 'expand',
+          style: 'width: 500px'
         }
       ],
-      visibleColumns: ['qty', 'item', 'unit', 'price', 'amount', 'gst', 'total', 'expAccount', 'inv']
+      visibleColumns: ['qty', 'item', 'unit', 'price', 'cost', 'gst', 'total', 'expAccount', 'inv', 'expand']
     }
   },
   computed: {
+    subTotal () {
+      let t = 0
+      this.$data.transaction.transItems.forEach(item => {
+        console.log('t', t, item.cost)
+        t += item.cost
+      })
+      return t
+    },
+    gstTotal () {
+      let g = 0
+      this.$data.transaction.transItems.forEach(item => {
+        console.log('g', g, item.gst)
+        g += item.gst
+      })
+      return g
+    },
+    grandTotal () {
+      let gt = 0
+      this.$data.transaction.transItems.forEach(item => {
+        gt += item.total
+      })
+      return gt
+    },
+    gstIncludedVisibility () {
+      if (this.$data.taxable == 'yes') {
+        return false
+      } else {
+        this.$data.gstIncluded = 'no'
+        return true
+      }
+    }
   },
   methods: {
-    validateVendor () {
-      return true
+    deleteItemRow(row) {
+      console.log('delete')
+      console.log(row)
+      let tmpIndex = _.findIndex(this.$data.transaction.transItems, {item: row.item})
+      console.log(tmpIndex)
+      this.$data.transaction.transItems.splice(tmpIndex, 1)
     },
-    addItem () {
+    expandCols () {
+      if (this.$data.visibleColumns.length == 10) {
+        this.$data.visibleColumns = ['qty', 'item', 'unit', 'price', 'cost', 'gst', 'total', 'expand']
+      } else {
+        this.$data.visibleColumns = ['qty', 'item', 'unit', 'price', 'cost', 'gst', 'total', 'expAccount', 'inv', 'expand']
+      }
+    },
+    validateVendor () {
       return true
     },
     popupUnitList () {
       return true
     },
-    confirmInv () {
+    addItem () {
       let line = JSON.parse(JSON.stringify(this.$data.newItem))
-      this.$data.transaction.transItems.push(line)
-      for (let v in this.$data.newItem){
-        this.$data.newItem[v] = ''
+      if (line.expAccount != '') {
+        line.price = _.round((line.amount / line.qty), 2)
+        if (this.$data.taxable == 'yes') {
+          if (this.$data.gstIncluded == 'yes') {
+            line.gst = _.round((line.amount / 9), 2)
+            line.cost = _.round((line.amount / 1.125), 2)
+          } else {
+            line.gst = _.round((line.amount * 0.125), 2)
+            line.cost = line.amount
+          }
+        } else {
+          line.gst = 0
+          line.cost = line.amount
+        }
+        line.total = line.gst + line.cost
+        delete line['amount']
+        this.$data.transaction.transItems.push(line)
+        for (let v in this.$data.newItem){
+          this.$data.newItem[v] = ''
+        }
+      } else {
+        console.log('expAccount needs value')
       }
-      /*
-      _.each(this.$data.newItem, function(value, key) {
-        console.log(key,value)
-        value = ''
-        console.log(key,value)
-      })
-      */
     }
   },
   mounted () {
