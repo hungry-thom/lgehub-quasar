@@ -37,7 +37,7 @@
           </tr>
         </template>
       </q-table>
-      <br>
+      <q-btn flat round size="xl" color="secondary" @click="newExpense" icon="add_circle" />
     </div>
     <br>
     <!-- //////// START OF MODAL' ////////-->
@@ -139,21 +139,20 @@
       <q-input class="col" float-label="Inv Account" v-model="newItem.inv" @keyup.enter="addItem"/>&nbsp;&nbsp;
     </div>
     <br>
-    <q-checkbox v-model="taxable" label="Taxable" true-value="yes" false-value="no"/>
+    <div class="row no-wrap">
+      <div>
+        <q-checkbox class="float-right" v-model="taxable" left-label label="Taxable" true-value="yes" false-value="no"/>
+        <br>
+        <q-checkbox v-model="gstIncluded" left-label label="GST Included" true-value="yes" false-value="no" :disable="gstIncludedVisibility" />
+      </div>
+      <div class="q-pa-xs">
+        &nbsp;&nbsp;<q-btn size="md" color="primary" label="add Item" @click="addItem" />
+      </div>
+    </div>
     <br>
-    <q-checkbox v-model="gstIncluded" label="GST Included" true-value="yes" false-value="no" :disable="gstIncludedVisibility" />
-    <br>
-    <br>
-    <div>
-      &nbsp;&nbsp;<q-btn size="md" color="primary" label="add Item" @click="addItem" /> <q-btn size="md" color="primary" label="Submit" class="float-right" @click="submitExpense"/> <!-- :disable not reading var -->
-    <br>
-    <q-btn
-        flat
-        round
-        dense
-        @click="overlay"
-        icon="keyboard_arrow_left"
-      />
+    <div class="q-pa-xs">
+      &nbsp;&nbsp;<q-btn size="md" color="primary" label="Cancel" @click="overlay"/>
+      &nbsp;&nbsp;<q-btn size="md" color="primary" label="Submit" @click="submitExpense"/> <!-- :disable not reading var -->
     </div>
   </q-modal-layout>
   </q-modal>
@@ -483,7 +482,26 @@ export default {
       })
       */
     },
+    newExpense () {
+      this.$data.transaction = {
+        date1: '',
+        vendor: '',
+        transNum: '',
+        paymentAccount: '',
+        transItems: [],
+      }
+      this.overlay()
+    },
     overlay () {
+      console.log('overlaycalled')
+      this.$data.newItem = {
+        qty: '',
+        item: '',
+        unit: '',
+        amount: '',
+        expAccount: '',
+        inv: ''
+      }
       this.$data.expenseModal = !this.$data.expenseModal
     },
     deleteItemRow(row) {
@@ -533,19 +551,42 @@ export default {
       }
     },
     submitExpense () {
+      // save computed values to transaction.object
       this.$data.transaction.subTotal = this.subTotal
       this.$data.transaction.gstTotal = this.gstTotal
       this.$data.transaction.grandTotal = this.grandTotal
-      api.service('expenses').create(this.$data.transaction).then((response) => {
+      // check if this is an exsisting transaction 
+      let tmpId = this.$data.transaction.id
+      if (tmpId) {
+        console.log('existing transaction', tmpId)
+        delete this.$data.transaction['id']
+        api.service('expenses').update(tmpId, this.$data.transaction).then((response) => {
+          console.log('sumbitted expense', response.id)
+          delete response['id']
+          api.service('audit').create(response)
+        })
+      } else {
+        console.log('new transaction')
+        api.service('expenses').create(this.$data.transaction).then((response) => {
           console.log('sumbitted expense', response.id)
           api.service('audit').create(response)
         })
+      }
+      this.overlay()
+      // load expenses
+      api.service('expenses').find({
+        query: {
+          $sort: { date1: -1 }
+        }
+      }).then((response) => {
+        this.$data.expenses = response.data
+        console.log('exp resp', response.data)
+      })
     }
   },
   mounted () {
-    const messages = api.service('messages')
-    const users = api.service('users')
     const inventory = api.service('inventory')
+    // load expenses
     api.service('expenses').find({
       query: {
         $sort: { date1: -1 }
@@ -554,21 +595,7 @@ export default {
       this.$data.expenses = response.data
       console.log('exp resp', response.data)
     })
-    // Get all users and messages
-    messages.find({
-      query: {
-        $sort: { createdAt: -1 },
-        $limit: 25
-      }
-    })
-      .then((response) => {
-        // We want the latest messages but in the reversed order
-        this.$data.messages = response.data.reverse()
-      })
-    users.find()
-      .then((response) => {
-        this.$data.users = response.data
-      })
+    // Get inventory (should change to priceList) for items, vendors, (and prices?)
     inventory.find({
       query: {
         $sort: { item: -1}
@@ -578,8 +605,6 @@ export default {
         // We want the latest inventory but in the reversed order
         this.$data.inventory = response.data.reverse()
         this.$data.inventory.forEach(item => {
-          console.log(item)
-          console.log('----------')
           let o = { value: item.item, label: item.item}
           this.$data.itemList.push(o)
           let og = JSON.parse(JSON.stringify(item.stock))
@@ -587,26 +612,9 @@ export default {
         }, this) // this necessary?
         console.log(this.$data.confirmations)
       })
-    // Add new messages to the message list
-    messages.on('created', message => {
-      console.log('message received')
-      this.$data.messages.unshift(message)
-    })
-    // Add new users to the user list
-    users.on('created', user => {
-      console.log('user received')
-      this.$data.users = this.$data.users.concat(user)
-    })
-    inventory.on('created', inv => {
-      console.log('item received')
-      // this.$data.inventory.push(inv)
-    })
-    /*
-    inventory.on('updated', item => {
-      console.log('item updated-feathers')
-      console.log(item)
-      let dex = _.findIndex(this.$data.inventory, {id: item.id})
-      this.$data.inventory[dex].stock = item.stock
+    /* //// 'created' service executed multiple time for one submission
+    api.service('expenses').on('created', expense => {
+      console.log('expense added', expense)
     })
     */
   },
