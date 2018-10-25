@@ -11,14 +11,41 @@
         hide-bottom
         class="col" >
         <tr slot="header" slot-scope="props">
+          <!-- 
           <q-th key="inv" :props="props">Inv</q-th>
           <q-th key="expAccount" :props="props">expAccount</q-th>
+          -->
           <q-th key="vendor" :props="props" class="bg-deep-purple-1">Vendor</q-th>
           <q-th key="subTotal" :props="props" class="bg-deep-purple-1">Cost</q-th>
           <q-th key="gstTotal" :props="props" class="bg-deep-purple-1">prepaidGST</q-th>
           <q-th key="grandTotal" :props="props" class="bg-deep-purple-1">Total</q-th>
           <q-th key="paymentAccount" :props="props" class="bg-deep-purple-2">Payment</q-th>
         </tr>
+        <template slot="body" slot-scope="props">
+          <tr :props="props">
+            <!--
+            <q-td key="inv" :props="props">{{ props.row.inv }}</q-td>
+            <q-td key="expAccount" :props="props">expAccount</q-td>
+            -->
+            <q-td key="vendor" :props="props" class="bg-deep-purple-1">
+              <q-checkbox color="primary" v-model="props.expand" checked-icon="remove" unchecked-icon="add" class="q-mr-md" />
+              {{ props.row.vendor }}
+            </q-td>
+            <q-td key="subTotal" :props="props" class="bg-deep-purple-1">{{ props.row.subTotal }}</q-td>
+            <q-td key="gstTotal" :props="props" class="bg-deep-purple-1">{{ props.row.gstTotal }}</q-td>
+            <q-td key="grandTotal" :props="props" class="bg-deep-purple-1">{{ props.row.grandTotal }}</q-td>
+            <q-td key="paymentAccount" :props="props" class="bg-deep-purple-2">{{ props.row.paymentAccount }}</q-td>
+          </tr>
+          <q-tr v-show="props.expand" :props="props">
+            <q-td colspan="100%">
+              <q-table
+                  :data="props.row.transItems"
+                  :columns="columns2"
+                  row-key="props.row.vendors.vendor"
+                  hide-bottom />
+            </q-td>
+          </q-tr>
+        </template>
       </q-table>
       &nbsp;&nbsp;
       <q-table
@@ -37,6 +64,15 @@
           <q-th key="vendor" :props="props" class="bg-deep-purple-1">Customer</q-th>
           <q-th key="expAccount" :props="props">expAccount</q-th>
           <q-th key="inv" :props="props">Inv</q-th>
+        </tr>
+        <tr slot="body" slot-scope="props">
+          <q-td key="paymentAccount" :props="props" class="bg-deep-purple-2">Payment</q-td>
+          <q-td key="grandTotal" :props="props" class="bg-deep-purple-1">Total</q-td>
+          <q-td key="gstTotal" :props="props" class="bg-deep-purple-1">payableGST</q-td>
+          <q-td key="subTotal" :props="props" class="bg-deep-purple-1">Cost</q-td>
+          <q-td key="vendor" :props="props" class="bg-deep-purple-1">Customer</q-td>
+          <q-td key="expAccount" :props="props">expAccount</q-td>
+          <q-td key="inv" :props="props">Inv</q-td>
         </tr>
       </q-table>
       <br>
@@ -211,6 +247,86 @@ export default {
         }
       ],
       visibleColumns: ['paymentAccount', 'vendor', 'grandTotal', 'subTotal', 'gstTotal', 'expAccount', 'inv'],
+      columns2: [
+       {
+          name: 'id',
+          required: false,
+          label: 'Id',
+          align: 'left',
+          field: 'id'
+        },
+        {
+          name: 'expAccount',
+          required: false,
+          label: 'expAccount',
+          align: 'center',
+          field: 'expAccount'
+        },
+        {
+          name: 'inv',
+          required: false,
+          label: 'Inv',
+          align: 'center',
+          field: 'inv'
+        },
+        {
+          name: 'qty',
+          required: true,
+          label: 'Qty',
+          align: 'left',
+          field: 'qty',
+          classes: "bg-deep-purple-1"
+        },
+        {
+          name: 'item',
+          required: true,
+          label: 'Item',
+          align: 'left',
+          field: 'item',
+          sortable: true,
+          classes: "bg-deep-purple-1"
+        },
+        {
+          name: 'unit',
+          required: true,
+          label: 'Unit',
+          align: 'left',
+          field: 'unit',
+          classes: "bg-deep-purple-1"
+        },
+        {
+          name: 'price',
+          required: false,
+          label: 'Price',
+          align: 'left',
+          field: 'price',
+          classes: "bg-deep-purple-1"
+        },
+        {
+          name: 'cost',
+          required: false,
+          label: 'Cost',
+          align: 'left',
+          field: 'cost',
+          classes: "bg-deep-purple-1"
+        },
+        {
+          name: 'gst',
+          required: false,
+          label: 'GST',
+          align: 'left',
+          field: 'gst',
+          classes: "bg-deep-purple-1"
+        },
+        {
+          name: 'total',
+          required: false,
+          label: 'Total',
+          align: 'left',
+          field: 'total',
+          classes: "bg-deep-purple-2"
+        }
+      ],
       colSales: [
         {
           name: 'id',
@@ -377,6 +493,14 @@ export default {
     const messages = api.service('messages')
     const users = api.service('users')
     const inventory = api.service('inventory')
+    api.service('expenses').find({
+      query: {
+        $sort: { date1: -1 }
+      }
+    }).then((response) => {
+      this.$data.expenses = response.data
+      console.log('exp resp', response.data)
+    })
     // Get all users and messages
     messages.find({
       query: {
