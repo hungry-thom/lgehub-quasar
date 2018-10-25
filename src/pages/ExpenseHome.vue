@@ -40,6 +40,124 @@
       <br>
     </div>
     <br>
+    <!-- //////// START OF MODAL' ////////-->
+    <q-modal v-model="expenseModal">
+    <q-modal-layout class="q-pa-sm">
+    <div class="row no-wrap">
+      <q-datetime class= "col" minimal color="orange" v-model="transaction.date1" type="date" float-label="Date" />&nbsp;&nbsp;
+      <q-input class= "col" ref="inputVendor" v-model="transaction.vendor" float-label="Vendor"  @blur="validateVendor"> <q-autocomplete :static-data="{field: 'value', list: vendors}" /></q-input>&nbsp;&nbsp;
+      <q-input class= "col" ref="inputtransNum" v-model="transaction.transNum" float-label="Transaction Number"/>&nbsp;&nbsp;
+      <q-input class= "col" v-model="transaction.paymentAccount" float-label="Payment Account" > <q-autocomplete :static-data="{field: 'value', list: paymentTypes}" /></q-input>
+    </div>
+    <div>
+      <br>
+      <q-table
+        :data="transaction.transItems"
+        :columns="modalColumns"
+        :visible-columns="visibleModalColumns"
+        row-key="item"
+        :pagination.sync="pagination"
+        hide-bottom >
+        <tr slot="header" slot-scope="props">
+          <q-th key="qty" :props="props" class="bg-deep-purple-1">Qty</q-th>
+          <q-th key="item" :props="props" class="bg-deep-purple-1">Item</q-th>
+          <q-th key="unit" :props="props" class="bg-deep-purple-1">Unit</q-th>
+          <q-th key="price" :props="props" class="bg-deep-purple-1">Price</q-th>
+          <q-th key="cost" :props="props" class="bg-deep-purple-1">Cost</q-th>
+          <q-th key="gst" :props="props" class="bg-deep-purple-1">GST</q-th>
+          <q-th key="total" :props="props" class="bg-deep-purple-2">Total</q-th>
+          <q-th key="expAccount" :props="props">expAccount</q-th>
+          <q-th key="inv" :props="props">Inv</q-th>
+          <q-th key="expand" :props="props" width='25px'><q-btn size="sm" round dense color="secondary" icon="code" class="q-mr-xs" @click="expandCols" /></q-th>
+        </tr>
+        <q-tr slot="body" slot-scope="props" :props="props">
+          <q-td key="qty" :props="props" class="bg-deep-purple-1">{{ props.row.qty || '-' }}</q-td>
+          <q-td key="item" :props="props" class="bg-deep-purple-1">{{ props.row.item || '-' }}</q-td>
+          <q-td key="unit" :props="props" class="bg-deep-purple-1" >{{ props.row.unit || '-' }}</q-td>
+          <q-td key="price" :props="props" class="bg-deep-purple-1" >{{ props.row.price || '-' }}</q-td>
+          <q-td key="cost" :props="props" class="bg-deep-purple-1" >{{ props.row.cost || '-' }}</q-td>
+          <q-td key="gst" :props="props" class="bg-deep-purple-1" >{{ props.row.gst || '-' }}</q-td>
+          <q-td key="total" :props="props" class="bg-deep-purple-2" >{{ props.row.total || '-' }}</q-td>
+          <q-td key="expAccount" :props="props">
+            {{ props.row.expAccount || '-' }}
+            <q-popup-edit v-model="props.row.expAccount" title="Update" buttons>
+              <q-input v-model="props.row.expAccount" />
+            </q-popup-edit>
+          </q-td>
+          <q-td key="inv" :props="props">
+            {{ props.row.inv || '-' }}
+            <q-popup-edit v-model="props.row.expAccount" title="Update" buttons>
+              <q-input v-model="props.row.expAccount" />
+            </q-popup-edit>
+          </q-td>
+          <q-td key="expand" :props="props">
+            <div class="row items-center justify-between no-wrap">
+              <q-btn size="sm" round dense color="secondary" icon="delete" @click="deleteItemRow(props.row)" class="q-mr-xs" />
+            </div>
+          </q-td>
+        </q-tr>
+        <!--
+          <q-td key="stock" :props="props">
+            <div class="row items-center justify-between no-wrap">
+              <div v-for="unit in props.row.stock" :key="unit.unit">{{ unit.unit }}:<br>&nbsp;&nbsp;<strong><font size="4">{{ unit.qty }}</font></strong>
+                <q-popup-edit v-model="unit.qty" title="Update count" @save="updateCount(props.row)" buttons>
+                  <q-input type="number" v-model="unit.qty" />
+                </q-popup-edit>
+              </div>
+              <div>
+                <q-checkbox v-model="confirmations[props.row.__index].confirmed" checked-icon="check_circle" unchecked-icon="remove_circle_outline" class="q-mr-md" />
+                <q-btn size="sm" round dense color="secondary" icon="playlist_add" class="q-mr-xs" @click="addStockUnit(props.row)" />
+                <q-btn size="sm" round dense color="secondary" icon="shopping_cart" class="q-mr-xs" />
+              </div>
+            </div>
+          </q-td>
+        </q-tr>
+        -->
+        <q-tr slot="bottom-row" slot-scope="props" align="left">
+            <q-td></q-td>
+            <q-td></q-td>
+            <q-td></q-td>
+            <q-td></q-td>
+            <q-td class="bg-deep-purple-2">{{ subTotal || '-' }}</q-td>
+            <q-td class="bg-deep-purple-2">{{ gstTotal || '-' }}</q-td>
+            <q-td class="bg-deep-purple-3">{{ grandTotal || '-' }}</q-td>
+            <q-td></q-td>
+            <q-td></q-td>
+        </q-tr>
+      </q-table>
+      <br>
+    </div>
+    <br>
+    <div class="row no-wrap">
+      <q-input class="col" ref="newEntry" float-label="Qty" type="number" v-model="newItem.qty" />&nbsp;&nbsp;
+      <q-input class="col" float-label="Item" v-model="newItem.item" > <q-autocomplete :static-data="{field: 'value', list: itemList}" :filter="myFilter"/> </q-input>&nbsp;&nbsp;
+      <q-input class="col" float-label="Unit" v-model="newItem.unit" @click="popupUnitList" > <q-autocomplete :static-data="{field: 'value', list: this.unitsList}" :filter="myFilter"/> </q-input>&nbsp;&nbsp;
+      <q-input class="col" float-label="Cost" type="number" v-model="newItem.amount" />
+    </div>
+    <div class="row no-wrap">
+      <q-input class="col" float-label="exp Account" v-model="newItem.expAccount" @keyup.enter="addItem"> <q-autocomplete :static-data="{field: 'value', list: expAccountList}" :filter="myFilter" /> </q-input>&nbsp;&nbsp;
+      <q-input class="col" float-label="Inv Account" v-model="newItem.inv" @keyup.enter="addItem"/>&nbsp;&nbsp;
+    </div>
+    <br>
+    <q-checkbox v-model="taxable" label="Taxable" true-value="yes" false-value="no"/>
+    <br>
+    <q-checkbox v-model="gstIncluded" label="GST Included" true-value="yes" false-value="no" :disable="gstIncludedVisibility" />
+    <br>
+    <br>
+    <div>
+      &nbsp;&nbsp;<q-btn size="md" color="primary" label="add Item" @click="addItem" /> <q-btn size="md" color="primary" label="Submit" class="float-right" @click="submitExpense"/> <!-- :disable not reading var -->
+    <br>
+    <q-btn
+        flat
+        round
+        dense
+        @click="overlay"
+        icon="keyboard_arrow_left"
+      />
+    </div>
+  </q-modal-layout>
+  </q-modal>
+  <!-- //////  END OF MODAL  //////// -->
   </q-page>
 </template>
 
@@ -59,7 +177,9 @@ import {
   QCheckbox,
   QBtn,
   QDatetime,
-  QAutocomplete
+  QAutocomplete,
+  QModal,
+  QModalLayout
 } from 'quasar'
 
 export default {
@@ -75,11 +195,15 @@ export default {
     QCheckbox,
     QBtn,
     QDatetime,
-    QAutocomplete
+    QAutocomplete,
+    QModal,
+    QModal,
+    QModalLayout
   },
   props: ['user'],
   data () {
     return {
+      expenseModal: false,
       expenses: [],
       sales: [],
       transaction:
@@ -216,7 +340,96 @@ export default {
           field: 'inv'
         }
       ],
-      visibleColumns: ['date1', 'paymentAccount', 'vendor', 'grandTotal', 'subTotal', 'gstTotal', 'expAccount', 'inv']
+      visibleColumns: ['date1', 'paymentAccount', 'vendor', 'grandTotal', 'subTotal', 'gstTotal', 'expAccount', 'inv'],
+      modalColumns: [
+        {
+          name: 'id',
+          required: false,
+          label: 'Id',
+          align: 'left',
+          field: 'id'
+        },
+        {
+          name: 'qty',
+          required: true,
+          label: 'Qty',
+          align: 'left',
+          field: 'qty',
+          classes: "bg-deep-purple-1"
+        },
+        {
+          name: 'item',
+          required: true,
+          label: 'Item',
+          align: 'left',
+          field: 'item',
+          sortable: true,
+          classes: "bg-deep-purple-1"
+        },
+        {
+          name: 'unit',
+          required: true,
+          label: 'Unit',
+          align: 'left',
+          field: 'unit',
+          classes: "bg-deep-purple-1"
+        },
+        {
+          name: 'price',
+          required: false,
+          label: 'Price',
+          align: 'left',
+          field: 'price',
+          classes: "bg-deep-purple-1"
+        },
+        {
+          name: 'cost',
+          required: false,
+          label: 'Cost',
+          align: 'left',
+          field: 'cost',
+          classes: "bg-deep-purple-1"
+        },
+        {
+          name: 'gst',
+          required: false,
+          label: 'GST',
+          align: 'left',
+          field: 'gst',
+          classes: "bg-deep-purple-1"
+        },
+        {
+          name: 'total',
+          required: false,
+          label: 'Total',
+          align: 'left',
+          field: 'total',
+          classes: "bg-deep-purple-2"
+        },
+        {
+          name: 'expAccount',
+          required: false,
+          label: 'expAccount',
+          align: 'center',
+          field: 'expAccount'
+        },
+        {
+          name: 'inv',
+          required: false,
+          label: 'Inv',
+          align: 'center',
+          field: 'inv'
+        },
+        {
+          name: 'expand',
+          required: false,
+          label: 'Expand',
+          align: 'center',
+          field: 'expand',
+          style: 'width: 500px'
+        }
+      ],
+      visibleModalColumns: ['qty', 'item', 'unit', 'price', 'cost', 'gst', 'total', 'expAccount', 'inv', 'expand']
     }
   },
   computed: {
@@ -258,12 +471,20 @@ export default {
       return list.filter(item => fuzzysearch(token, item[field].toLowerCase()));
     },
     popup(row) {
+      // _.findIndex(this.$data.expenses, {})
       console.log(row)
+      this.$data.transaction = row
+      this.overlay()
+      /*
       this.$q.notify({
         message: row.id,
         timeout: 3000,
         position: 'center'
       })
+      */
+    },
+    overlay () {
+      this.$data.expenseModal = !this.$data.expenseModal
     },
     deleteItemRow(row) {
       console.log('delete')
@@ -273,10 +494,10 @@ export default {
       this.$data.transaction.transItems.splice(tmpIndex, 1)
     },
     expandCols () {
-      if (this.$data.visibleColumns.length == 10) {
-        this.$data.visibleColumns = ['qty', 'item', 'unit', 'price', 'cost', 'gst', 'total', 'expand']
+      if (this.$data.visibleModalColumns.length == 10) {
+        this.$data.visibleModalColumns = ['qty', 'item', 'unit', 'price', 'cost', 'gst', 'total', 'expand']
       } else {
-        this.$data.visibleColumns = ['qty', 'item', 'unit', 'price', 'cost', 'gst', 'total', 'expAccount', 'inv', 'expand']
+        this.$data.visibleModalColumns = ['qty', 'item', 'unit', 'price', 'cost', 'gst', 'total', 'expAccount', 'inv', 'expand']
       }
     },
     validateVendor () {
