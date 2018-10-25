@@ -22,7 +22,7 @@
           <template slot="body" slot-scope="props">
             <q-tr :props="props">
               <q-td key="item" :props="props">
-                <q-checkbox color="primary" v-model="props.expand" unchecked-icon="add" class="q-mr-md" />
+                <q-checkbox color="primary" v-model="props.expand" unchecked-icon="add" checked-icon="remove" class="q-mr-md" />
                 {{ props.row.item }}
               </q-td>
               <q-td key="taxable" :props="props">
