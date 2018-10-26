@@ -4,6 +4,8 @@ const inventory = require('./inventory/inventory.service.js');
 const audit = require('./audit/audit.service.js');
 const transfers = require('./transfers/transfers.service.js');
 const expenses = require('./expenses/expenses.service.js');
+const priceList = require('./price-list/price-list.service.js');
+const pricelist = require('./pricelist/pricelist.service.js');
 // eslint-disable-next-line no-unused-vars
 module.exports = function (app) {
   app.configure(users);
@@ -12,4 +14,5 @@ module.exports = function (app) {
   app.configure(audit);
   app.configure(transfers);
   app.configure(expenses);
+  app.configure(pricelist);
 };
