@@ -600,7 +600,7 @@ export default {
         })
       }
       let cleanTransactionData = JSON.parse(JSON.stringify(this.$data.transaction))
-      // checkPrices(cleanTransactionData)
+      this.updatePrices(cleanTransactionData)
       // close overlay
       this.overlay()
       // reload expenses list from rethink
@@ -613,32 +613,41 @@ export default {
         console.log('exp resp', response.data)
       })
     },
-    checkPrices (trans) {
+    updatePrices (trans) {
       // clean transaction data is being used
+      console.log('updating prices',trans)
+      console.log(this.$data.pricelist)
       trans.transItems.forEach(item => {
         // check if item is in pricelist
         let dex = _.findIndex(this.$data.pricelist, {item: item.item})
+        console.log(item, dex)
         if (dex < 0) {
           // create new item
           console.log('newItem for pricelist')
         } else {
           // item is in pricelist, check if unit/vendor are listed
           let tVendors = this.$data.pricelist[dex].vendors // is there reactivity? possibleBug*****
+          let itemId = this.$data.pricelist[dex].id
           let d2 = _.findIndex(tVendors, {unit: item.unit, vendor: trans.vendor})
           if (d2 < 0) {
             // new unit/vendor
-            console.log('newUnit/Vendor')
+            console.log('newUnit/Vendor not found')
           } else {
+            console.log(tVendors[d2].updated < trans.date1)
             // unit/Vendor is present, check if this record is more recent
-            if (tVendors[d2].date < trans.date1) {
+            if (tVendors[d2].updated < trans.date1) {
               // record needs updating
               // first check if there is a price change
-              let diff = tVendors[d2].cost - item.cost
+              console.log('newRecord')
+              let diff = item.cost - tVendors[d2].cost
+              console.log(diff)
               if (diff !== 0) {
                 console.log(item.item, item.unit, 'price changed by', diff)
               }
-              tVendors[d2] = { cost: item.cost , unit: item.unit, vendor: trans.vendor, date: trans.date }
-              api.service('pricelist').update(item.id, {vendors: tVendors }).then((response)=> {
+              tVendors[d2] = { cost: item.cost , unit: item.unit, vendor: trans.vendor, updated: trans.date1 }
+              console.log('new Vendors', tVendors[d2])
+              // need to get item id, either by loading into transItems or lookup
+              api.service('pricelist').patch(itemId, {vendors: tVendors }).then((response)=> {
                 console.log('update pricelist', response)
               })
             }
