@@ -131,7 +131,7 @@
     <div class="row no-wrap">
       <q-input class="col" ref="newEntry" float-label="Qty" type="number" v-model="newItem.qty" />&nbsp;&nbsp;
       <q-input class="col" float-label="Item" v-model="newItem.item" > <q-autocomplete :static-data="{field: 'value', list: itemList}" :filter="myFilter"/> </q-input>&nbsp;&nbsp;
-      <q-input class="col" float-label="Unit" v-model="newItem.unit" @click="popupUnitList" > <q-autocomplete :static-data="{field: 'value', list: this.unitsList}" :filter="myFilter"/> </q-input>&nbsp;&nbsp;
+      <q-input class="col" float-label="Unit" v-model="newItem.unit" @click="popupUnitList" > <q-autocomplete :static-data="{field: 'value', list: computedUnitsList}" :filter="myFilter"/> </q-input>&nbsp;&nbsp;
       <q-input class="col" float-label="Cost" type="number" v-model="newItem.amount" />
     </div>
     <div class="row no-wrap">
@@ -257,7 +257,8 @@ export default {
         expAccount: '',
         inv: ''
       },
-      unitsList: [],
+      unitsList: {},
+      pricelist: [],
       taxable: 'yes',
       gstIncluded: 'yes',
       pagination: {
@@ -432,6 +433,9 @@ export default {
     }
   },
   computed: {
+    computedUnitsList () {
+      return this.$data.unitsList[this.$data.newItem.item]
+    },
     subTotal () {
       let t = 0
       this.$data.transaction.transItems.forEach(item => {
@@ -595,23 +599,32 @@ export default {
       this.$data.expenses = response.data
       console.log('exp resp', response.data)
     })
-    // Get inventory (should change to priceList) for items, vendors, (and prices?)
-    inventory.find({
+    // get pricelist data from rethinkdb
+    api.service('pricelist').find({
       query: {
-        $sort: { item: -1}
+        $sort: { item: 1 }
       }
-    })
-      .then((response) => {
-        // We want the latest inventory but in the reversed order
-        this.$data.inventory = response.data.reverse()
-        this.$data.inventory.forEach(item => {
-          let o = { value: item.item, label: item.item}
-          this.$data.itemList.push(o)
-          let og = JSON.parse(JSON.stringify(item.stock))
-          // this.$data.confirmations.push( {item: item.item, confirmed: false, originalStock: og} )
-        }, this) // this necessary?
-        console.log(this.$data.confirmations)
+    }).then((response) => {
+      // load pricelist data
+      this.$data.pricelist = response.data
+      response.data.forEach(item => {
+        // create item list for autocomplete
+        let o = {value: item.item, label: item.item}
+        this.$data.itemList.push(o)
+        //create list for each item units list for autocomplete
+        this.$data.unitsList[item.item] = []
+        let uniqueUnits = []
+        item.vendors.forEach(unit => {
+          // for purposed of autocomplete list make sure values aren't repeated
+          if (!uniqueUnits.includes(unit.unit)) {
+            let u = {value: unit.unit, label: unit.unit}
+            this.$data.unitsList[item.item].push(u) //may have to load to temp list and push outside this loop
+            uniqueUnits.push(unit.unit)
+          }
+        }, this)
+        // list = someVar.filter((x, i, a) => a.indexOf(x) == i) //sete list with unique values
       })
+    })
     /* //// 'created' service executed multiple time for one submission
     api.service('expenses').on('created', expense => {
       console.log('expense added', expense)
