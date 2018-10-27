@@ -153,6 +153,9 @@
     <div class="q-pa-xs">
       &nbsp;&nbsp;<q-btn size="md" color="primary" label="Cancel" @click="overlay"/>
       &nbsp;&nbsp;<q-btn size="md" color="primary" label="Submit" @click="submitExpense"/> <!-- :disable not reading var -->
+      <br>
+      <br>
+      &nbsp;&nbsp;<q-btn size="md" color="primary" label="Delete Expense" @click="deleteExpense()"/>
     </div>
   </q-modal-layout>
   </q-modal>
@@ -508,6 +511,26 @@ export default {
       }
       this.$data.expenseModal = !this.$data.expenseModal
     },
+    deleteExpense() {
+      console.log('delete expense')
+      this.$q.dialog({
+        title: 'Confirm',
+        message: 'Are you sure you want to delete this expense',
+        ok: 'Delete',
+        cancel: 'Cancel'
+      }).then(() => {
+        console.log('deleted', this.$data.transaction.id)
+        api.service('expenses').remove(this.$data.transaction.id).then((response) => {
+          console.log('executed')
+          this.loadExpenses()
+          //api.service('audit').create(response)
+          this.overlay()
+        })
+      }).catch((err) => {
+        console.log('cancelled',err)
+        this.$q.notify('Disagreed...')
+      })
+    },
     deleteItemRow(row) {
       console.log('delete')
       console.log(row)
@@ -563,7 +586,7 @@ export default {
       let tmpId = this.$data.transaction.id
       if (tmpId) {
         console.log('existing transaction', tmpId)
-        delete this.$data.transaction['id']
+        // sdelete this.$data.transaction['id']
         api.service('expenses').update(tmpId, this.$data.transaction).then((response) => {
           console.log('sumbitted expense', response.id)
           delete response['id']
@@ -576,8 +599,54 @@ export default {
           api.service('audit').create(response)
         })
       }
+      let cleanTransactionData = JSON.parse(JSON.stringify(this.$data.transaction))
+      // checkPrices(cleanTransactionData)
+      // close overlay
       this.overlay()
-      // load expenses
+      // reload expenses list from rethink
+      api.service('expenses').find({
+        query: {
+          $sort: { date1: -1 }
+        }
+      }).then((response) => {
+        this.$data.expenses = response.data
+        console.log('exp resp', response.data)
+      })
+    },
+    checkPrices (trans) {
+      // clean transaction data is being used
+      trans.transItems.forEach(item => {
+        // check if item is in pricelist
+        let dex = _.findIndex(this.$data.pricelist, {item: item.item})
+        if (dex < 0) {
+          // create new item
+          console.log('newItem for pricelist')
+        } else {
+          // item is in pricelist, check if unit/vendor are listed
+          let tVendors = this.$data.pricelist[dex].vendors // is there reactivity? possibleBug*****
+          let d2 = _.findIndex(tVendors, {unit: item.unit, vendor: trans.vendor})
+          if (d2 < 0) {
+            // new unit/vendor
+            console.log('newUnit/Vendor')
+          } else {
+            // unit/Vendor is present, check if this record is more recent
+            if (tVendors[d2].date < trans.date1) {
+              // record needs updating
+              // first check if there is a price change
+              let diff = tVendors[d2].cost - item.cost
+              if (diff !== 0) {
+                console.log(item.item, item.unit, 'price changed by', diff)
+              }
+              tVendors[d2] = { cost: item.cost , unit: item.unit, vendor: trans.vendor, date: trans.date }
+              api.service('pricelist').update(item.id, {vendors: tVendors }).then((response)=> {
+                console.log('update pricelist', response)
+              })
+            }
+          }
+        }
+      }, this)
+    },
+    loadExpenses() {
       api.service('expenses').find({
         query: {
           $sort: { date1: -1 }
@@ -591,14 +660,7 @@ export default {
   mounted () {
     const inventory = api.service('inventory')
     // load expenses
-    api.service('expenses').find({
-      query: {
-        $sort: { date1: -1 }
-      }
-    }).then((response) => {
-      this.$data.expenses = response.data
-      console.log('exp resp', response.data)
-    })
+    this.loadExpenses()
     // get pricelist data from rethinkdb
     api.service('pricelist').find({
       query: {
