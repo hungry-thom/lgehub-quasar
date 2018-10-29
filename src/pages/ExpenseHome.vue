@@ -65,7 +65,7 @@
     <div class="q-pa-sm">
     <div class="row no-wrap">
       <q-datetime class= "col" minimal color="orange" v-model="transaction.date1" type="date" float-label="Date" />&nbsp;&nbsp;
-      <q-input class= "col" ref="inputVendor" v-model="transaction.vendor" float-label="Vendor"  @blur="validateVendor"> <q-autocomplete :static-data="{field: 'value', list: vendors}" /></q-input>&nbsp;&nbsp;
+      <q-input class= "col" ref="inputVendor" v-model="transaction.vendor" float-label="Vendor"  @blur="validateVendor"> <q-autocomplete :static-data="{field: 'value', list: vendorsList}" /></q-input>&nbsp;&nbsp;
       <q-input class= "col" ref="inputtransNum" v-model="transaction.transNum" float-label="Transaction Number"/>&nbsp;&nbsp;
       <q-input class= "col" v-model="transaction.paymentAccount" float-label="Payment Account" > <q-autocomplete :static-data="{field: 'value', list: paymentTypes}" /></q-input>
     </div>
@@ -238,15 +238,7 @@ export default {
         transItems: [],
       },
       itemList: [],
-      vendors: [
-        {
-          value: 'Helen',
-          label: 'Helen'
-        },
-        { 
-          value: 'Madisco',
-          label: 'Madisco'
-        }
+      vendorsList: [
       ],
       paymentTypes: [
         {
@@ -512,7 +504,7 @@ export default {
     },
     newExpense () {
       this.$data.transaction = {
-        date1: '',
+        date1: new Date(),
         vendor: '',
         transNum: '',
         paymentAccount: '',
@@ -774,6 +766,7 @@ export default {
     }).then((response) => {
       // load pricelist data
       this.$data.pricelist = response.data
+      let uniqueVendors = []
       response.data.forEach(item => {
         // create item list for autocomplete
         let o = {value: item.item, label: item.item}
@@ -782,7 +775,13 @@ export default {
         this.$data.unitsList[item.item] = []
         let uniqueUnits = []
         item.vendors.forEach(unit => {
-          // for purposed of autocomplete list make sure values aren't repeated
+          // vendor list, for purposed of autocomplete list make sure values aren't repeated
+          if (!uniqueVendors.includes(unit.vendor)) {
+            let v = {value: unit.vendor, label: unit.vendor}
+            this.$data.vendorsList.push(v)
+            uniqueVendors.push(unit.vendor)
+          }
+          // units list, for purposed of autocomplete list make sure values aren't repeated
           if (!uniqueUnits.includes(unit.unit)) {
             let u = {value: unit.unit, label: unit.unit}
             this.$data.unitsList[item.item].push(u) //may have to load to temp list and push outside this loop
