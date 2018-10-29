@@ -624,7 +624,7 @@ export default {
         })
       }
       // moved updatePrices and Inventory to 'newTransaction' to use transaction.id
-      
+      // |-> no longer executed if loading existing transaction
       // close overlay
       this.overlay()
       // reload expenses list from rethinkdb
@@ -668,6 +668,7 @@ export default {
                   recordDate: trans.date1,
                   change: item.qty,
                   item: item.item,
+                  unit: item.unit,
                   expenseId: trans.expenseId
                   // add user key
                 }
@@ -695,6 +696,7 @@ export default {
                   table: 'inventory',
                   recordDate: trans.date1,
                   item: item.item,
+                  unit: item.unit,
                   change: item.qty,
                   expenseId: trans.expenseId
                   // add user key
@@ -731,6 +733,17 @@ export default {
           }
           api.service('pricelist').create(tmpObj).then((response)=> {
             console.log('created new item')
+            let auditObj = {
+              table: 'priceList',
+              recordDate: trans.date1,
+              cost: item.cost,
+              item: item.item,
+              unit: item.unit,
+              vendor: trans.vendor,
+              expenseId: trans.expenseId
+              // add user key
+            }
+            api.service('audit').create(auditObj)
           })
         } else {
           // item is in pricelist, check if unit/vendor are listed
@@ -749,6 +762,17 @@ export default {
             tVendors.push(tmpObj)
             api.service('pricelist').patch(itemId, {vendors: tVendors}).then((response) => {
               console.log('added unit/vendor to pricelist')
+              let auditObj = {
+                table: 'priceList',
+                recordDate: trans.date1,
+                cost: item.cost,
+                item: item.item,
+                unit: item.unit,
+                vendor: trans.vendor,
+                expenseId: trans.expenseId
+                // add user key
+              }
+              api.service('audit').create(auditObj)
             })
           } else {
             console.log(tVendors[d2].updated < trans.date1)
@@ -767,6 +791,18 @@ export default {
               // need to get item id, either by loading into transItems or lookup
               api.service('pricelist').patch(itemId, {vendors: tVendors }).then((response)=> {
                 console.log('update pricelist', response)
+                let auditObj = {
+                  table: 'priceList',
+                  recordDate: trans.date1,
+                  cost: item.cost,
+                  change: diff,
+                  item: item.item,
+                  unit: item.unit,
+                  vendor: trans.vendor,
+                  expenseId: trans.expenseId
+                  // add user key
+                }
+                api.service('audit').create(auditObj)
               })
             }
           }
