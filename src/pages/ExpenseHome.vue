@@ -42,7 +42,27 @@
     <br>
     <!-- //////// START OF MODAL' ////////-->
     <q-modal v-model="expenseModal">
-    <q-modal-layout class="q-pa-sm">
+    <q-modal-layout> <!-- class="q-pa-sm" -->
+      <q-toolbar slot="header">
+        <q-btn
+          flat
+          round
+          dense
+          icon="keyboard_arrow_left"
+        />
+        <q-toolbar-title>
+          Header
+        </q-toolbar-title>
+      </q-toolbar>
+      <div slot="footer">
+          <q-btn
+          flat
+          round
+          dense
+          icon="keyboard_arrow_left"
+        />
+      </div>
+    <div class="q-pa-sm">
     <div class="row no-wrap">
       <q-datetime class= "col" minimal color="orange" v-model="transaction.date1" type="date" float-label="Date" />&nbsp;&nbsp;
       <q-input class= "col" ref="inputVendor" v-model="transaction.vendor" float-label="Vendor"  @blur="validateVendor"> <q-autocomplete :static-data="{field: 'value', list: vendors}" /></q-input>&nbsp;&nbsp;
@@ -156,6 +176,7 @@
       <br>
       <br>
       &nbsp;&nbsp;<q-btn size="md" color="primary" label="Delete Expense" @click="deleteExpense()"/>
+    </div>
     </div>
   </q-modal-layout>
   </q-modal>
@@ -622,8 +643,23 @@ export default {
         let dex = _.findIndex(this.$data.pricelist, {item: item.item})
         console.log(item, dex)
         if (dex < 0) {
+          console.log('item not in pricelist')
           // create new item
-          console.log('newItem for pricelist')
+          let tmpObj = {
+            item: item.item,
+            taxable: item.taxable,
+            vendors: [
+              {
+                unit: item.unit,
+                cost: item.cost,
+                updated: trans.date1,
+                vendor: trans.vendor
+              }
+            ]
+          }
+          api.service('pricelist').create(tmpObj).then((response)=> {
+            console.log('created new item')
+          })
         } else {
           // item is in pricelist, check if unit/vendor are listed
           let tVendors = this.$data.pricelist[dex].vendors // is there reactivity? possibleBug*****
@@ -632,6 +668,16 @@ export default {
           if (d2 < 0) {
             // new unit/vendor
             console.log('newUnit/Vendor not found')
+            let tmpObj = {
+              unit: item.unit,
+              cost: item.cost,
+              updated: trans.date1,
+              vendor: trans.vendor
+            }
+            tVendors.push(tmpObj)
+            api.service('pricelist').patch(itemId, {vendors: tVendors}).then((response) => {
+              console.log('added unit/vendor to pricelist')
+            })
           } else {
             console.log(tVendors[d2].updated < trans.date1)
             // unit/Vendor is present, check if this record is more recent

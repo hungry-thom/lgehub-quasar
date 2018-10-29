@@ -4,7 +4,7 @@
       <div>
         <br>
         <q-table
-          :data="priceList"
+          :data="pricelist"
           :columns="columns"
           :filter="filter"
           :visible-columns="visibleColumns"
@@ -77,7 +77,7 @@ export default {
       message: '',
       messages: [],
       users: [],
-      priceList: [
+      pricelist: [
         {
           id:  "adaaa2a3-2634-45ec-befd-f38c7e22e13f" ,
           item:  "Balsamic" ,
@@ -212,7 +212,7 @@ export default {
   mounted () {
     const messages = api.service('messages')
     const users = api.service('users')
-    const priceList = api.service('pricelist')
+    const pricelist = api.service('pricelist')
     // Get all users and messages
     messages.find({
       query: {
@@ -228,13 +228,14 @@ export default {
       .then((response) => {
         this.$data.users = response.data
       })
-    /*
-    pricelist.find()
+    pricelist.find({
+      query: {
+        $sort: { item: -1 }
+      }
+    })
       .then((response) => {
-        // We want the latest inventory but in the reversed order
-        this.$data.priceList = response.data.reverse()
+        this.$data.pricelist = response.data
       })
-    */
     // Add new messages to the message list
     messages.on('created', message => {
       console.log('message received')
