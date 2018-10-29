@@ -49,18 +49,18 @@
           round
           dense
           icon="keyboard_arrow_left"
+          @click="overlay"
         />
         <q-toolbar-title>
-          Header
+          Enter/Edit Expense
         </q-toolbar-title>
+        &nbsp;&nbsp;<q-btn size="md" color="negative" label="Delete Expense" @click="deleteExpense()"/>
       </q-toolbar>
       <div slot="footer">
-          <q-btn
-          flat
-          round
-          dense
-          icon="keyboard_arrow_left"
-        />
+        <div class="q-pa-xs float-right">
+          &nbsp;&nbsp;<q-btn size="md" color="primary" label="Cancel" @click="overlay"/>
+          &nbsp;&nbsp;<q-btn size="md" color="primary" label="Submit" @click="submitExpense"/> <!-- :disable not reading var -->
+        </div>
       </div>
     <div class="q-pa-sm">
     <div class="row no-wrap">
@@ -170,13 +170,6 @@
       </div>
     </div>
     <br>
-    <div class="q-pa-xs">
-      &nbsp;&nbsp;<q-btn size="md" color="primary" label="Cancel" @click="overlay"/>
-      &nbsp;&nbsp;<q-btn size="md" color="primary" label="Submit" @click="submitExpense"/> <!-- :disable not reading var -->
-      <br>
-      <br>
-      &nbsp;&nbsp;<q-btn size="md" color="primary" label="Delete Expense" @click="deleteExpense()"/>
-    </div>
     </div>
   </q-modal-layout>
   </q-modal>
