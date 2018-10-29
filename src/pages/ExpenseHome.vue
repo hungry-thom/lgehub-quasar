@@ -605,16 +605,26 @@ export default {
           delete response['id']
           api.service('audit').create(response)
         })
+        // need to handle any edits to inv changes
+        // probably need og copy to track changes
+        // lookup inv record based on an id?
       } else {
         console.log('new transaction')
         api.service('expenses').create(this.$data.transaction).then((response) => {
           console.log('sumbitted expense', response.id)
-          api.service('audit').create(response)
+          // submit expense to audit trail. better to use same id for expense and audit, or create expenseId?
+          // probably expenseId to have seperate entries for edits (ie full trail)
+          this.$data.transaction.expenseId = response.id
+          let cleanTransactionData = JSON.parse(JSON.stringify(this.$data.transaction))
+          this.updatePrices(cleanTransactionData)
+          this.updateInventory(cleanTransactionData)
+          // submit expense record for audit after price and inv methods for separate table keys
+          this.$data.transaction.table = 'expenses'
+          api.service('audit').create(this.$data.transaction)
         })
       }
-      let cleanTransactionData = JSON.parse(JSON.stringify(this.$data.transaction))
-      this.updatePrices(cleanTransactionData)
-      this.updateInventory(cleanTransactionData)
+      // moved updatePrices and Inventory to 'newTransaction' to use transaction.id
+      
       // close overlay
       this.overlay()
       // reload expenses list from rethinkdb
@@ -652,6 +662,16 @@ export default {
               }
               api.service('inventory').create(tmpObj).then(response => {
                 console.log('created new inventory item', response)
+                // create audit trail
+                let auditObj = {
+                  table: 'inventory',
+                  recordDate: trans.date1,
+                  change: item.qty,
+                  item: item.item,
+                  expenseId: trans.expenseId
+                  // add user key
+                }
+                api.service('audit').create(auditObj)
               })
             } else {
               // update item inv
@@ -670,6 +690,16 @@ export default {
               console.log(inventoryData[dex])
               api.service('inventory').patch(inventoryData[dex].id, {stock: tmpStock}).then((response) => {
                 console.log(item.item, 'inventory updated +', item.unit, item.qty )
+                // creat audit trail for inventory table
+                let auditObj = {
+                  table: 'inventory',
+                  recordDate: trans.date1,
+                  item: item.item,
+                  change: item.qty,
+                  expenseId: trans.expenseId
+                  // add user key
+                }
+                api.service('audit').create(auditObj)
               }) 
             }
           }
