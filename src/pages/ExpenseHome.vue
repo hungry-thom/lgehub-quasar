@@ -622,9 +622,10 @@ export default {
       }
       let cleanTransactionData = JSON.parse(JSON.stringify(this.$data.transaction))
       this.updatePrices(cleanTransactionData)
+      this.updateInventory(cleanTransactionData)
       // close overlay
       this.overlay()
-      // reload expenses list from rethink
+      // reload expenses list from rethinkdb
       api.service('expenses').find({
         query: {
           $sort: { date1: -1 }
@@ -632,6 +633,55 @@ export default {
       }).then((response) => {
         this.$data.expenses = response.data
         console.log('exp resp', response.data)
+      })
+    },
+    updateInventory (trans) {
+      // first get inventory data (use store in future?)
+      let inventoryData = []
+      api.service('inventory').find().then((response) => {
+        inventoryData = response.data
+        console.log('inventoryData loaded', inventoryData)
+      }).then((response) => {
+        trans.transItems.forEach(item => {
+          if (item.inv) {
+            let tmpStock = []
+            let dex = _.findIndex(inventoryData, {item: item.item}) //possible use of item.id (still need to load id to transItems)
+            if ( dex < 0 ) {
+              // item not in inventory. add new item
+              console.log(item.item,' not in inventory ')
+              let tmpObj = {
+                item: item.item,
+                stock: [
+                  {
+                    unit: item.unit,
+                    qty: item.qty
+                  }
+                ]
+              }
+              api.service('inventory').create(tmpObj).then(response => {
+                console.log('created new inventory item', response)
+              })
+            } else {
+              // update item inv
+              console.log('item in inv', inventoryData)
+              tmpStock = inventoryData[dex].stock // stock is a list
+              let dex2 = _.findIndex(tmpStock, {unit: item.unit})
+              if (dex2 < 0) {
+                // no match, add unit to stock
+                tmpStock.push({unit: item.unit, qty: item.qty})
+              } else {
+                let newQty = tmpStock[dex2].qty + item.qty // tmpStock[dex2].qty += item.qty
+                tmpStock[dex2].qty = newQty 
+              }
+              // may not be needed // inventoryData[dex].stock = tmpStock
+              // is it better to send entire inventory or item by item* (item by item leaves easier trail?)
+              console.log(inventoryData[dex])
+              api.service('inventory').patch(inventoryData[dex].id, {stock: tmpStock}).then((response) => {
+                console.log(item.item, 'inventory updated +', item.unit, item.qty )
+              }) 
+            }
+          }
+        }, this)
       })
     },
     updatePrices (trans) {
