@@ -32,6 +32,7 @@
                 <div>
                   <!-- <q-checkbox v-model="inventory[props.row.__index].confirmed" checked-icon="check_circle" unchecked-icon="remove_circle_outline" class="q-mr-md" /> -->
                   <q-checkbox v-model="confirmations[props.row.__index].confirmed" checked-icon="check_circle" unchecked-icon="remove_circle_outline" @input="confirmInv(props.row)" class="q-mr-md" />
+                  <q-btn size="sm" round dense color="negative" icon="warning" class="q-mr-xs" v-if="confirmations[props.row.__index].confirmed" />
                   <q-btn size="sm" round dense color="secondary" icon="flag" class="q-mr-xs" @click="auditItem(props.row)" />
                   <q-btn size="sm" round dense color="secondary" icon="shopping_cart" class="q-mr-xs" />
                 </div>
