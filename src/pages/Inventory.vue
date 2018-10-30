@@ -322,6 +322,7 @@ export default {
             user: this.$props.user.email
           }
           this.$data.confirmations[row.__index].warning = false
+          api.service('inventory').patch(row.id, {lastConf: new Date()})
           api.service('audit').create(auditObj)
         }, this)
       }
