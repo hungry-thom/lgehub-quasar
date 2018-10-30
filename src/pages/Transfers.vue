@@ -239,7 +239,7 @@ export default {
     updateCount (item, day) {
       console.log('?????',item)
       // props.row.tue
-      let t = 0
+      let t = 0 // total variable
       let transferUnit = {}
       let checkTransferVals = this.$data.originalTransferVals.items
       item[day].transfers.forEach(unit => {
@@ -262,6 +262,7 @@ export default {
       api.service('transfers').patch(this.$data.inventory.id, {
         items: this.$data.inventory.items
       })
+      // audit trail type='transfer' for item --> day --> unit --> qty 
       api.service('inventory').get(item.id)
         .then((invItem) => {
           let updatedStock = []
