@@ -32,7 +32,7 @@
                 <div>
                   <!-- <q-checkbox v-model="inventory[props.row.__index].confirmed" checked-icon="check_circle" unchecked-icon="remove_circle_outline" class="q-mr-md" /> -->
                   <q-checkbox v-model="confirmations[props.row.__index].confirmed" checked-icon="check_circle" unchecked-icon="remove_circle_outline" @input="confirmInv(props.row)" class="q-mr-md" />
-                  <q-btn size="sm" round dense color="negative" icon="warning" class="q-mr-xs" v-if="confirmations[props.row.__index].confirmed" />
+                  <q-btn size="sm" round dense color="negative" icon="warning" class="q-mr-xs" v-if="confirmations[props.row.__index].warning" />
                   <q-btn size="sm" round dense color="secondary" icon="flag" class="q-mr-xs" @click="auditItem(props.row)" />
                   <q-btn size="sm" round dense color="secondary" icon="shopping_cart" class="q-mr-xs" />
                 </div>
@@ -267,8 +267,11 @@ export default {
               unit: unit.unit,
               user: this.$props.user.email
             }
+            this.$data.confirmations[item.__index].originalStock = JSON.parse(JSON.stringify(item.stock))
             console.log('audit',auditObj)
             api.service('audit').create(auditObj)
+            this.$data.confirmations[item.__index].confirmed = true
+            this.confirmInv(item)
           } else {
             // no change in stockk amounts
             console.log('no change in stockk amounts')
@@ -306,7 +309,7 @@ export default {
     },
     confirmInv (row) {
       console.log('check',this.$data.confirmations[row.__index].confirmed)
-      // send current item stock values to audit
+      // send current item stock values to audit, only if going from unchecked --> checked
       if (this.$data.confirmations[row.__index].confirmed) {
         row.stock.forEach(unit => {
           let auditObj = {
@@ -318,6 +321,7 @@ export default {
             unit: unit.unit,
             user: this.$props.user.email
           }
+          this.$data.confirmations[row.__index].warning = false
           api.service('audit').create(auditObj)
         }, this)
       }
@@ -376,13 +380,15 @@ export default {
           console.log(item)
           console.log('----------')
           let timeDiff = moment().dayOfYear() - moment(item.lastConf).dayOfYear()
-          if (timeDiff > 5) {
+          if (timeDiff > 1) {
             item.confirmed = false
+            item.warning = ((timeDiff > 7) ? true : false)
           } else {
             item.confirmed = true
+            item.warning = false
           }
           let og = JSON.parse(JSON.stringify(item.stock))
-          this.$data.confirmations.push( {item: item.item, confirmed: item.confirmed, originalStock: og} )
+          this.$data.confirmations.push( {item: item.item, confirmed: item.confirmed, warning: item.warning, originalStock: og} )
         }, this) // this necessary?
         console.log(this.$data.confirmations)
       })
