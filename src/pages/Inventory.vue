@@ -304,21 +304,22 @@ export default {
       
     },
     confirmInv (row) {
-      console.log(row)
+      console.log('check',this.$data.confirmations[row.__index].confirmed)
       // send current item stock values to audit
-      row.stock.forEach(unit => {
-        let auditObj = {
-          table: 'inventory',
-          type: 'confirmation',
-          recordDate: new Date(),
-          confirmedAmt: unit.qty,
-          item: row.item,
-          unit: unit.unit,
-          user: this.$props.user.email
-        }
-        api.service('audit').create(auditObj)
-      }, this)
-      
+      if (this.$data.confirmations[row.__index].confirmed) {
+        row.stock.forEach(unit => {
+          let auditObj = {
+            table: 'inventory',
+            type: 'confirmation',
+            recordDate: new Date(),
+            confirmedAmt: unit.qty,
+            item: row.item,
+            unit: unit.unit,
+            user: this.$props.user.email
+          }
+          api.service('audit').create(auditObj)
+        }, this)
+      }
     }
     /* OLD method using comfirm button, does all items at once
     confirmInv () {
