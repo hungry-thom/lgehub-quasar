@@ -658,12 +658,13 @@ export default {
                 // create audit trail
                 let auditObj = {
                   table: 'inventory',
+                  type: 'expense',
                   recordDate: trans.date1,
                   change: item.qty,
                   item: item.item,
                   unit: item.unit,
-                  expenseId: trans.expenseId
-                  // add user key
+                  expenseId: trans.expenseId,
+                  user: this.$props.user.email
                 }
                 api.service('audit').create(auditObj)
               })
@@ -687,12 +688,13 @@ export default {
                 // creat audit trail for inventory table
                 let auditObj = {
                   table: 'inventory',
+                  type: 'expense',
                   recordDate: trans.date1,
                   item: item.item,
                   unit: item.unit,
                   change: item.qty,
-                  expenseId: trans.expenseId
-                  // add user key
+                  expenseId: trans.expenseId,
+                  user: this.$props.user.email
                 }
                 api.service('audit').create(auditObj)
               }) 
@@ -728,13 +730,14 @@ export default {
             console.log('created new item')
             let auditObj = {
               table: 'priceList',
+              type: 'expense',
               recordDate: trans.date1,
               cost: item.cost,
               item: item.item,
               unit: item.unit,
               vendor: trans.vendor,
-              expenseId: trans.expenseId
-              // add user key
+              expenseId: trans.expenseId,
+              user: this.$props.user.email
             }
             api.service('audit').create(auditObj)
           })
@@ -757,13 +760,14 @@ export default {
               console.log('added unit/vendor to pricelist')
               let auditObj = {
                 table: 'priceList',
+                type: 'expense',
                 recordDate: trans.date1,
                 cost: item.cost,
                 item: item.item,
                 unit: item.unit,
                 vendor: trans.vendor,
-                expenseId: trans.expenseId
-                // add user key
+                expenseId: trans.expenseId,
+                user: this.$props.user.email
               }
               api.service('audit').create(auditObj)
             })
@@ -786,14 +790,15 @@ export default {
                 console.log('update pricelist', response)
                 let auditObj = {
                   table: 'priceList',
+                  type: 'expense',
                   recordDate: trans.date1,
                   cost: item.cost,
                   change: diff,
                   item: item.item,
                   unit: item.unit,
                   vendor: trans.vendor,
-                  expenseId: trans.expenseId
-                  // add user key
+                  expenseId: trans.expenseId,
+                  user: this.$props.user.email
                 }
                 api.service('audit').create(auditObj)
               })

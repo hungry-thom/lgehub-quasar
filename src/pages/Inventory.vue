@@ -31,7 +31,7 @@
                 </div>
                 <div>
                   <!-- <q-checkbox v-model="inventory[props.row.__index].confirmed" checked-icon="check_circle" unchecked-icon="remove_circle_outline" class="q-mr-md" /> -->
-                  <q-checkbox v-model="confirmations[props.row.__index].confirmed" checked-icon="check_circle" unchecked-icon="remove_circle_outline" class="q-mr-md" />
+                  <q-checkbox v-model="confirmations[props.row.__index].confirmed" checked-icon="check_circle" unchecked-icon="remove_circle_outline" @input="confirmInv(props.row)" class="q-mr-md" />
                   <q-btn size="sm" round dense color="secondary" icon="flag" class="q-mr-xs" @click="auditItem(props.row)" />
                   <q-btn size="sm" round dense color="secondary" icon="shopping_cart" class="q-mr-xs" />
                 </div>
@@ -61,9 +61,20 @@
             :data="auditData"
             :columns="modalColumns"
             :visible-columns="visibleModalColumns"
-            row-key="item"
+            :title="auditData[0].item"
+            row-key="__index"
+            :filter="filter"
             :pagination.sync="pagination"
             hide-bottom >
+            <template slot="top-right" slot-scope="props">
+              <q-search
+                hide-underline
+                color="secondary"
+                inverted
+                v-model="filter"
+                class="q-pa-xs"
+              />
+            </template>
           </q-table>
         </q-modal-layout>
       </q-modal>
@@ -104,8 +115,9 @@ export default {
   props: ['user'],
   data () {
     return {
+      filter: '',
       auditModal: false,
-      auditData: [],
+      auditData: [{item: ''}],
       message: '',
       messages: [],
       users: [],
@@ -161,8 +173,15 @@ export default {
           sortable: true
         },
         {
-          name: 'item',
+          name: 'type',
           required: true,
+          label: 'Type',
+          align: 'left',
+          field: 'type'
+        },
+        {
+          name: 'item',
+          required: false,
           label: 'Item',
           align: 'left',
           field: 'item'
@@ -182,14 +201,28 @@ export default {
           field: 'change'
         },
         {
+          name: 'confirmedAmt',
+          required: true,
+          label: 'confirmedAmt',
+          align: 'left',
+          field: 'confirmedAmt'
+        },
+        {
           name: 'expenseId',
           required: true,
           label: 'ExpenseId',
           align: 'left',
           field: 'expenseId'
+        },
+        {
+          name: 'user',
+          required: true,
+          label: 'User',
+          align: 'left',
+          field: 'user'
         }
       ],
-      visibleModalColumns: ['recordDate', 'item', 'unit', 'change', 'expenseId']
+      visibleModalColumns: ['recordDate', 'unit', 'change', 'expenseId']
     }
   },
   computed: {
@@ -226,11 +259,12 @@ export default {
           if (diff !== 0) {
             let auditObj = {
               table: 'inventory',
+              type: 'userEdit',
               recordDate: new Date(),
               change: diff,
               item: item.item,
-              unit: unit.unit
-              // add user key
+              unit: unit.unit,
+              user: this.$props.user.email
             }
             console.log('audit',auditObj)
             api.service('audit').create(auditObj)
@@ -255,7 +289,7 @@ export default {
     auditItem (itemId) {
       console.log(itemId)
       console.log('////////')
-      console.log(this.$data.confirmations)
+      console.log(this.$data.inventory)
       api.service('audit').find({
         query: {
           item: itemId.item,
@@ -269,6 +303,24 @@ export default {
       })
       
     },
+    confirmInv (row) {
+      console.log(row)
+      // send current item stock values to audit
+      row.stock.forEach(unit => {
+        let auditObj = {
+          table: 'inventory',
+          type: 'confirmation',
+          recordDate: new Date(),
+          confirmedAmt: unit.qty,
+          item: row.item,
+          unit: unit.unit,
+          user: this.$props.user.email
+        }
+        api.service('audit').create(auditObj)
+      }, this)
+      
+    }
+    /* OLD method using comfirm button, does all items at once
     confirmInv () {
       let test = this.$data.confirmations.every(item => {
         console.log(item.item, item.confirmed)
@@ -288,6 +340,7 @@ export default {
         })
       }
     }
+    */
   },
   mounted () {
     const messages = api.service('messages')
@@ -310,7 +363,8 @@ export default {
       })
     inventory.find({
       query: {
-        $sort: { item: -1}
+        $sort: { item: -1},
+        $limit: 500
       }
     })
       .then((response) => {
@@ -319,9 +373,14 @@ export default {
         this.$data.inventory.forEach(item => {
           console.log(item)
           console.log('----------')
-          item.confirmed = false
+          let timeDiff = moment().dayOfYear() - moment(item.lastConf).dayOfYear()
+          if (timeDiff > 5) {
+            item.confirmed = false
+          } else {
+            item.confirmed = true
+          }
           let og = JSON.parse(JSON.stringify(item.stock))
-          this.$data.confirmations.push( {item: item.item, confirmed: false, originalStock: og} )
+          this.$data.confirmations.push( {item: item.item, confirmed: item.confirmed, originalStock: og} )
         }, this) // this necessary?
         console.log(this.$data.confirmations)
       })
