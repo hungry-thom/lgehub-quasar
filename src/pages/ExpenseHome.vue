@@ -46,9 +46,7 @@
       <q-toolbar slot="header">
         <q-btn
           flat
-          round
-          dense
-          icon="keyboard_arrow_left"
+          icon="keyboard_backspace"
           @click="overlay"
         />
         <q-toolbar-title>
@@ -212,7 +210,6 @@ export default {
     QBtn,
     QDatetime,
     QAutocomplete,
-    QModal,
     QModal,
     QModalLayout
   },
@@ -809,7 +806,8 @@ export default {
       api.service('expenses').find({
         paginate: false,
         query: {
-          $sort: { date1: -1 }
+          $sort: { date1: -1 },
+          $limit: 50
         }
       }).then((response) => {
         this.$data.expenses = response.data

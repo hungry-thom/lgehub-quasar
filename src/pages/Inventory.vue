@@ -44,6 +44,29 @@
       <div>
         &nbsp;&nbsp;<q-btn size="md" color="primary" label="confirm" @click="confirmInv" /> <!-- :disable not reading var -->
       </div>
+      <!-- //////// START OF MODAL' ////////-->
+      <q-modal v-model="auditModal">
+        <q-modal-layout> <!-- class="q-pa-sm" -->
+          <q-toolbar slot="header">
+            <q-btn
+              flat
+              icon="keyboard_backspace"
+              @click="overlay"
+            />
+            <q-toolbar-title>
+              Audit Item
+            </q-toolbar-title>
+          </q-toolbar>
+          <q-table
+            :data="auditData"
+            :columns="modalColumns"
+            :visible-columns="visibleModalColumns"
+            row-key="item"
+            :pagination.sync="pagination"
+            hide-bottom >
+          </q-table>
+        </q-modal-layout>
+      </q-modal>
   </q-page>
 </template>
 
@@ -59,7 +82,9 @@ import {
   QSearch,
   QPopupEdit,
   QCheckbox,
-  QBtn
+  QBtn,
+  QModal,
+  QModalLayout
 } from 'quasar'
 
 export default {
@@ -72,11 +97,15 @@ export default {
     QSearch,
     QPopupEdit,
     QCheckbox,
-    QBtn
+    QBtn,
+    QModal,
+    QModalLayout
   },
   props: ['user'],
   data () {
     return {
+      auditModal: false,
+      auditData: [],
       message: '',
       messages: [],
       users: [],
@@ -114,12 +143,62 @@ export default {
           field: 'stock'
         }
       ],
-      visibleColumns: ['item', 'stock']
+      visibleColumns: ['item', 'stock'],
+      modalColumns: [
+        {
+          name: 'id',
+          required: false,
+          label: 'Id',
+          align: 'left',
+          field: 'id'
+        },
+        {
+          name: 'recordDate',
+          required: true,
+          label: 'recordDate',
+          align: 'left',
+          field: 'recordDate',
+          sortable: true
+        },
+        {
+          name: 'item',
+          required: true,
+          label: 'Item',
+          align: 'left',
+          field: 'item'
+        },
+        {
+          name: 'unit',
+          required: true,
+          label: 'Unit',
+          align: 'left',
+          field: 'unit'
+        },
+        {
+          name: 'change',
+          required: true,
+          label: 'Change',
+          align: 'left',
+          field: 'change'
+        },
+        {
+          name: 'expenseId',
+          required: true,
+          label: 'ExpenseId',
+          align: 'left',
+          field: 'expenseId'
+        }
+      ],
+      visibleModalColumns: ['recordDate', 'item', 'unit', 'change', 'expenseId']
     }
   },
   computed: {
   },
   methods: {
+    overlay () {
+      console.log('overlaycalled')
+      this.$data.auditModal = !this.$data.auditModal
+    },
     isSent (message) {
       return (message.userId === this.user._id)
     },
@@ -135,24 +214,60 @@ export default {
     },
     updateCount (item) {
       console.log(';;;;',item)
-      this.$data.confirmations[item.__index].newStock = item.stock
+      // find change from previous val
+      this.$data.confirmations[item.__index].newStock = item.stock // old
+      api.service('inventory').patch(item.id, {stock: item.stock}).then((response) => {
+        let comp = this.$data.confirmations[item.__index].originalStock
+        item.stock.forEach(unit => {
+          console.log('comp', comp, 'unit', unit)
+          let dex = _.findIndex(comp, {unit: unit.unit})
+          console.log(dex)
+          let diff = unit.qty - comp[dex].qty
+          if (diff !== 0) {
+            let auditObj = {
+              table: 'inventory',
+              recordDate: new Date(),
+              change: diff,
+              item: item.item,
+              unit: unit.unit
+              // add user key
+            }
+            console.log('audit',auditObj)
+            api.service('audit').create(auditObj)
+          } else {
+            // no change in stockk amounts
+            console.log('no change in stockk amounts')
+          }
+        })
+        
+      })
+      /*
+      let dex = _.findIndex(this.$data.confirmations[item.__index].oldStock, {unit: item.unit})
       api.service('inventory').update(item.id, {
         item: item.item,
         stock: item.stock
+      }).then((response) => {
+        // audit service 'inventory' with change
+        //
       })
-      // move validate to native qpopupedit validate function 
-      /* if (!isNaN(newVal)) {
-        // api.service('inventory').
-        console.log(oldVal)
-      } */
+      */
     },
     auditItem (itemId) {
       console.log(itemId)
       console.log('////////')
       console.log(this.$data.confirmations)
       api.service('audit').find({
-        
+        query: {
+          item: itemId.item,
+          table: 'inventory',
+          $limit: 50
+        }
+      }).then((response) => {
+        console.log('audit resp',response)
+        this.$data.auditData = response.data
+        this.overlay()
       })
+      
     },
     confirmInv () {
       let test = this.$data.confirmations.every(item => {
