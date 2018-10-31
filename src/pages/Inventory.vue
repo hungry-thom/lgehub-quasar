@@ -302,8 +302,16 @@ export default {
         }
       }).then((response) => {
         console.log('audit resp',response)
-        this.$data.auditData = response.data
-        this.overlay()
+        if (response.data.length < 1) {
+          this.$q.notify({
+            message: 'No audit info for item',
+            timeout: 3000,
+            position: 'center'
+          })
+        } else {
+          this.$data.auditData = response.data
+          this.overlay()
+        }
       })
       
     },

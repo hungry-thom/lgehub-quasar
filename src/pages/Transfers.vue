@@ -242,6 +242,14 @@ export default {
       let t = 0 // total variable
       let transferUnit = {}
       let checkTransferVals = this.$data.originalTransferVals.items
+      let auditObj1 = {
+        type: 'transfer',
+        table: 'transfer',
+        item: item.item,
+        day: day,
+        recordDate: new Date(),
+        user: this.$props.user.email
+      }
       item[day].transfers.forEach(unit => {
         t += unit.qty
         // amount to change inventory stock = originalQty - this.unit.qty
@@ -254,25 +262,50 @@ export default {
         // transferUnit[unit.unit] = transferValue
         transferUnit[unit.unit] = transferValue
         // OLD: transferUnit[unit.unit] = unit.qty
+        if (transferValue !== 0) {
+          auditObj1.unit = unit.unit
+          auditObj1.qty = transferValue * -1 // should transfer qty be negative
+        }
         // need to update originalTansferVals with new value
         this.$data.originalTransferVals.items[itemIndex][day].transfers[unitIndex].qty
       })
       console.log('loadTransferQty', transferUnit)
       item[day].total = t
       api.service('transfers').patch(this.$data.inventory.id, {
-        items: this.$data.inventory.items
+        items: this.$data.inventory.items // patches entire item list for the week. seems excessive
+      }).then((response) => {
+        api.service('audit').create(auditObj1)
       })
+      
       // audit trail type='transfer' for item --> day --> unit --> qty 
       api.service('inventory').get(item.id)
         .then((invItem) => {
           let updatedStock = []
+          let auditUnit = ''
+          let auditUnitQty = 0
           invItem.stock.forEach(unit => {
             let newUnitQty = unit.qty - transferUnit[unit.unit]
+            if (transferUnit[unit.unit] !== 0) {
+              auditUnitQty = transferUnit[unit.unit] * -1
+              auditUnit = unit.unit
+            }
             // console.log('mathCheck', unit.qty, transferUnit[unit.unit],)
             updatedStock.push({unit: unit.unit, qty: newUnitQty})
+
           })
           console.log('patchInv', updatedStock)
-          api.service('inventory').patch(invItem.id, {stock: updatedStock})
+          api.service('inventory').patch(invItem.id, {stock: updatedStock}).then((response) => {
+            let auditObj2 = {
+              recordDate: new Date(),
+              table: 'inventory',
+              type: 'transfer',
+              item: item.item,
+              unit: auditUnit,
+              change: auditUnitQty,
+              user: this.$props.user.email
+            }
+              api.service('audit').create(auditObj2)
+          })
         })
       
       /*
