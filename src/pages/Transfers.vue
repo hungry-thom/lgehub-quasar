@@ -395,7 +395,7 @@ export default {
         response2.data.forEach(item => {
           // find base units
           let tempItem = {}
-          tempItem.item = item.item
+          tempItem.item = item.item // won't need
           tempItem.id = item.id
           let tempStock = []
           item.stock.forEach(stock => { 
@@ -411,7 +411,7 @@ export default {
             tempItem[day] = { total: 0, transfers: cleanStock }
             // tempWeekTransfers.items[day] = {total:0 , transfers: tempStock }
           }, this)
-          tempWeekTransfers.items.push(tempItem)
+          tempWeekTransfers.items.push(tempItem) // change
         }, this)
         console.log('NewTransferWeek', tempWeekTransfers)
         this.$data.inventory = tempWeekTransfers
