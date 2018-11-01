@@ -390,7 +390,7 @@ export default {
       }).then((response2) => {
         let tempWeekTransfers = {}
         tempWeekTransfers.week = this.currentMonday().format('DD-MMM-YYYY')
-        tempWeekTransfers.items = []
+        tempWeekTransfers.items = [] // changing this from list to each item object key
         console.log('call2 inventory',response2.data)
         response2.data.forEach(item => {
           // find base units
@@ -398,7 +398,7 @@ export default {
           tempItem.item = item.item
           tempItem.id = item.id
           let tempStock = []
-          item.stock.forEach(stock => {
+          item.stock.forEach(stock => { 
             let tempUnit = {}
             tempUnit.unit = stock.unit
             tempUnit.qty = 0
