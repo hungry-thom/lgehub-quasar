@@ -52,7 +52,7 @@
         <q-toolbar-title>
           Enter/Edit Expense
         </q-toolbar-title>
-        &nbsp;&nbsp;<q-btn size="md" color="negative" label="Delete Expense" @click="deleteExpense()"/>
+        &nbsp;&nbsp;<q-btn size="md" color="negative" label="Delete Expense" @click="deleteExpense()" v-if="transaction.id" />
       </q-toolbar>
       <div slot="footer">
         <div class="q-pa-xs float-right">
@@ -639,6 +639,19 @@ export default {
       }).then((response) => {
         trans.transItems.forEach(item => {
           if (item.inv) {
+            let actualUnit = ''
+            let actualQty = 0
+            // need to break out unit if entered as a case
+            let i = item.unit.search('x')
+            if (i > -1) {
+              // multiple number before 'x' to get qty
+              actualQty = item.qty * item.unit.substr(0,i)
+              // get the actual unit
+              actualUnit = item.unit.substr(i + 1)
+            } else {
+              actualUnit = item.unit
+              actualQty = item.qty
+            }
             let tmpStock = []
             let dex = _.findIndex(inventoryData, {item: item.item}) //possible use of item.id (still need to load id to transItems)
             if ( dex < 0 ) {
@@ -646,10 +659,11 @@ export default {
               console.log(item.item,' not in inventory ')
               let tmpObj = {
                 item: item.item,
+                lastConf: 0,
                 stock: [
                   {
-                    unit: item.unit,
-                    qty: item.qty
+                    unit: actualUnit,
+                    qty: actualQty
                   }
                 ]
               }
@@ -660,9 +674,9 @@ export default {
                   table: 'inventory',
                   type: 'expense',
                   recordDate: trans.date1,
-                  change: item.qty,
+                  change: actualQty,
                   item: item.item,
-                  unit: item.unit,
+                  unit: actualUnit,
                   expenseId: trans.expenseId,
                   user: this.$props.user.email
                 }
@@ -672,27 +686,27 @@ export default {
               // update item inv
               console.log('item in inv', inventoryData)
               tmpStock = inventoryData[dex].stock // stock is a list
-              let dex2 = _.findIndex(tmpStock, {unit: item.unit})
+              let dex2 = _.findIndex(tmpStock, {unit: actualUnit})
               if (dex2 < 0) {
                 // no match, add unit to stock
-                tmpStock.push({unit: item.unit, qty: item.qty})
+                tmpStock.push({unit: actualUnit, qty: actualQty})
               } else {
-                let newQty = tmpStock[dex2].qty + item.qty // tmpStock[dex2].qty += item.qty
+                let newQty = tmpStock[dex2].qty + actualQty // tmpStock[dex2].qty += actualQty
                 tmpStock[dex2].qty = newQty 
               }
               // may not be needed // inventoryData[dex].stock = tmpStock
               // is it better to send entire inventory or item by item* (item by item leaves easier trail?)
               console.log(inventoryData[dex])
               api.service('inventory').patch(inventoryData[dex].id, {stock: tmpStock}).then((response) => {
-                console.log(item.item, 'inventory updated +', item.unit, item.qty )
+                console.log(item.item, 'inventory updated +', actualUnit, actualQty )
                 // creat audit trail for inventory table
                 let auditObj = {
                   table: 'inventory',
                   type: 'expense',
                   recordDate: trans.date1,
                   item: item.item,
-                  unit: item.unit,
-                  change: item.qty,
+                  unit: actualUnit,
+                  change: actualQty,
                   expenseId: trans.expenseId,
                   user: this.$props.user.email
                 }
