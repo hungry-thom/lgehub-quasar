@@ -159,7 +159,7 @@
     <br>
     <div class="row no-wrap">
       <div>
-        <q-checkbox class="float-right" v-model="taxable" left-label label="Taxable" true-value="yes" false-value="no"/>
+        <q-checkbox class="float-right" v-model="newItem.taxable" left-label label="Taxable" true-value="yes" false-value="no"/>
         <br>
         <q-checkbox v-model="gstIncluded" left-label label="GST Included" true-value="yes" false-value="no" :disable="gstIncludedVisibility" />
       </div>
@@ -261,11 +261,11 @@ export default {
         unit: '',
         amount: '',
         expAccount: '',
-        inv: ''
+        inv: '',
+        taxable: 'yes'
       },
       unitsList: {},
       pricelist: [],
-      taxable: 'yes',
       gstIncluded: 'yes',
       pagination: {
         sortBy: name, // String, column "item" property value
@@ -466,7 +466,7 @@ export default {
       return _.round(gt,2)
     },
     gstIncludedVisibility () {
-      if (this.$data.taxable == 'yes') {
+      if (this.$data.newItem.taxable == 'yes') {
         return false
       } else {
         this.$data.gstIncluded = 'no'
@@ -513,7 +513,8 @@ export default {
         unit: '',
         amount: '',
         expAccount: '',
-        inv: ''
+        inv: '',
+        taxable: 'yes'
       }
       this.$data.expenseModal = !this.$data.expenseModal
     },
@@ -561,7 +562,7 @@ export default {
       let line = JSON.parse(JSON.stringify(this.$data.newItem))
       if (line.expAccount != '') {
         line.price = _.round((line.amount / line.qty), 2)
-        if (this.$data.taxable == 'yes') {
+        if (this.$data.newItem.taxable == 'yes') {
           if (this.$data.gstIncluded == 'yes') {
             line.gst = _.round((line.amount / 9), 2)
             line.cost = _.round((line.amount / 1.125), 2)
@@ -576,11 +577,18 @@ export default {
         line.total = _.round((line.gst + line.cost), 2)
         delete line['amount']
         this.$data.transaction.transItems.push(line)
+        console.log('line Item', line)
         for (let v in this.$data.newItem){
           this.$data.newItem[v] = ''
+
         }
       } else {
         console.log('expAccount needs value')
+        this.$q.notify({
+          message: 'expAccount needs value',
+          timeout: 3000,
+          position: 'center'
+        })
       }
     },
     submitExpense () {
