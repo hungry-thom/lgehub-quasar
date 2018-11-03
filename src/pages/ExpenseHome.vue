@@ -1,6 +1,12 @@
 <!-- ExpenseHome.vue -->
 <template>
   <q-page class="layout-padding">
+    <div class="row no-wrap">
+      <q-datetime class= "col" minimal color="orange" v-model="startDate" type="date" float-label="StartDate" clearable />&nbsp;&nbsp;
+      <q-datetime class= "col" minimal color="orange" v-model="endDate" type="date" float-label="EndDate" clearable />&nbsp;&nbsp;
+      <q-btn label="search" color="secondary" @click="loadExpenses(startDate, endDate)" />
+    </div>
+    <br>
     <div>
       <q-table
         :data="expenses"
@@ -216,6 +222,8 @@ export default {
   props: ['user'],
   data () {
     return {
+      startDate: '',
+      endDate: '',
       expenseModal: false,
       expenses: [],
       sales: [],
@@ -829,10 +837,21 @@ export default {
         }
       }, this)
     },
-    loadExpenses() {
+    loadExpenses(stDate, endDate) {
+      let sDate = moment(new Date(stDate))
+      sDate.subtract(1, 'days')
+      // console.log('stDate', stDate)
+      let eDate = moment(new Date(endDate))
+      //console.log(eDate)
+      eDate.add(1,'days').calendar()
+      console.log('stD',sDate.format(),'end',eDate)
       api.service('expenses').find({
         paginate: false,
         query: {
+          date1: {
+            $gte: sDate.format(),
+            $lte: eDate.format()
+          },
           $sort: { date1: -1 },
           $limit: 50
         }
@@ -845,7 +864,9 @@ export default {
   mounted () {
     const inventory = api.service('inventory')
     // load expenses
-    this.loadExpenses()
+    this.$data.startDate = new Date()
+    this.$data.endDate = new Date()
+    this.loadExpenses(this.$data.startDate, this.$data.startDate)
     // get pricelist data from rethinkdb
     api.service('pricelist').find({
       query: {
