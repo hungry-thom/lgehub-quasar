@@ -50,6 +50,7 @@
 import moment from 'moment'
 import api from 'src/api'
 import _ from 'lodash'
+import convert from 'convert-units'
 import {
   QChatMessage,
   QTable,
@@ -180,6 +181,22 @@ export default {
           sortable: true
         },
         {
+          name: 'compValue',
+          required: true,
+          label: 'compValue',
+          align: 'left',
+          field: 'compValue',
+          sortable: true
+        },
+        {
+          name: 'compBase',
+          required: true,
+          label: 'compBase',
+          align: 'left',
+          field: 'compBase',
+          sortable: true
+        },
+        {
           name: 'updated',
           required: false,
           label: 'updated',
@@ -230,17 +247,21 @@ export default {
       })
     pricelist.find({
       query: {
-        $sort: { item: -1 }
+        $sort: { item: 1 }
       }
     })
       .then((response) => {
+        let tempList = []
         // this.$data.pricelist = response.data
         // for each item need to sort vendors list
-        response.data.forEach(item => {
+        response.data.forEach((item,z) => {
+          console.log('index', z, item)
           let tempItem = item
           let sortedVendors = []
           item.vendors.forEach(vendor => {
-            // check if unit is case
+            console.log( item.item, vendor.vendor, vendor. unit)
+            // check if it is a case unit
+            let pUnit = ''
             let i = vendor.unit.search('x')
             if (i > -1) {
               pUnit = vendor.unit.substr(i + 1)
@@ -248,28 +269,62 @@ export default {
               pUnit = vendor.unit
             }
             // parse qty and base
-            i2 = pUnit.search('-')
-            pQty = pUnit.substr(0,i2)
-            pbase = pUnit.substr(i2 + 1)
-            // compare to find place in order
-            sortedVendors.forEach((v, index) => {
-              // check if same base unit
-              if (pBase === v.base) {
-                // base is same, get per unit cost
-                let diff = (vendor.cost / pQty) - (v.cost / vQty)
-                if (diff > 0) {
-                  // more expensive than index
+            let i2 = pUnit.search('-')
+            let pQty = pUnit.substr(0,i2)
+            let pBase = pUnit.substr(i2 + 1)
+            // conform pBase to convert-units definition
+            if (pBase === 'L') {
+              pBase = 'l'
+            }
+            if (pBase === 'Fl.oz') {
+              pBase = 'fl-oz'
+            }
+            // check if sortedVendors is empty
+            if (sortedVendors.length === 0){
+              vendor.compQty = pQty
+              vendor.compBase = pBase
+              vendor.compUnit = pUnit
+              vendor.compValue = vendor.cost / vendor.compQty
+              sortedVendors.push(vendor)
+            } else {
+              // compare vendor to sortedVendors list find place in order
+              sortedVendors.forEach((comp, index) => {
+                // check if same base unit
+                if (pBase === comp.compBase) {
+                  vendor.compQty = pQty
+                  vendor.compBase = pBase
                 } else {
-                  // cheaper than index
+                  // base not same need to change
+                  console.log('converting', item.item, pBase, comp.compBase, index,sortedVendors[index])
+                  vendor.compQty = convert(pQty).from(pBase).to(comp.compBase)
+                  vendor.compBase = comp.compBase
                 }
-              } else {
-                // base not same need to change
-              }
-            })
+                ////////Maybe can break out vvvvvvvv
+                // base is same, get per unit cost
+                vendor.compValue = vendor.cost / vendor.compQty
+                let diff = vendor.compValue - comp.compValue
+                if (diff > 0) {
+                  // more expensive than comp
+                } else {
+                  // cheaper than comp, vendor replaces position in sortedVendors and comp becomes new vendor value to evaluate
+                  let holder = JSON.parse(JSON.stringify(comp)) // sanitize?
+                  sortedVendors[index] = JSON.parse(JSON.stringify(vendor))
+                  vendor = holder
+                }
+                if (index === (sortedVendors.length - 1)) {
+                  sortedVendors.push(vendor)
+                }
+                /////////Maybe can break out^^^^^^
+              })
             // push vendor to  item
+            }
           })
+          tempItem.vendors = sortedVendors
           // push item to $data.pricelist
+          tempList.push(tempItem)
         }) 
+        console.log('set pricelist')
+        this.$data.pricelist = tempList
       })
     // Add new messages to the message list
     messages.on('created', message => {
