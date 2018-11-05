@@ -254,12 +254,40 @@ export default {
       ],
       expAccountList: [
         {
-          value: 'COGS:HR:FOOD',
-          label: 'COGS:HR:FOOD'
+          value: 'COGS:restaurant',
+          label: 'COGS:restaurant'
+        },
+        {
+          value: 'COGS:meatshop',
+          label: 'COGS:meatshop'
+        },
+        {
+          value: 'COGS:farm',
+          label: 'COGS:farm'
+        },
+        {
+          value: 'COGS:lge',
+          label: 'COGS:lge'
+        },
+        {
+          value: 'opExp:restaurant',
+          label: 'opExp:restaurant'
         },
         { 
-          value: 'OPEXP:MS:CLEANING',
-          label: 'OPEXP:MS:CLEANING'
+          value: 'opExp:meatshop',
+          label: 'opExp:meatshop'
+        },
+        { 
+          value: 'opExp:farm',
+          label: 'opExp:farm'
+        },
+        { 
+          value: 'opExp:lge',
+          label: 'opExp:lge'
+        },
+        { 
+          value: 'employee',
+          label: 'employee'
         }
       ],
       checked: false,

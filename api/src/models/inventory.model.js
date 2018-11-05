@@ -1,5 +1,5 @@
 const r = require('rethinkdbdash')({
-  db: 'test', 
+  db: 'koox2', 
   servers: [{
     host: 'ec2-52-86-240-100.compute-1.amazonaws.com',
     port:28015

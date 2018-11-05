@@ -91,7 +91,7 @@
           <q-item-main label="Expenses" />
         </q-item>
 
-        <q-item to="/sales">
+        <q-item disabled to="/sales">
           <q-item-side icon="monetization_on" />
           <q-item-main label="Sales" />
         </q-item>
