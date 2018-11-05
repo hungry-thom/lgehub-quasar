@@ -234,7 +234,42 @@ export default {
       }
     })
       .then((response) => {
-        this.$data.pricelist = response.data
+        // this.$data.pricelist = response.data
+        // for each item need to sort vendors list
+        response.data.forEach(item => {
+          let tempItem = item
+          let sortedVendors = []
+          item.vendors.forEach(vendor => {
+            // check if unit is case
+            let i = vendor.unit.search('x')
+            if (i > -1) {
+              pUnit = vendor.unit.substr(i + 1)
+            } else {
+              pUnit = vendor.unit
+            }
+            // parse qty and base
+            i2 = pUnit.search('-')
+            pQty = pUnit.substr(0,i2)
+            pbase = pUnit.substr(i2 + 1)
+            // compare to find place in order
+            sortedVendors.forEach((v, index) => {
+              // check if same base unit
+              if (pBase === v.base) {
+                // base is same, get per unit cost
+                let diff = (vendor.cost / pQty) - (v.cost / vQty)
+                if (diff > 0) {
+                  // more expensive than index
+                } else {
+                  // cheaper than index
+                }
+              } else {
+                // base not same need to change
+              }
+            })
+            // push vendor to  item
+          })
+          // push item to $data.pricelist
+        }) 
       })
     // Add new messages to the message list
     messages.on('created', message => {

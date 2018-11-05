@@ -2,8 +2,8 @@
 <template>
   <q-page class="layout-padding">
     <div class="row no-wrap">
-      <q-datetime class= "col" minimal color="orange" v-model="startDate" type="date" float-label="StartDate" clearable />&nbsp;&nbsp;
-      <q-datetime class= "col" minimal color="orange" v-model="endDate" type="date" float-label="EndDate" clearable />&nbsp;&nbsp;
+      <q-datetime class= "col" minimal color="orange" v-model="startDate" type="date" float-label="StartDate" />&nbsp;&nbsp;
+      <q-datetime class= "col" minimal color="orange" v-model="endDate" type="date" float-label="EndDate" />&nbsp;&nbsp;
       <q-btn label="search" color="secondary" @click="loadExpenses(startDate, endDate)" />
     </div>
     <br>
@@ -839,11 +839,13 @@ export default {
     },
     loadExpenses(stDate, endDate) {
       let sDate = moment(new Date(stDate))
-      sDate.subtract(1, 'days')
+      sDate.startOf('day')
+      //sDate.subtract(1, 'days')
       // console.log('stDate', stDate)
       let eDate = moment(new Date(endDate))
       //console.log(eDate)
-      eDate.add(1,'days').calendar()
+      // eDate.add(1,'days').calendar()
+      eDate.endOf('day')
       console.log('stD',sDate.format(),'end',eDate)
       api.service('expenses').find({
         paginate: false,
