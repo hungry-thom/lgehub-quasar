@@ -405,8 +405,9 @@ export default {
     inventory.find({
       query: {
         $sort: { item: -1},
-        $limit: 500
-      }
+        $limit: 200
+      },
+      paginate: false
     })
       .then((response) => {
         // We want the latest inventory but in the reversed order
