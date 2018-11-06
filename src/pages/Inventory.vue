@@ -22,7 +22,7 @@
             />
           </template>
           <template slot="top-right" slot-scope="props">
-            <q-checkbox v-model="categoryArray" label="DryFood" color="teal-10" @input="loadCategories" val="DryFood" />
+            <q-checkbox v-model="categoryArray" label="DryFood" color="teal-10" val="DryFood" />
             <q-checkbox v-model="categoryArray" label="RefrigeratedFood" val="RefrigeratedFood" color="teal-10" style="margin-left: 10px" />
             <q-checkbox v-model="categoryArray" label="NonFoodstuff" val="NonFoodstuff" color="teal-10" style="margin-left: 10px" />
             <q-checkbox v-model="categoryArray" label="Alcohol" color="teal-10" val="Alcohol" style="margin-left: 10px"/>

@@ -21,6 +21,15 @@
               class="col-6"
             />
           </template>
+          <template slot="top-right" slot-scope="props">
+            <q-radio v-model="categoryValue" label="DryFood" color="teal-10"  val="DryFood" />
+            <q-radio v-model="categoryValue" label="RefrigeratedFood" val="RefrigeratedFood" color="teal-10" style="margin-left: 10px" />
+            <q-radio v-model="categoryValue" label="NonFoodstuff" val="NonFoodstuff" color="teal-10" style="margin-left: 10px" />
+            <q-radio v-model="categoryValue" label="Alcohol" color="teal-10" val="Alcohol" style="margin-left: 10px"/>
+            <q-radio v-model="categoryValue" label="Togo" color="teal-10" val="Togo" style="margin-left: 10px"/>
+            <q-radio v-model="categoryValue" label="Office" color="teal-10" val="Office" style="margin-left: 10px"/>
+            <q-btn round color="teal-10" icon="refresh" style="margin-left: 10px"/>
+          </template>
           <tr slot="header" slot-scope="props">
             <q-th key="item" :props="props">
               <u>Item</u>
@@ -134,7 +143,8 @@ import {
   QPopupEdit,
   QCheckbox,
   QBtn,
-  QField
+  QField,
+  QRadio
 } from 'quasar'
 
 export default {
@@ -149,11 +159,13 @@ export default {
     QPopupEdit,
     QCheckbox,
     QBtn,
-    QField
+    QField,
+    QRadio
   },
   props: ['user'],
   data () {
     return {
+      categoryValue: 'DryFood',
       startingDate: moment(),
       days: ['Mon','Tue','Wed','Thu','Fri','Sat'],
       weekDates: [],
@@ -386,7 +398,7 @@ export default {
       api.service('inventory').find({
         query: {
           $sort: { item: 1},
-          $limit: 200
+          $limit: 500
         }
       }).then((response2) => {
         let tempWeekTransfers = {}
