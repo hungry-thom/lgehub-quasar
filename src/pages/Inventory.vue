@@ -9,8 +9,8 @@
           :filter="filter"
           :visible-columns="visibleColumns"
           row-key="item"
-          :pagination.sync="pagination"
-          hide-bottom >
+          :pagination.sync="pagination">
+          <!--hide-bottom >-->
           <template slot="top-left" slot-scope="props">
             <q-search
               hide-underline
@@ -406,10 +406,10 @@ export default {
       query: {
         $sort: { item: -1},
         $limit: 200
-      },
-      paginate: false
+      }
     })
       .then((response) => {
+        console.log('response info', response)
         // We want the latest inventory but in the reversed order
         this.$data.inventory = response.data.reverse()
         this.$data.inventory.forEach(item => {
