@@ -7,6 +7,7 @@ module.exports = function (app) {
   // const Model = app.get('rethinkdbClient');
   const Model = createModel(app);
   const paginate = app.get('paginate');
+  paginate.max=200;
 
   const options = {
     name: 'transfers',

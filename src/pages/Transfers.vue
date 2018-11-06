@@ -385,7 +385,8 @@ export default {
       console.log('creating new blank week')
       api.service('inventory').find({
         query: {
-          $sort: { item: 1}
+          $sort: { item: 1},
+          $limit: 200
         }
       }).then((response2) => {
         let tempWeekTransfers = {}
