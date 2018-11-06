@@ -595,6 +595,7 @@ export default {
       return true
     },
     addItem () {
+      console.log('start',this.$data.newItem.taxable)
       let line = JSON.parse(JSON.stringify(this.$data.newItem))
       if (line.expAccount != '') {
         line.price = _.round((line.amount / line.qty), 2)
@@ -614,10 +615,16 @@ export default {
         delete line['amount']
         this.$data.transaction.transItems.push(line)
         console.log('line Item', line)
-        for (let v in this.$data.newItem){
-          this.$data.newItem[v] = ''
-
+        let tempItem = {
+          qty: '',
+          item: '',
+          unit: '',
+          amount: '',
+          expAccount: '',
+          inv: '',
+          taxable: this.$data.newItem.taxable
         }
+        this.$data.newItem = tempItem
       } else {
         console.log('expAccount needs value')
         this.$q.notify({
@@ -626,6 +633,7 @@ export default {
           position: 'center'
         })
       }
+      console.log('end',this.$data.newItem.taxable)
     },
     submitExpense () {
       // save computed values to transaction.object

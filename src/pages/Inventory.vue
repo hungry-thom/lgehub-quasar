@@ -43,9 +43,9 @@
         <br>
       </div>
       <div>
-        &nbsp;&nbsp;<q-btn size="md" color="primary" label="confirm" @click="confirmInv" /> <!-- :disable not reading var -->
+        &nbsp;&nbsp;<q-btn size="md" color="primary" label="Add item to inventory" @click="addItemOverlay" /> <!-- :disable not reading var -->
       </div>
-      <!-- //////// START OF MODAL' ////////-->
+      <!-- //////// START OF AUDIT MODAL  ////////-->
       <q-modal v-model="auditModal">
         <q-modal-layout> <!-- class="q-pa-sm" -->
           <q-toolbar slot="header">
@@ -79,6 +79,23 @@
           </q-table>
         </q-modal-layout>
       </q-modal>
+      <!-- ///////END OF AUDIT MODAL ///////// -->
+      <!-- //////START OF ADD ITEM MODAL //////
+      <q-modal v-model="addItemModal">
+        <q-modal-layout>
+          <q-toolbar slot="header">
+            <q-btn
+              flat
+              icon="keyboard_backspace"
+              @click="addItemOverlay"
+            />
+            <q-toolbar-title>
+              Add Item
+            </q-toolbar-title>
+          </q-toolbar>
+          <q-input float-label="Item name" v-model="newItem.item" />
+        </q-modal-layout>
+      </q-modal> -->
   </q-page>
 </template>
 
@@ -117,6 +134,7 @@ export default {
   data () {
     return {
       filter: '',
+      addItemModal: false,
       auditModal: false,
       auditData: [{item: ''}],
       message: '',
@@ -229,9 +247,17 @@ export default {
   computed: {
   },
   methods: {
+    addItem () {
+      
+    },
+    addItemOverlay () {
+      this.$data.addItemModal = !this.$data.addItemModal
+      this.$data.auditModal = false
+    },
     overlay () {
       console.log('overlaycalled')
       this.$data.auditModal = !this.$data.auditModal
+      this.$data.addItemOverlay = false
     },
     isSent (message) {
       return (message.userId === this.user._id)
