@@ -13,11 +13,22 @@
           <!--hide-bottom >-->
           <template slot="top-left" slot-scope="props">
             <q-search
-              hide-underline
+              clearable
+              inverted
               color="secondary"
               v-model="filter"
+              placeholder="Filter"
               class="col-6"
             />
+          </template>
+          <template slot="top-right" slot-scope="props">
+            <q-checkbox v-model="categoryArray" label="DryFood" color="teal-10" @input="loadCategories" val="DryFood" />
+            <q-checkbox v-model="categoryArray" label="RefrigeratedFood" val="RefrigeratedFood" color="teal-10" style="margin-left: 10px" />
+            <q-checkbox v-model="categoryArray" label="NonFoodstuff" val="NonFoodstuff" color="teal-10" style="margin-left: 10px" />
+            <q-checkbox v-model="categoryArray" label="Alcohol" color="teal-10" val="Alcohol" style="margin-left: 10px"/>
+            <q-checkbox v-model="categoryArray" label="Togo" color="teal-10" val="Togo" style="margin-left: 10px"/>
+            <q-checkbox v-model="categoryArray" label="Office" color="teal-10" val="Office" style="margin-left: 10px"/>
+            <q-btn round @click="loadInventoryData" color="teal-10" icon="refresh" style="margin-left: 10px"/>
           </template>
           <q-tr slot="body" slot-scope="props" :props="props">
             <q-td key="item" :props="props">{{ props.row.item }}</q-td>
@@ -133,6 +144,7 @@ export default {
   props: ['user'],
   data () {
     return {
+      categoryArray: ['DryFood'],
       filter: '',
       addItemModal: false,
       auditModal: false,
@@ -247,7 +259,7 @@ export default {
   computed: {
   },
   methods: {
-    addItem () {
+    loadCategories () {
       
     },
     addItemOverlay () {
@@ -360,28 +372,40 @@ export default {
           api.service('audit').create(auditObj)
         }, this)
       }
-    }
-    /* OLD method using comfirm button, does all items at once
-    confirmInv () {
-      let test = this.$data.confirmations.every(item => {
-        console.log(item.item, item.confirmed)
-        // this.$data.conf = item.confirmed
-        return item.confirmed
+    },
+    loadInventoryData () {
+      this.$data.inventory = []
+      this.$data.confirmations = []
+      api.service('inventory').find({
+        query: {
+          $sort: { item: -1},
+          $limit: 200,
+          category: {
+            $in: this.$data.categoryArray
+          }
+        }
       })
-      if (test) {
-        // submit inv
-        console.log('submitting audit')
-        api.service('audit').create(this.$data.confirmations)
-        // ^this create submits as a list, so each item is its own object(document) in table
-      } else {
-        this.$q.notify({
-          message: 'Not all inventory items confirmed',
-          timeout: 3000,
-          position: 'center'
+        .then((response) => {
+          console.log('response info', response)
+          // We want the latest inventory but in the reversed order
+          this.$data.inventory = response.data.reverse()
+          this.$data.inventory.forEach(item => {
+            console.log(item)
+            console.log('----------')
+            let timeDiff = moment().dayOfYear() - moment(item.lastConf).dayOfYear()
+            if (timeDiff > 1) {
+              item.confirmed = false
+              item.warning = ((timeDiff > 7) ? true : false)
+            } else {
+              item.confirmed = true
+              item.warning = false
+            }
+            let og = JSON.parse(JSON.stringify(item.stock))
+            this.$data.confirmations.push( {item: item.item, confirmed: item.confirmed, warning: item.warning, originalStock: og} )
+          }, this) // this necessary?
+          console.log(this.$data.confirmations)
         })
-      }
     }
-    */
   },
   mounted () {
     const messages = api.service('messages')
@@ -402,6 +426,8 @@ export default {
       .then((response) => {
         this.$data.users = response.data
       })
+    this.loadInventoryData()
+    /*
     inventory.find({
       query: {
         $sort: { item: -1},
