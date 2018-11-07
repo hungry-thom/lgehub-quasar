@@ -4,7 +4,7 @@
       <div>
         <br>
         <q-table
-          :data="inventory.items"
+          :data="itemList"
           :columns="columns"
           :filter="filter"
           :visible-columns="visibleColumns"
@@ -22,12 +22,12 @@
             />
           </template>
           <template slot="top-right" slot-scope="props">
-            <q-radio v-model="categoryValue" label="DryFood" color="teal-10"  val="DryFood" />
-            <q-radio v-model="categoryValue" label="RefrigeratedFood" val="RefrigeratedFood" color="teal-10" style="margin-left: 10px" />
-            <q-radio v-model="categoryValue" label="NonFoodstuff" val="NonFoodstuff" color="teal-10" style="margin-left: 10px" />
-            <q-radio v-model="categoryValue" label="Alcohol" color="teal-10" val="Alcohol" style="margin-left: 10px"/>
-            <q-radio v-model="categoryValue" label="Togo" color="teal-10" val="Togo" style="margin-left: 10px"/>
-            <q-radio v-model="categoryValue" label="Office" color="teal-10" val="Office" style="margin-left: 10px"/>
+            <q-radio v-model="categoryValue" label="-DryFood" color="teal-10"  val="DryFood" @input="loadTransferData(inventory.week)" />
+            <q-radio v-model="categoryValue" label="-RefrigeratedFood" val="RefrigeratedFood" color="teal-10" @input="loadTransferData(inventory.week)" style="margin-left: 10px" />
+            <q-radio v-model="categoryValue" label="-NonFoodstuff" val="NonFoodstuff" color="teal-10" @input="loadTransferData(inventory.week)" style="margin-left: 10px" />
+            <q-radio v-model="categoryValue" label="-Alcohol" color="teal-10" val="Alcohol" @input="loadTransferData(inventory.week)" style="margin-left: 10px"/>
+            <q-radio v-model="categoryValue" label="-Togo" color="teal-10" val="Togo" @input="loadTransferData(inventory.week)" style="margin-left: 10px"/>
+            <q-radio v-model="categoryValue" label="-Office" color="teal-10" val="Office" @input="loadTransferData(inventory.week)" style="margin-left: 10px"/>
           </template>
           <tr slot="header" slot-scope="props">
             <q-th key="item" :props="props">
@@ -165,6 +165,7 @@ export default {
   data () {
     return {
       categoryValue: 'DryFood',
+      itemList: [],
       startingDate: moment(),
       days: ['Mon','Tue','Wed','Thu','Fri','Sat'],
       weekDates: [],
@@ -433,7 +434,7 @@ export default {
         api.service('transfers').create(tempWeekTransfers).then((response) => {
           console.log('created week', response.id)
           // this.$data.inventory.id = response.id
-          this.loadTransferData(tempWeekTransfer.week)
+          this.loadTransferData(tempWeekTransfers.week)
         })
         /*vvvvvvvvMIGHT BE ABLE TO ELIMINATE ALL THIS IF CALL TO LOAD IS BETTER vvvvvvvvvvvvvv
         // load new starting date
@@ -490,13 +491,15 @@ export default {
         query: {
           week: {
             $search: lookupDate
-          }
+          },
+          $select: ['week','id',this.$data.categoryValue]
         }
       }).then((response) => {
         if (response.data.length > 0) {
           // what if more than 1 record found?
           console.log('record found', response)
           this.$data.inventory = response.data[0]
+          this.$data.itemList = this.$data.inventory[this.$data.categoryValue] // is this a pointer or double the data?
           console.log('inventory',this.$data.inventory)
           // load new starting date
           let d = new Date(this.$data.inventory.week)
