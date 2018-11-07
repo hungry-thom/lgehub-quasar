@@ -163,11 +163,11 @@
       <q-input class="col" float-label="Category" v-model="newItem.category" @keyup.enter="addItem"> <q-autocomplete :static-data="{field: 'value', list: categoryList}" :filter="myFilter" /> </q-input>&nbsp;&nbsp;
     </div>
     <br>
-    <div class="row no-wrap">
+    <div>
       <div>
-        <q-checkbox class="float-right" v-model="newItem.taxable" left-label label="Taxable" true-value="yes" false-value="no"/>
-        <br>
-        <q-checkbox v-model="gstIncluded" left-label label="GST Included" true-value="yes" false-value="no" :disable="gstIncludedVisibility" />
+        <q-checkbox v-model="newItem.taxable" label="Taxable" true-value="yes" false-value="no"/><br>
+        <q-checkbox v-model="gstIncluded" label="GST Included" true-value="yes" false-value="no" :disable="gstIncludedVisibility" /><br>
+        <q-checkbox v-model="newItem.add2Inventory" label="add2Inventory" /><br>
       </div>
       <div class="q-pa-xs">
         &nbsp;&nbsp;<q-btn size="md" color="primary" label="add Item" @click="addItem" />
@@ -300,7 +300,8 @@ export default {
         amount: '',
         expAccount: '',
         category: '',
-        taxable: 'yes'
+        taxable: 'yes',
+        add2Inventory: false
       },
       unitsList: {},
       pricelist: [],
@@ -551,7 +552,7 @@ export default {
       this.overlay()
     },
     overlay () {
-      console.log('overlaycalled')
+      console.log('overlaycalled',this.$data.newItem.add2Inventory)
       this.$data.newItem = {
         qty: '',
         item: '',
@@ -559,7 +560,8 @@ export default {
         amount: '',
         expAccount: '',
         category: '',
-        taxable: 'yes'
+        taxable: 'yes',
+        add2Inventory: false
       }
       this.$data.expenseModal = !this.$data.expenseModal
     },
@@ -699,7 +701,7 @@ export default {
         console.log('inventoryData loaded', inventoryData)
       }).then((response) => {
         trans.transItems.forEach(item => {
-          if (item.category) {
+          if (item.add2Inventory) {
             let actualUnit = ''
             let actualQty = 0
             // need to break out unit if entered as a case
