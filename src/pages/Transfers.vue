@@ -253,7 +253,7 @@ export default {
       // props.row.tue
       let t = 0 // total variable
       let transferUnit = {}
-      let checkTransferVals = this.$data.originalTransferVals.items
+      let checkTransferVals = this.$data.originalTransferVals
       let auditObj1 = {
         type: 'transfer',
         table: 'transfer',
@@ -279,7 +279,7 @@ export default {
           auditObj1.qty = transferValue * -1 // should transfer qty be negative
         }
         // need to update originalTansferVals with new value
-        this.$data.originalTransferVals.items[itemIndex][day].transfers[unitIndex].qty
+        this.$data.originalTransferVals[itemIndex][day].transfers[unitIndex].qty
       })
       console.log('loadTransferQty', transferUnit)
       item[day].total = t
@@ -403,7 +403,6 @@ export default {
       }).then((response2) => {
         let tempWeekTransfers = {}
         tempWeekTransfers.week = this.currentMonday().format('DD-MMM-YYYY')
-        tempWeekTransfers.items = [] // changing this from list to each item object key
         console.log('call2 inventory',response2.data)
         response2.data.forEach(item => {
           // find base units
@@ -514,7 +513,7 @@ export default {
           console.log('dateWeek', dateWeek)
           // create copy of loaded data for original Values
           console.log('creating copy of data for og vals')
-          this.$data.originalTransferVals = JSON.parse(JSON.stringify(this.$data.inventory))
+          this.$data.originalTransferVals = JSON.parse(JSON.stringify(this.$data.inventory[this.$data.categoryValue]))
           console.log(this.$data.originalTransferVals)
           // check for previous and next week
           this.checkPrevNextButtons()
