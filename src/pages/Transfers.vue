@@ -28,7 +28,6 @@
             <q-radio v-model="categoryValue" label="Alcohol" color="teal-10" val="Alcohol" style="margin-left: 10px"/>
             <q-radio v-model="categoryValue" label="Togo" color="teal-10" val="Togo" style="margin-left: 10px"/>
             <q-radio v-model="categoryValue" label="Office" color="teal-10" val="Office" style="margin-left: 10px"/>
-            <q-btn round color="teal-10" icon="refresh" style="margin-left: 10px"/>
           </template>
           <tr slot="header" slot-scope="props">
             <q-th key="item" :props="props">
@@ -407,8 +406,8 @@ export default {
         console.log('call2 inventory',response2.data)
         response2.data.forEach(item => {
           // find base units
-          let tempItem = {}
-          tempItem.item = item.item // won't need
+          let tempItem = {} // to be added to appropriate category list
+          tempItem.item = item.item 
           tempItem.id = item.id
           let tempStock = []
           item.stock.forEach(stock => { 
@@ -424,14 +423,19 @@ export default {
             tempItem[day] = { total: 0, transfers: cleanStock }
             // tempWeekTransfers.items[day] = {total:0 , transfers: tempStock }
           }, this)
-          tempWeekTransfers.items.push(tempItem) // change
+          if (!tempWeekTransfers[item.category]) {
+            tempWeekTransfers[item.category] = []
+          }
+          tempWeekTransfers[item.category].push(tempItem) // change
         }, this)
         console.log('NewTransferWeek', tempWeekTransfers)
-        this.$data.inventory = tempWeekTransfers
+        this.$data.inventory = tempWeekTransfers /////IMPORTANT Maybe leave out and just make a call to transfer db
         api.service('transfers').create(tempWeekTransfers).then((response) => {
           console.log('created week', response.id)
-          this.$data.inventory.id = response.id
+          // this.$data.inventory.id = response.id
+          this.loadTransferData(tempWeekTransfer.week)
         })
+        /*vvvvvvvvMIGHT BE ABLE TO ELIMINATE ALL THIS IF CALL TO LOAD IS BETTER vvvvvvvvvvvvvv
         // load new starting date
         let d = new Date(this.$data.inventory.week)
         this.$data.startingDate = moment(d)
@@ -449,9 +453,11 @@ export default {
         console.log(this.$data.originalTransferVals)
         // check for previous and next week
         this.checkPrevNextButtons()
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^*/
       })
       // this.$data.inventory = this.$data.inventory2
       // end createBlankTransferRec
+      
     },
     initializeData () {
       // find transfer record (week) using this monday's date
