@@ -22,13 +22,15 @@
             />
           </template>
           <template slot="top-right" slot-scope="props">
-            <q-checkbox v-model="categoryArray" label="DryFood" color="teal-10" val="DryFood" />
-            <q-checkbox v-model="categoryArray" label="RefrigeratedFood" val="RefrigeratedFood" color="teal-10" style="margin-left: 10px" />
-            <q-checkbox v-model="categoryArray" label="NonFoodstuff" val="NonFoodstuff" color="teal-10" style="margin-left: 10px" />
-            <q-checkbox v-model="categoryArray" label="Alcohol" color="teal-10" val="Alcohol" style="margin-left: 10px"/>
-            <q-checkbox v-model="categoryArray" label="Togo" color="teal-10" val="Togo" style="margin-left: 10px"/>
-            <q-checkbox v-model="categoryArray" label="Office" color="teal-10" val="Office" style="margin-left: 10px"/>
-            <q-btn round @click="loadInventoryData" color="teal-10" icon="refresh" style="margin-left: 10px"/>
+            <q-btn-dropdown color="primary" :label="categoryValue" >
+              <q-list link>
+                <q-item v-for="n in categoryArray" :key="`1.${n}`" v-close-overlay @click.native="showNotification(n)">
+                  <q-item-main>
+                    <q-item-tile label>{{ n }}</q-item-tile>
+                  </q-item-main>
+                </q-item>
+              </q-list>
+            </q-btn-dropdown>
           </template>
           <q-tr slot="body" slot-scope="props" :props="props">
             <q-td key="item" :props="props">{{ props.row.item }}</q-td>
@@ -54,7 +56,7 @@
         <br>
       </div>
       <div>
-        &nbsp;&nbsp;<q-btn size="md" color="primary" label="Add item to inventory" @click="addItemOverlay" /> <!-- :disable not reading var -->
+        &nbsp;&nbsp;<q-btn size="md" color="primary" label="Add item to inventory" disable @click="addItemOverlay" /> <!-- :disable not reading var -->
       </div>
       <!-- //////// START OF AUDIT MODAL  ////////-->
       <q-modal v-model="auditModal">
@@ -124,7 +126,8 @@ import {
   QCheckbox,
   QBtn,
   QModal,
-  QModalLayout
+  QModalLayout,
+  QBtnDropdown
 } from 'quasar'
 
 export default {
@@ -139,12 +142,14 @@ export default {
     QCheckbox,
     QBtn,
     QModal,
-    QModalLayout
+    QModalLayout,
+    QBtnDropdown
   },
   props: ['user'],
   data () {
     return {
-      categoryArray: ['DryFood'],
+      categoryArray: [],
+      categoryValue: 'DryFood',
       filter: '',
       addItemModal: false,
       auditModal: false,
@@ -259,8 +264,24 @@ export default {
   computed: {
   },
   methods: {
+    showNotification (val) {
+      console.log(val)
+      this.$data.categoryValue = val
+      this.loadInventoryData()
+    },
     loadCategories () {
-      
+      api.service('inventory').find({
+        query: {
+          $select: ['category']
+        }
+      }).then(response=> {
+        response.data.forEach(category => {
+          console.log('ccc',category)
+          if (!this.$data.categoryArray.includes(category.category)) {
+            this.$data.categoryArray.push(category.category)
+          }
+        })
+      })
     },
     addItemOverlay () {
       this.$data.addItemModal = !this.$data.addItemModal
@@ -380,9 +401,7 @@ export default {
         query: {
           $sort: { item: -1},
           $limit: 200,
-          category: {
-            $in: this.$data.categoryArray
-          }
+          category: this.$data.categoryValue
         }
       })
         .then((response) => {
@@ -427,6 +446,7 @@ export default {
         this.$data.users = response.data
       })
     this.loadInventoryData()
+    this.loadCategories()
     /*
     inventory.find({
       query: {

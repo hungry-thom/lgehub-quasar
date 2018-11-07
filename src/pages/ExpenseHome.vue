@@ -91,7 +91,7 @@
           <q-th key="gst" :props="props" class="bg-deep-purple-1">GST</q-th>
           <q-th key="total" :props="props" class="bg-deep-purple-2">Total</q-th>
           <q-th key="expAccount" :props="props">expAccount</q-th>
-          <q-th key="inv" :props="props">Inv</q-th>
+          <q-th key="category" :props="props">Category</q-th>
           <q-th key="expand" :props="props" width='25px'><q-btn size="sm" round dense color="secondary" icon="code" class="q-mr-xs" @click="expandCols" /></q-th>
         </tr>
         <q-tr slot="body" slot-scope="props" :props="props">
@@ -108,8 +108,8 @@
               <q-input v-model="props.row.expAccount" />
             </q-popup-edit>
           </q-td>
-          <q-td key="inv" :props="props">
-            {{ props.row.inv || '-' }}
+          <q-td key="category" :props="props">
+            {{ props.row.category || '-' }}
             <q-popup-edit v-model="props.row.expAccount" title="Update" buttons>
               <q-input v-model="props.row.expAccount" />
             </q-popup-edit>
@@ -154,13 +154,13 @@
     <br>
     <div class="row no-wrap">
       <q-input class="col" ref="newEntry" float-label="Qty" type="number" v-model="newItem.qty" />&nbsp;&nbsp;
-      <q-input class="col" float-label="Item" v-model="newItem.item" > <q-autocomplete :static-data="{field: 'value', list: itemList}" :filter="myFilter"/> </q-input>&nbsp;&nbsp;
+      <q-input class="col" float-label="Item" v-model="newItem.item" @blur="linkCategory" > <q-autocomplete :static-data="{field: 'value', list: itemList}" :filter="myFilter"/> </q-input>&nbsp;&nbsp;
       <q-input class="col" float-label="Unit" v-model="newItem.unit" @click="popupUnitList" > <q-autocomplete :static-data="{field: 'value', list: computedUnitsList}" :filter="myFilter"/> </q-input>&nbsp;&nbsp;
       <q-input class="col" float-label="Cost" type="number" v-model="newItem.amount" />
     </div>
     <div class="row no-wrap">
       <q-input class="col" float-label="exp Account" v-model="newItem.expAccount" @keyup.enter="addItem"> <q-autocomplete :static-data="{field: 'value', list: expAccountList}" :filter="myFilter" /> </q-input>&nbsp;&nbsp;
-      <q-input class="col" float-label="Inv Account" v-model="newItem.inv" @keyup.enter="addItem"/>&nbsp;&nbsp;
+      <q-input class="col" float-label="Category" v-model="newItem.category" @keyup.enter="addItem"> <q-autocomplete :static-data="{field: 'value', list: categoryList}" :filter="myFilter" /> </q-input>&nbsp;&nbsp;
     </div>
     <br>
     <div class="row no-wrap">
@@ -236,6 +236,8 @@ export default {
         transItems: [],
       },
       itemList: [],
+      categoryList: [],
+      itemCategory: [],
       vendorsList: [
       ],
       paymentTypes: [
@@ -297,7 +299,7 @@ export default {
         unit: '',
         amount: '',
         expAccount: '',
-        inv: '',
+        category: '',
         taxable: 'yes'
       },
       unitsList: {},
@@ -375,14 +377,14 @@ export default {
           classes: "bg-deep-purple-1"
         },
         {
-          name: 'inv',
+          name: 'category',
           required: false,
-          label: 'Inv',
+          label: 'Category',
           align: 'center',
-          field: 'inv'
+          field: 'category'
         }
       ],
-      visibleColumns: ['date1', 'paymentAccount', 'vendor', 'grandTotal', 'subTotal', 'gstTotal', 'expAccount', 'inv'],
+      visibleColumns: ['date1', 'paymentAccount', 'vendor', 'grandTotal', 'subTotal', 'gstTotal', 'expAccount', 'category'],
       modalColumns: [
         {
           name: 'id',
@@ -456,11 +458,11 @@ export default {
           field: 'expAccount'
         },
         {
-          name: 'inv',
+          name: 'category',
           required: false,
-          label: 'Inv',
+          label: 'Category',
           align: 'center',
-          field: 'inv'
+          field: 'category'
         },
         {
           name: 'expand',
@@ -471,7 +473,7 @@ export default {
           style: 'width: 500px'
         }
       ],
-      visibleModalColumns: ['qty', 'item', 'unit', 'price', 'cost', 'gst', 'total', 'expAccount', 'inv', 'expand']
+      visibleModalColumns: ['qty', 'item', 'unit', 'price', 'cost', 'gst', 'total', 'expAccount', 'category', 'expand']
     }
   },
   computed: {
@@ -531,6 +533,13 @@ export default {
       })
       */
     },
+    linkCategory () {
+      let n = _.findIndex(this.$data.itemCategory, {item: this.$data.newItem.item})
+      if (n > -1) {
+        this.$data.newItem.category = this.$data.itemCategory[n].category
+      }
+       
+    },
     newExpense () {
       this.$data.transaction = {
         date1: new Date(),
@@ -549,7 +558,7 @@ export default {
         unit: '',
         amount: '',
         expAccount: '',
-        inv: '',
+        category: '',
         taxable: 'yes'
       }
       this.$data.expenseModal = !this.$data.expenseModal
@@ -585,7 +594,7 @@ export default {
       if (this.$data.visibleModalColumns.length == 10) {
         this.$data.visibleModalColumns = ['qty', 'item', 'unit', 'price', 'cost', 'gst', 'total', 'expand']
       } else {
-        this.$data.visibleModalColumns = ['qty', 'item', 'unit', 'price', 'cost', 'gst', 'total', 'expAccount', 'inv', 'expand']
+        this.$data.visibleModalColumns = ['qty', 'item', 'unit', 'price', 'cost', 'gst', 'total', 'expAccount', 'category', 'expand']
       }
     },
     validateVendor () {
@@ -598,7 +607,6 @@ export default {
       console.log('start',this.$data.newItem.taxable)
       let line = JSON.parse(JSON.stringify(this.$data.newItem))
       if (line.expAccount != '') {
-        line.price = _.round((line.amount / line.qty), 2)
         if (this.$data.newItem.taxable == 'yes') {
           if (this.$data.gstIncluded == 'yes') {
             line.gst = _.round((line.amount / 9), 2)
@@ -611,6 +619,7 @@ export default {
           line.gst = 0
           line.cost = line.amount
         }
+        line.price = _.round((line.cost / line.qty), 2)
         line.total = _.round((line.gst + line.cost), 2)
         delete line['amount']
         this.$data.transaction.transItems.push(line)
@@ -621,7 +630,7 @@ export default {
           unit: '',
           amount: '',
           expAccount: '',
-          inv: '',
+          category: '',
           taxable: this.$data.newItem.taxable
         }
         this.$data.newItem = tempItem
@@ -690,7 +699,7 @@ export default {
         console.log('inventoryData loaded', inventoryData)
       }).then((response) => {
         trans.transItems.forEach(item => {
-          if (item.inv) {
+          if (item.category) {
             let actualUnit = ''
             let actualQty = 0
             // need to break out unit if entered as a case
@@ -712,6 +721,7 @@ export default {
               let tmpObj = {
                 item: item.item,
                 lastConf: 0,
+                category: item.category,
                 stock: [
                   {
                     unit: actualUnit,
@@ -897,6 +907,70 @@ export default {
         this.$data.expenses = response.data
         console.log('exp resp', response.data)
       })
+    },
+    loadPricelistData() {
+      api.service('pricelist').find({
+        query: {
+          $sort: { item: 1 }
+        }
+      }).then((response) => {
+        // load pricelist data
+        this.$data.pricelist = response.data
+        let uniqueVendors = []
+        response.data.forEach(item => {
+          // create item list for autocomplete
+          /* ///// Item and unit autocomplete list will be handled by inventory date
+          let o = {value: item.item, label: item.item}
+          this.$data.itemList.push(o)
+          //create list for each item units list for autocomplete
+          this.$data.unitsList[item.item] = []
+          */
+          let uniqueUnits = []
+          item.vendors.forEach(unit => {
+            // vendor list, for purposed of autocomplete list make sure values aren't repeated
+            if (!uniqueVendors.includes(unit.vendor)) {
+              let v = {value: unit.vendor, label: unit.vendor}
+              this.$data.vendorsList.push(v)
+              uniqueVendors.push(unit.vendor)
+            }
+            // units list, for purposed of autocomplete list make sure values aren't repeated
+            if (!uniqueUnits.includes(unit.unit)) {
+              let u = {value: unit.unit, label: unit.unit}
+              // this.$data.unitsList[item.item].push(u) //may have to load to temp list and push outside this loop
+              uniqueUnits.push(unit.unit)
+            }
+          }, this)
+          // list = someVar.filter((x, i, a) => a.indexOf(x) == i) //sete list with unique values
+        })
+      })
+    },
+    loadInventoryData() {
+      api.service('inventory').find({
+        query: {
+          $sort: { item: 1 }
+        }
+      }).then((response) => {
+        this.$data.itemCategory = []
+        response.data.forEach(item => {
+          this.$data.itemCategory.push({item:item.item, category:item.category})
+          // create item list for autocomplete
+          let o = {value: item.item, label: item.item}
+          this.$data.itemList.push(o)
+          //create list for each item units list for autocomplete
+          this.$data.unitsList[item.item] = []
+          //let uniqueUnits = []
+          item.stock.forEach(unit => {
+            let u = {value: unit.unit, label: unit.unit}
+            this.$data.unitsList[item.item].push(u)
+          }, this)
+          let check = _.findIndex(this.$data.categoryList, {value: item.category})
+          if (check < 0) {
+            let c = {value: item.category, label: item.category}
+            this.$data.categoryList.push(c)
+          }
+          // list = someVar.filter((x, i, a) => a.indexOf(x) == i) //sete list with unique values
+        })
+      })
     }
   },
   mounted () {
@@ -906,6 +980,9 @@ export default {
     this.$data.endDate = new Date()
     this.loadExpenses(this.$data.startDate, this.$data.startDate)
     // get pricelist data from rethinkdb
+    this.loadPricelistData()
+    this.loadInventoryData() // if not using inventory data for item and unit list, unblock code in loadpricelistdata
+    /*
     api.service('pricelist').find({
       query: {
         $sort: { item: 1 }

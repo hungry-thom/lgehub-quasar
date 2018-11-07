@@ -64,7 +64,8 @@ module.exports = function (ctx) {
         'QPageSticky'
       ],
       directives: [
-        'Ripple'
+        'Ripple',
+        'CloseOverlay'
       ],
       // Quasar plugins
       plugins: [

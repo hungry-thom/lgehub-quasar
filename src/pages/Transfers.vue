@@ -22,12 +22,15 @@
             />
           </template>
           <template slot="top-right" slot-scope="props">
-            <q-radio v-model="categoryValue" label="-DryFood" color="teal-10"  val="DryFood" @input="loadTransferData(inventory.week)" />
-            <q-radio v-model="categoryValue" label="-RefrigeratedFood" val="RefrigeratedFood" color="teal-10" @input="loadTransferData(inventory.week)" style="margin-left: 10px" />
-            <q-radio v-model="categoryValue" label="-NonFoodstuff" val="NonFoodstuff" color="teal-10" @input="loadTransferData(inventory.week)" style="margin-left: 10px" />
-            <q-radio v-model="categoryValue" label="-Alcohol" color="teal-10" val="Alcohol" @input="loadTransferData(inventory.week)" style="margin-left: 10px"/>
-            <q-radio v-model="categoryValue" label="-Togo" color="teal-10" val="Togo" @input="loadTransferData(inventory.week)" style="margin-left: 10px"/>
-            <q-radio v-model="categoryValue" label="-Office" color="teal-10" val="Office" @input="loadTransferData(inventory.week)" style="margin-left: 10px"/>
+            <q-btn-dropdown color="primary" :label="categoryValue" >
+              <q-list link>
+                <q-item v-for="n in categoryArray" :key="`1.${n}`" v-close-overlay @click.native="showNotification(n)">
+                  <q-item-main>
+                    <q-item-tile label>{{ n }}</q-item-tile>
+                  </q-item-main>
+                </q-item>
+              </q-list>
+            </q-btn-dropdown>
           </template>
           <tr slot="header" slot-scope="props">
             <q-th key="item" :props="props">
@@ -143,7 +146,8 @@ import {
   QCheckbox,
   QBtn,
   QField,
-  QRadio
+  QRadio,
+  QBtnDropdown
 } from 'quasar'
 
 export default {
@@ -159,12 +163,14 @@ export default {
     QCheckbox,
     QBtn,
     QField,
-    QRadio
+    QRadio,
+    QBtnDropdown
   },
   props: ['user'],
   data () {
     return {
       categoryValue: 'DryFood',
+      categoryArray: [],
       itemList: [],
       startingDate: moment(),
       days: ['Mon','Tue','Wed','Thu','Fri','Sat'],
@@ -248,6 +254,25 @@ export default {
   computed: {
   },
   methods: {
+    showNotification (val) {
+      console.log(val)
+      this.$data.categoryValue = val
+      this.loadTransferData(this.$data.inventory.week)
+    },
+    loadCategories () {
+      api.service('inventory').find({
+        query: {
+          $select: ['category']
+        }
+      }).then(response=> {
+        response.data.forEach(category => {
+          console.log('ccc',category)
+          if (!this.$data.categoryArray.includes(category.category)) {
+            this.$data.categoryArray.push(category.category)
+          }
+        })
+      })
+    },
     updateCount (item, day) {
       console.log('?????',item)
       // props.row.tue
@@ -559,6 +584,7 @@ export default {
     //load tranfer data (api.service('transfers'))
     //this.$data.startingDate = this.currentMonday()
     this.initializeData()
+    this.loadCategories()
     // this.loadTransferData()
     /*
     inventory.on('created', inv => {
