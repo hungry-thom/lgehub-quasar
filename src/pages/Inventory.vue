@@ -44,10 +44,12 @@
                 </div>
                 <div>
                   <!-- <q-checkbox v-model="inventory[props.row.__index].confirmed" checked-icon="check_circle" unchecked-icon="remove_circle_outline" class="q-mr-md" /> -->
-                  <q-checkbox v-model="confirmations[props.row.__index].confirmed" checked-icon="check_circle" unchecked-icon="remove_circle_outline" @input="confirmInv(props.row)" class="q-mr-md" />
+                  <q-checkbox v-model="confirmations[props.row.__index].confirmed" checked-icon="check_circle" :unchecked-icon="props.row.uncheckedIcon" @input="confirmInv(props.row)" class="q-mr-md">
+                    <q-tooltip :delay="1000">Confirmed: {{props.row.lastConf.substr(0,10)}}</q-tooltip>
+                  </q-checkbox>
                   <q-btn size="sm" round dense color="negative" icon="warning" class="q-mr-xs" v-if="confirmations[props.row.__index].warning" />
-                  <q-btn size="sm" round dense color="secondary" icon="flag" class="q-mr-xs" @click="auditItem(props.row)" />
-                  <q-btn size="sm" round dense color="secondary" icon="shopping_cart" class="q-mr-xs" />
+                  <q-btn size="sm" round dense color="secondary" icon="zoom_in" class="q-mr-xs" @click="auditItem(props.row)" />
+                  <q-btn size="md" round dense color="secondary" icon="shopping_cart" class="q-mr-xs" />
                 </div>
               </div>
             </q-td>
@@ -388,7 +390,8 @@ export default {
             unit: unit.unit,
             user: this.$props.user.email
           }
-          this.$data.confirmations[row.__index].warning = false
+          //this.$data.confirmations[row.__index].warning = false
+          this.$data.inventory[row.__index].lastConf = new Date().toISOString()
           api.service('inventory').patch(row.id, {lastConf: new Date()})
           api.service('audit').create(auditObj)
         }, this)
@@ -414,10 +417,19 @@ export default {
             let timeDiff = moment().dayOfYear() - moment(item.lastConf).dayOfYear()
             if (timeDiff > 1) {
               item.confirmed = false
-              item.warning = ((timeDiff > 7) ? true : false)
+              if (timeDiff > 7) {
+                item.uncheckedIcon = 'cancel'
+                // item.color = 'negative'
+              } else {
+                item.uncheckedIcon = 'remove_circle_outline'
+                // item.color = 'secondary'
+              }
+              // item.warning = ((timeDiff > 7) ? true : false) // want to trigger warning for low stock
+              // item.cartColor = 'negative'
             } else {
               item.confirmed = true
               item.warning = false
+              item.color = 'secondary'
             }
             let og = JSON.parse(JSON.stringify(item.stock))
             this.$data.confirmations.push( {item: item.item, confirmed: item.confirmed, warning: item.warning, originalStock: og} )
