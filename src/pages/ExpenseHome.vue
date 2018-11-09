@@ -163,17 +163,20 @@
       <q-input class="col" float-label="Category" v-model="newItem.category" @keyup.enter="addItem"> <q-autocomplete :static-data="{field: 'value', list: categoryList}" :filter="myFilter" /> </q-input>&nbsp;&nbsp;
     </div>
     <br>
-    <div>
+    <div class="row no-wrap">
       <div>
-        <q-checkbox v-model="newItem.taxable" label="Taxable" true-value="yes" false-value="no"/><br>
-        <q-checkbox v-model="gstIncluded" label="GST Included" true-value="yes" false-value="no" :disable="gstIncludedVisibility" /><br>
-        <q-checkbox v-model="newItem.add2Inventory" label="add2Inventory" /><br>
+        <q-checkbox class="float-right" v-model="newItem.taxable" left-label label="Taxable" true-value="yes" false-value="no"/>
+        <br>
+        <q-checkbox v-model="gstIncluded" left-label label="GST Included" true-value="yes" false-value="no" :disable="gstIncludedVisibility" />
       </div>
-      <div class="q-pa-xs">
+      <div>
+        <q-checkbox v-model="newItem.add2Inventory" class="float-right q-pl-md" left-label label="add2Inventory" /><br>
+        <q-checkbox v-model="add2Pricelist" class="float-right" left-label label="add2Pricelist" /><br>
+      </div>
+      <div class="q-pl-md">
         &nbsp;&nbsp;<q-btn size="md" color="primary" label="add Item" @click="addItem" />
       </div>
     </div>
-    <br>
     </div>
   </q-modal-layout>
   </q-modal>
@@ -293,6 +296,7 @@ export default {
         }
       ],
       checked: false,
+      add2Pricelist: true,
       newItem: {
         qty: '',
         item: '',
@@ -633,7 +637,8 @@ export default {
           amount: '',
           expAccount: '',
           category: '',
-          taxable: this.$data.newItem.taxable
+          taxable: this.$data.newItem.taxable,
+          add2Inventory: this.$data.newItem.add2Inventory
         }
         this.$data.newItem = tempItem
       } else {
@@ -953,6 +958,7 @@ export default {
         }
       }).then((response) => {
         this.$data.itemCategory = []
+        console.log(response)
         response.data.forEach(item => {
           this.$data.itemCategory.push({item:item.item, category:item.category})
           // create item list for autocomplete
@@ -966,6 +972,7 @@ export default {
             this.$data.unitsList[item.item].push(u)
           }, this)
           let check = _.findIndex(this.$data.categoryList, {value: item.category})
+          console.log('check',this.$data.categoryList, item.category)
           if (check < 0) {
             let c = {value: item.category, label: item.category}
             this.$data.categoryList.push(c)
@@ -981,6 +988,7 @@ export default {
     this.$data.startDate = new Date()
     this.$data.endDate = new Date()
     this.loadExpenses(this.$data.startDate, this.$data.startDate)
+    //// !!!! THERE WILL BE ISSUES ONCE RECORDS GO BEYOND 200 !!!!!!!
     // get pricelist data from rethinkdb
     this.loadPricelistData()
     this.loadInventoryData() // if not using inventory data for item and unit list, unblock code in loadpricelistdata

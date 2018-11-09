@@ -6,7 +6,8 @@ const hooks = require('./inventory.hooks');
 module.exports = function (app) {
   const Model = createModel(app);
   const paginate = app.get('paginate');
-  paginate.max=200;
+  paginate.max=500;
+  paginate.default=500;
 
   const options = {
     name: 'inventory',
