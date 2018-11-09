@@ -357,6 +357,7 @@ export default {
       console.log(this.$data.inventory)
       api.service('audit').find({
         query: {
+          $sort: { recordDate: -1 },
           item: itemId.item,
           table: 'inventory',
           $limit: 50
