@@ -1,10 +1,10 @@
 const r = require('rethinkdbdash')({
-  db: 'test', 
+  db: 'koox2', 
   servers: [{
-    host: 'localhost',
+    host: 'ec2-52-86-240-100.compute-1.amazonaws.com',
     port:28015
-  }]
-  //password:'lifeinthewoods'
+  }],
+  password:'lifeinthewoods'
 });
 
 module.exports = function (app) {
