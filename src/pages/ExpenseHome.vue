@@ -800,6 +800,7 @@ export default {
           let tmpObj = {
             item: item.item,
             taxable: item.taxable,
+            category: item.category,
             vendors: [
               {
                 unit: item.unit,
