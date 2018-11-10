@@ -79,6 +79,7 @@ export default {
       messages: [],
       users: [],
       pricelist: [
+        //sample doc
         {
           id:  "adaaa2a3-2634-45ec-befd-f38c7e22e13f" ,
           item:  "Balsamic" ,
@@ -87,33 +88,14 @@ export default {
             {
               unit: '1-gal',
               vendor: 'Helen',
-              cost: 43 ,
+              price: 43 ,
               updated:  "2018-08-16T19:51:25.991Z"
             },
             {
               unit: '1-gal',
               vendor: 'Madisco',
-              cost: 34 ,
+              price: 34 ,
               updated:  "2018-07-18T18:23:17.697Z"
-            }
-          ]
-        },
-        {
-          id:  "0301daa0-d637-440c-83de-8588dfdddc4b" ,
-          item:  "JamSmall" ,
-          taxable:  "no" ,
-          vendors: [
-            {
-              unit: '8-oz',
-              vendor: 'JorgeVasquez',
-              cost: 1.25 ,
-              updated:  "2018-06-23T19:27:21.789Z"
-            },
-            {
-              unit: '12-oz',
-              vendor: 'JorgeVasquez',
-              cost: 5,
-              updated:  "2018-06-23T19:27:21.789Z"
             }
           ]
         }
@@ -173,11 +155,11 @@ export default {
           field: 'unit'
         },
         {
-          name: 'cost',
+          name: 'price',
           required: true,
-          label: 'Cost',
+          label: 'Price',
           align: 'left',
-          field: 'cost',
+          field: 'price',
           sortable: true
         },
         {
@@ -284,7 +266,7 @@ export default {
               vendor.compQty = pQty
               vendor.compBase = pBase
               vendor.compUnit = pUnit
-              vendor.compValue = vendor.cost / vendor.compQty
+              vendor.compValue = vendor.price / vendor.compQty
               sortedVendors.push(vendor)
             } else {
               // compare vendor to sortedVendors list find place in order
@@ -300,8 +282,8 @@ export default {
                   vendor.compBase = comp.compBase
                 }
                 ////////Maybe can break out vvvvvvvv
-                // base is same, get per unit cost
-                vendor.compValue = vendor.cost / vendor.compQty
+                // base is same, get per unit price
+                vendor.compValue = vendor.price / vendor.compQty
                 let diff = vendor.compValue - comp.compValue
                 if (diff > 0) {
                   // more expensive than comp

@@ -689,14 +689,7 @@ export default {
       // close overlay
       this.overlay()
       // reload expenses list from rethinkdb
-      api.service('expenses').find({
-        query: {
-          $sort: { date1: -1 }
-        }
-      }).then((response) => {
-        this.$data.expenses = response.data
-        console.log('exp resp', response.data)
-      })
+      this.loadExpenses(this.$data.startDate, this.$data.endDate)
     },
     updateInventory (trans) {
       // first get inventory data (use store in future?)
@@ -804,7 +797,7 @@ export default {
             vendors: [
               {
                 unit: item.unit,
-                cost: item.cost,
+                price: item.price,
                 updated: trans.date1,
                 vendor: trans.vendor
               }
@@ -816,7 +809,7 @@ export default {
               table: 'priceList',
               type: 'expense',
               recordDate: trans.date1,
-              cost: item.cost,
+              price: item.price,
               item: item.item,
               unit: item.unit,
               vendor: trans.vendor,
@@ -835,7 +828,7 @@ export default {
             console.log('newUnit/Vendor not found')
             let tmpObj = {
               unit: item.unit,
-              cost: item.cost,
+              price: item.price,
               updated: trans.date1,
               vendor: trans.vendor
             }
@@ -846,7 +839,7 @@ export default {
                 table: 'priceList',
                 type: 'expense',
                 recordDate: trans.date1,
-                cost: item.cost,
+                price: item.price,
                 item: item.item,
                 unit: item.unit,
                 vendor: trans.vendor,
@@ -862,12 +855,12 @@ export default {
               // record needs updating
               // first check if there is a price change
               console.log('newRecord')
-              let diff = item.cost - tVendors[d2].cost
+              let diff = item.price - tVendors[d2].price
               console.log(diff)
               if (diff !== 0) {
                 console.log(item.item, item.unit, 'price changed by', diff)
               }
-              tVendors[d2] = { cost: item.cost , unit: item.unit, vendor: trans.vendor, updated: trans.date1 }
+              tVendors[d2] = { price: item.price , unit: item.unit, vendor: trans.vendor, updated: trans.date1 }
               console.log('new Vendors', tVendors[d2])
               // need to get item id, either by loading into transItems or lookup
               api.service('pricelist').patch(itemId, {vendors: tVendors }).then((response)=> {
@@ -876,7 +869,7 @@ export default {
                   table: 'priceList',
                   type: 'expense',
                   recordDate: trans.date1,
-                  cost: item.cost,
+                  price: item.price,
                   change: diff,
                   item: item.item,
                   unit: item.unit,
