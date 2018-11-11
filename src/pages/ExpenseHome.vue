@@ -236,7 +236,7 @@ export default {
         vendor: '',
         transNum: '',
         paymentAccount: '',
-        transItems: [],
+        transItems: []
       },
       itemList: [],
       categoryList: [],
@@ -311,7 +311,7 @@ export default {
       pricelist: [],
       gstIncluded: 'yes',
       pagination: {
-        sortBy: name, // String, column "item" property value
+        sortBy: name, // String, column 'item' property value
         descending: true,
         page: 1,
         rowsPerPage: 0 // current rows per page being displayed,
@@ -330,7 +330,7 @@ export default {
           label: 'Date',
           align: 'left',
           field: 'date1',
-          classes: "bg-deep-purple-1"
+          classes: 'bg-deep-purple-1'
         },
         {
           name: 'paymentAccount',
@@ -338,7 +338,7 @@ export default {
           label: 'paymentAcct',
           align: 'left',
           field: 'paymentAccount',
-          classes: "bg-deep-purple-1"
+          classes: 'bg-deep-purple-1'
         },
         {
           name: 'vendor',
@@ -347,7 +347,7 @@ export default {
           align: 'left',
           field: 'vendor',
           sortable: true,
-          classes: "bg-deep-purple-1"
+          classes: 'bg-deep-purple-1'
         },
         {
           name: 'grandTotal',
@@ -355,7 +355,7 @@ export default {
           label: 'gTotal',
           align: 'left',
           field: 'grandTotal',
-          classes: "bg-deep-purple-1"
+          classes: 'bg-deep-purple-1'
         },
         {
           name: 'subTotal',
@@ -363,7 +363,7 @@ export default {
           label: 'sTotal',
           align: 'left',
           field: 'subTotal',
-          classes: "bg-deep-purple-1"
+          classes: 'bg-deep-purple-1'
         },
         {
           name: 'gstTotal',
@@ -371,7 +371,7 @@ export default {
           label: 'prepaidGST',
           align: 'left',
           field: 'gstTotal',
-          classes: "bg-deep-purple-1"
+          classes: 'bg-deep-purple-1'
         },
         {
           name: 'expAccount',
@@ -379,7 +379,7 @@ export default {
           label: 'expAccount',
           align: 'left',
           field: 'expAccount',
-          classes: "bg-deep-purple-1"
+          classes: 'bg-deep-purple-1'
         },
         {
           name: 'category',
@@ -404,7 +404,7 @@ export default {
           label: 'Qty',
           align: 'left',
           field: 'qty',
-          classes: "bg-deep-purple-1"
+          classes: 'bg-deep-purple-1'
         },
         {
           name: 'item',
@@ -413,7 +413,7 @@ export default {
           align: 'left',
           field: 'item',
           sortable: true,
-          classes: "bg-deep-purple-1"
+          classes: 'bg-deep-purple-1'
         },
         {
           name: 'unit',
@@ -421,7 +421,7 @@ export default {
           label: 'Unit',
           align: 'left',
           field: 'unit',
-          classes: "bg-deep-purple-1"
+          classes: 'bg-deep-purple-1'
         },
         {
           name: 'price',
@@ -429,7 +429,7 @@ export default {
           label: 'Price',
           align: 'left',
           field: 'price',
-          classes: "bg-deep-purple-1"
+          classes: 'bg-deep-purple-1'
         },
         {
           name: 'cost',
@@ -437,7 +437,7 @@ export default {
           label: 'Cost',
           align: 'left',
           field: 'cost',
-          classes: "bg-deep-purple-1"
+          classes: 'bg-deep-purple-1'
         },
         {
           name: 'gst',
@@ -445,7 +445,7 @@ export default {
           label: 'GST',
           align: 'left',
           field: 'gst',
-          classes: "bg-deep-purple-1"
+          classes: 'bg-deep-purple-1'
         },
         {
           name: 'total',
@@ -453,7 +453,7 @@ export default {
           label: 'Total',
           align: 'left',
           field: 'total',
-          classes: "bg-deep-purple-2"
+          classes: 'bg-deep-purple-2'
         },
         {
           name: 'expAccount',
@@ -509,7 +509,7 @@ export default {
       return _.round(gt,2)
     },
     gstIncludedVisibility () {
-      if (this.$data.newItem.taxable == 'yes') {
+      if (this.$data.newItem.taxable === 'yes') {
         return false
       } else {
         this.$data.gstIncluded = 'no'
@@ -597,7 +597,7 @@ export default {
       this.$data.transaction.transItems.splice(tmpIndex, 1)
     },
     expandCols () {
-      if (this.$data.visibleModalColumns.length == 10) {
+      if (this.$data.visibleModalColumns.length === 10) {
         this.$data.visibleModalColumns = ['qty', 'item', 'unit', 'price', 'cost', 'gst', 'total', 'expand']
       } else {
         this.$data.visibleModalColumns = ['qty', 'item', 'unit', 'price', 'cost', 'gst', 'total', 'expAccount', 'category', 'expand']
@@ -612,9 +612,9 @@ export default {
     addItem () {
       console.log('start',this.$data.newItem.taxable)
       let line = JSON.parse(JSON.stringify(this.$data.newItem))
-      if (line.expAccount != '') {
-        if (this.$data.newItem.taxable == 'yes') {
-          if (this.$data.gstIncluded == 'yes') {
+      if (line.expAccount !== '') {
+        if (this.$data.newItem.taxable === 'yes') {
+          if (this.$data.gstIncluded === 'yes') {
             line.gst = _.round((line.amount / 9), 2)
             line.cost = _.round((line.amount / 1.125), 2)
           } else {

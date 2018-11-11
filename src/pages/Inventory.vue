@@ -160,7 +160,6 @@ export default {
       messages: [],
       users: [],
       inventory: [],
-      filter: '',
       checked: false,
       confirmations : [],
       pagination: {

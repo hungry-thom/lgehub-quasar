@@ -49,7 +49,6 @@
 <script>
 import moment from 'moment'
 import api from 'src/api'
-import _ from 'lodash'
 import convert from 'convert-units'
 import {
   QChatMessage,
@@ -81,28 +80,28 @@ export default {
       pricelist: [
         //sample doc
         {
-          id:  "adaaa2a3-2634-45ec-befd-f38c7e22e13f" ,
-          item:  "Balsamic" ,
-          taxable:  "yes" ,
+          id:  'adaaa2a3-2634-45ec-befd-f38c7e22e13f' ,
+          item:  'Balsamic' ,
+          taxable:  'yes' ,
           vendors: [
             {
               unit: '1-gal',
               vendor: 'Helen',
               price: 43 ,
-              updated:  "2018-08-16T19:51:25.991Z"
+              updated:  '2018-08-16T19:51:25.991Z'
             },
             {
               unit: '1-gal',
               vendor: 'Madisco',
               price: 34 ,
-              updated:  "2018-07-18T18:23:17.697Z"
+              updated:  '2018-07-18T18:23:17.697Z'
             }
           ]
         }
       ],
       filter: '',
       pagination: {
-        sortBy: name, // String, column "item" property value
+        sortBy: name, // String, column 'item' property value
         descending: true,
         page: 1,
         rowsPerPage: 0 // current rows per page being displayed,
@@ -278,8 +277,15 @@ export default {
                 } else {
                   // base not same need to change
                   console.log('converting', item.item, pBase, comp.compBase, index,sortedVendors[index])
-                  vendor.compQty = convert(pQty).from(pBase).to(comp.compBase)
-                  vendor.compBase = comp.compBase
+                  // check to see if compBase &&& pBase in convert units.
+                  let possibleList = convert().possibilities()
+                  if (possibleList.includes(pBase) && possibleList.includes(compBase)) {
+                    vendor.compQty = convert(pQty).from(pBase).to(comp.compBase)
+                    vendor.compBase = comp.compBase
+                  }
+                  
+                  // vendor.compQty = convert(pQty).from(pBase).to(comp.compBase)
+                  // vendor.compBase = comp.compBase
                 }
                 ////////Maybe can break out vvvvvvvv
                 // base is same, get per unit price

@@ -24,9 +24,6 @@
         <q-btn flat @click="goTo('signin')" v-show="!authenticated">
           Sign In
         </q-btn>
-        <q-btn flat @click="goTo('register')" v-show="!authenticated">
-          Register
-        </q-btn>
         <q-btn flat round @click="goTo('home')" v-show="authenticated">
           <q-icon name="home" />
           <q-tooltip anchor="bottom middle" self="top middle" :offset="[0, 20]">Home</q-tooltip>
@@ -97,7 +94,7 @@
 
         <q-collapsible icon="info" label="About">
           <p style="padding: 25px;" class="text-grey-7">
-            This is a template project combining the power of Quasar and Feathers to create real-time web apps.
+            lgHub v0.1
           </p>
         </q-collapsible>
 
