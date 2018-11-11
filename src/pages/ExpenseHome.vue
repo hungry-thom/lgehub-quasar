@@ -47,13 +47,18 @@
     </div>
     <br>
     <!-- //////// START OF MODAL' ////////-->
-    <q-modal v-model="expenseModal">
+    <q-modal v-model="expenseModal" :maximized="boolScreen">
     <q-modal-layout> <!-- class="q-pa-sm" -->
       <q-toolbar slot="header">
         <q-btn
           flat
           icon="keyboard_backspace"
           @click="overlay"
+        />
+        <q-btn
+          flat
+          icon="fullscreen"
+          @click="toggleFullscreen"
         />
         <q-toolbar-title>
           Enter/Edit Expense
@@ -171,7 +176,7 @@
       </div>
       <div>
         <q-checkbox v-model="newItem.add2Inventory" class="float-right q-pl-md" left-label label="add2Inventory" /><br>
-        <q-checkbox v-model="add2Pricelist" class="float-right" left-label label="add2Pricelist" /><br>
+        <q-checkbox v-model="transaction.add2Pricelist" class="float-right" left-label label="add2Pricelist" /><br>
       </div>
       <div class="q-pl-md">
         &nbsp;&nbsp;<q-btn size="md" color="primary" label="add Item" @click="addItem" />
@@ -225,6 +230,7 @@ export default {
   props: ['user'],
   data () {
     return {
+      boolScreen: false,
       startDate: '',
       endDate: '',
       expenseModal: false,
@@ -236,7 +242,8 @@ export default {
         vendor: '',
         transNum: '',
         paymentAccount: '',
-        transItems: []
+        transItems: [],
+        add2Pricelist: true
       },
       itemList: [],
       categoryList: [],
@@ -255,6 +262,18 @@ export default {
         {
           value: 'ccardScotia',
           label: 'ccardScotia'
+        },
+        {
+          value: 'checkAtl#',
+          label: 'checkAtl#'
+        },
+        {
+          value: 'cashAtl',
+          label: 'cashAtl'
+        },
+        {
+          value: 'payableAcct',
+          label: 'payableAcct'
         }
       ],
       expAccountList: [
@@ -296,7 +315,6 @@ export default {
         }
       ],
       checked: false,
-      add2Pricelist: true,
       newItem: {
         qty: '',
         item: '',
@@ -518,6 +536,10 @@ export default {
     }
   },
   methods: {
+    toggleFullscreen () {
+      this.$data.boolScreen = !this.$data.boolScreen
+      console.log('fullscreen', this.$data.boolScreen)
+    },
     selectDate (newVal) {
       console.log('newVal',newVal)
     },
@@ -546,12 +568,14 @@ export default {
        
     },
     newExpense () {
+      let carryOver = this.$data.transaction.add2Pricelist // maintain value
       this.$data.transaction = {
         date1: new Date(),
         vendor: '',
         transNum: '',
         paymentAccount: '',
         transItems: [],
+        add2Pricelist: carryOver
       }
       this.overlay()
     },
@@ -568,6 +592,7 @@ export default {
         add2Inventory: false
       }
       this.$data.expenseModal = !this.$data.expenseModal
+      this.$refs.inputVendor.focus()
     },
     deleteExpense() {
       console.log('delete expense')
@@ -649,6 +674,7 @@ export default {
           position: 'center'
         })
       }
+      this.$refs.newEntry.focus()
       console.log('end',this.$data.newItem.taxable)
     },
     submitExpense () {
@@ -677,7 +703,11 @@ export default {
           // probably expenseId to have seperate entries for edits (ie full trail)
           this.$data.transaction.expenseId = response.id
           let cleanTransactionData = JSON.parse(JSON.stringify(this.$data.transaction))
-          this.updatePrices(cleanTransactionData)
+          // can choose to not register to pricelist
+          if (this.$data.transaction.add2Pricelist) {
+            this.updatePrices(cleanTransactionData)
+          }
+          // inventory updata is based line by line
           this.updateInventory(cleanTransactionData)
           // submit expense record for audit after price and inv methods for separate table keys
           this.$data.transaction.table = 'expenses'
@@ -803,6 +833,7 @@ export default {
               }
             ]
           }
+          this.$data.pricelist.push(tmpObj) //this should prevent new items getting added twice
           api.service('pricelist').create(tmpObj).then((response)=> {
             console.log('created new item')
             let auditObj = {
@@ -910,9 +941,11 @@ export default {
       })
     },
     loadPricelistData() {
+      // there will be a problem if docs exceed 200
       api.service('pricelist').find({
         query: {
-          $sort: { item: 1 }
+          $sort: { item: 1 },
+          $limit: 500
         }
       }).then((response) => {
         // load pricelist data
