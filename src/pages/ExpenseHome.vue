@@ -97,26 +97,52 @@
           <q-th key="total" :props="props" class="bg-deep-purple-2">Total</q-th>
           <q-th key="expAccount" :props="props">expAccount</q-th>
           <q-th key="category" :props="props">Category</q-th>
-          <q-th key="expand" :props="props" width='25px'><q-btn size="sm" round dense color="secondary" icon="code" class="q-mr-xs" @click="expandCols" /></q-th>
+          <q-th key="taxable" :props="props" >Taxable</q-th> <!-- width='25px'><q-btn size="sm" round dense color="secondary" icon="code" class="q-mr-xs" @click="expandCols" /></q-th> -->
         </tr>
         <q-tr slot="body" slot-scope="props" :props="props">
-          <q-td key="qty" :props="props" class="bg-deep-purple-1">{{ props.row.qty || '-' }}</q-td>
-          <q-td key="item" :props="props" class="bg-deep-purple-1">{{ props.row.item || '-' }}</q-td>
-          <q-td key="unit" :props="props" class="bg-deep-purple-1" >{{ props.row.unit || '-' }}</q-td>
+          <q-td key="qty" :props="props" class="bg-deep-purple-1">
+            {{ props.row.qty || '-' }}
+            <q-popup-edit v-model="props.row.qty" title="update" @save="editItemValues(props.row)" buttons>
+              <q-input v-model="props.row.qty" type="number" />
+            </q-popup-edit>
+          </q-td>
+          <q-td key="item" :props="props" class="bg-deep-purple-1">
+            {{ props.row.item || '-' }}
+            <q-popup-edit v-model="props.row.item" title="Update" buttons>
+              <q-input v-model="props.row.item" > <q-autocomplete :static-data="{field: 'value', list: itemList}" :filter="myFilter" /> </q-input>
+            </q-popup-edit>
+          </q-td>
+          <q-td key="unit" :props="props" class="bg-deep-purple-1" >
+            {{ props.row.unit || '-' }}
+            <q-popup-edit v-model="props.row.unit" title="Update" buttons>
+              <q-input v-model="props.row.unit" />
+            </q-popup-edit>
+          </q-td>
           <q-td key="price" :props="props" class="bg-deep-purple-1" >{{ props.row.price || '-' }}</q-td>
-          <q-td key="cost" :props="props" class="bg-deep-purple-1" >{{ props.row.cost || '-' }}</q-td>
+          <q-td key="cost" :props="props" class="bg-deep-purple-1" >
+            {{ props.row.cost || '-' }}
+            <q-popup-edit v-model="props.row.cost"  title="Update" @save="editCost(props.row)" buttons>
+              <q-input v-model="props.row.cost" type="number" />
+            </q-popup-edit>
+          </q-td>
           <q-td key="gst" :props="props" class="bg-deep-purple-1" >{{ props.row.gst || '-' }}</q-td>
           <q-td key="total" :props="props" class="bg-deep-purple-2" >{{ props.row.total || '-' }}</q-td>
           <q-td key="expAccount" :props="props">
             {{ props.row.expAccount || '-' }}
             <q-popup-edit v-model="props.row.expAccount" title="Update" buttons>
-              <q-input v-model="props.row.expAccount" />
+              <q-input v-model="props.row.expAccount" > <q-autocomplete :static-data="{field: 'value', list: expAccountList}" :filter="myFilter" /> </q-input>
             </q-popup-edit>
           </q-td>
           <q-td key="category" :props="props">
             {{ props.row.category || '-' }}
             <q-popup-edit v-model="props.row.expAccount" title="Update" buttons>
-              <q-input v-model="props.row.expAccount" />
+              <q-input v-model="props.row.expAccount" > <q-autocomplete :static-data="{field: 'value', list: categoryList}" :filter="myFilter" /> </q-input>
+            </q-popup-edit>
+          </q-td>
+          <q-td key="taxable" :props="props">
+            {{ props.row.taxable || '-' }}
+            <q-popup-edit v-model="props.row.taxable" title="Update" @save="editItemValues(props.row)" buttons>
+              <q-checkbox v-model="props.row.taxable" label="Taxable" true-value="yes" false-value="no" />
             </q-popup-edit>
           </q-td>
           <q-td key="expand" :props="props">
@@ -494,6 +520,13 @@ export default {
           field: 'category'
         },
         {
+          name: 'taxable',
+          required: false,
+          label: 'Taxable',
+          align: 'center',
+          field: 'taxable'
+        },
+        {
           name: 'expand',
           required: false,
           label: 'Expand',
@@ -502,7 +535,7 @@ export default {
           style: 'width: 500px'
         }
       ],
-      visibleModalColumns: ['qty', 'item', 'unit', 'price', 'cost', 'gst', 'total', 'expAccount', 'category', 'expand']
+      visibleModalColumns: ['qty', 'item', 'unit', 'price', 'cost', 'gst', 'total', 'expAccount', 'category', 'taxable', 'expand']
     }
   },
   computed: {
@@ -542,6 +575,25 @@ export default {
     }
   },
   methods: {
+    editCost (row) {
+      if (row.taxable === 'yes') {
+        row.gst = _.round((row.cost * 0.125), 2)
+      } else {
+        row.gst = 0
+      }
+      row.total = _.round((row.gst + row.cost), 2)
+      row.price = _.round((row.cost / row.qty), 2)
+    },
+    editItemValues (row) {
+      if (row.taxable === 'yes') {
+        row.cost = _.round((row.total / 1.125), 2)
+        row.gst = _.round((row.cost * 0.125), 2)
+      } else {
+        row.cost = row.total
+        row.gst = 0
+      }
+      row.price = _.round((row.cost / row.qty), 2)
+    },
     toggleFullscreen () {
       this.$data.boolScreen = !this.$data.boolScreen
       console.log('fullscreen', this.$data.boolScreen)
@@ -556,7 +608,7 @@ export default {
     popup(row) {
       // _.findIndex(this.$data.expenses, {})
       console.log(row)
-      this.$data.transaction = row
+      this.$data.transaction = JSON.parse(JSON.stringify(row))
       this.overlay()
       /*
       this.$q.notify({
