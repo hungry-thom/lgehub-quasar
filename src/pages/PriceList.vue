@@ -244,15 +244,20 @@ export default {
             console.log( item.item, vendor.vendor, vendor. unit)
             // check if it is a case unit
             let pUnit = ''
+            let caseQty = null
             let i = vendor.unit.search('x')
             if (i > -1) {
               pUnit = vendor.unit.substr(i + 1)
+              caseQty = vendor.unit.substr(0,i)
             } else {
               pUnit = vendor.unit
             }
             // parse qty and base
             let i2 = pUnit.search('-')
             let pQty = pUnit.substr(0,i2)
+            if (caseQty) {
+              pQty = pQty * caseQty
+            }
             let pBase = pUnit.substr(i2 + 1)
             // conform pBase to convert-units definition
             if (pBase === 'L') {
