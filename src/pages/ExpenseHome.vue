@@ -2,8 +2,8 @@
 <template>
   <q-page class="layout-padding">
     <div class="row no-wrap">
-      <q-datetime class= "col" minimal color="orange" v-model="startDate" type="date" float-label="StartDate" first-day-of-week=6 />&nbsp;&nbsp;
-      <q-datetime class= "col" minimal color="orange" v-model="endDate" type="date" float-label="EndDate" first-day-of-week=6 />&nbsp;&nbsp;
+      <q-datetime class= "col" minimal color="orange" v-model="startDate" type="date" float-label="StartDate" :first-day-of-week="6" />&nbsp;&nbsp;
+      <q-datetime class= "col" minimal color="orange" v-model="endDate" type="date" float-label="EndDate" :first-day-of-week="6" />&nbsp;&nbsp;
       <q-btn label="search" color="secondary" @click="loadExpenses(startDate, endDate)" />
     </div>
     <br>
@@ -126,7 +126,12 @@
             </q-popup-edit>
           </q-td>
           <q-td key="gst" :props="props" class="bg-deep-purple-1" >{{ props.row.gst || '-' }}</q-td>
-          <q-td key="total" :props="props" class="bg-deep-purple-2" >{{ props.row.total || '-' }}</q-td>
+          <q-td key="total" :props="props" class="bg-deep-purple-2" >
+            {{ props.row.total || '-' }}
+            <q-popup-edit v-model="props.row.total" title="update" @save="editItemValues(props.row)" buttons>
+              <q-input v-model="props.row.total" type="number" />
+            </q-popup-edit>
+          </q-td>
           <q-td key="expAccount" :props="props">
             {{ props.row.expAccount || '-' }}
             <q-popup-edit v-model="props.row.expAccount" title="Update" buttons>
@@ -135,8 +140,8 @@
           </q-td>
           <q-td key="category" :props="props">
             {{ props.row.category || '-' }}
-            <q-popup-edit v-model="props.row.expAccount" title="Update" buttons>
-              <q-input v-model="props.row.expAccount" > <q-autocomplete :static-data="{field: 'value', list: categoryList}" :filter="myFilter" /> </q-input>
+            <q-popup-edit v-model="props.row.category" title="Update" buttons>
+              <q-input v-model="props.row.category" > <q-autocomplete :static-data="{field: 'value', list: categoryList}" :filter="myFilter" /> </q-input>
             </q-popup-edit>
           </q-td>
           <q-td key="taxable" :props="props">
@@ -235,6 +240,7 @@ import {
   QCheckbox,
   QBtn,
   QDatetime,
+  QDatetimePicker,
   QAutocomplete,
   QModal,
   QModalLayout
@@ -253,6 +259,7 @@ export default {
     QCheckbox,
     QBtn,
     QDatetime,
+    QDatetimePicker,
     QAutocomplete,
     QModal,
     QModalLayout
@@ -623,8 +630,9 @@ export default {
       if (n > -1) {
         this.$data.newItem.category = this.$data.itemCategory[n].category
       }
-      if (computedUnitsList.length === 1) {
-        this.$data.newItem.unit = computedUnitsList[0] 
+      if (this.computedUnitsList.length === 1) {
+        console.log(this.computedUnitsList)
+        this.$data.newItem.unit = this.computedUnitsList[0].label
       }
     },
     newExpense () {
