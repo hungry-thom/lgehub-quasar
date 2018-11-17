@@ -1015,7 +1015,10 @@ export default {
           $limit: 50
         }
       }).then((response) => {
-        this.$data.expenses = response.data
+        // this.$data.expenses = response.data
+        reponse.data.forEach((expense) => {
+          
+        })
         console.log('exp resp', response.data)
       })
     },

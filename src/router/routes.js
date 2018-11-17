@@ -13,7 +13,8 @@ const routes = [
       { path: '/inventory', name: 'inventory', component: () => import('pages/Inventory'), meta: { requiresAuth: true } },
       { path: '/pricelist', name: 'pricelist', component: () => import('pages/PriceList'), meta: { requiresAuth: true } },
       { path: '/transfers', name: 'transfers', component: () => import('pages/Transfers'), meta: { requiresAuth: true } },
-      { path: '/expense', name: 'expenseHome', component: () => import('pages/ExpenseHome'), meta: { requiresAuth: true } }
+      { path: '/expense', name: 'expenseHome', component: () => import('pages/ExpenseHome'), meta: { requiresAuth: true } },
+      { path: '/carousel', name: 'carousel', component: () => import('pages/Carousel'), meta: { requiresAuth: true } }
     ]
   }
 ]
