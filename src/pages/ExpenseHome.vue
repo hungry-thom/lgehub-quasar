@@ -73,7 +73,7 @@
       </div>
     <div class="q-pa-sm">
     <div class="row no-wrap">
-      <q-datetime class= "col" minimal color="orange" v-model="transaction.date1" type="date" float-label="Date" @input="selectDate"/>&nbsp;&nbsp;
+      <q-datetime class= "col" minimal color="orange" v-model="transaction.date1" type="date" float-label="Date" @input="selectDate" :first-day-of-week="6" />&nbsp;&nbsp;
       <q-input class= "col" ref="inputVendor" v-model="transaction.vendor" float-label="Vendor"  @blur="validateVendor"> <q-autocomplete :static-data="{field: 'value', list: vendorsList}" /></q-input>&nbsp;&nbsp;
       <q-input class= "col" ref="inputtransNum" v-model="transaction.transNum" float-label="Transaction Number"/>&nbsp;&nbsp;
       <q-input class= "col" v-model="transaction.paymentAccount" float-label="Payment Account" > <q-autocomplete :static-data="{field: 'value', list: paymentTypes}" /></q-input>
@@ -192,7 +192,7 @@
       <q-input class="col" ref="newEntry" float-label="Qty" type="number" v-model="newItem.qty" />&nbsp;&nbsp;
       <q-input class="col" float-label="Item" v-model="newItem.item" @blur="linkCategory" > <q-autocomplete :static-data="{field: 'value', list: itemList}" :filter="myFilter"/> </q-input>&nbsp;&nbsp;
       <q-input class="col" float-label="Unit" v-model="newItem.unit" @click="popupUnitList" > <q-autocomplete :static-data="{field: 'value', list: computedUnitsList}" :filter="myFilter"/> </q-input>&nbsp;&nbsp;
-      <q-input class="col" float-label="Cost" type="number" v-model="newItem.amount" />
+      <q-input class="col" float-label="Cost" type="number" v-model="newItem.amount" @keyup.enter="addItem" />
       <div class="q-pt-md">
         <q-checkbox v-model="newItem.taxable" label="Taxable" true-value="yes" false-value="no" />
         <br>
@@ -267,8 +267,8 @@ export default {
   props: ['user'],
   data () {
     return {
-      lockAccount: false,
-      lockCategory: false,
+      lockAccount: true,
+      lockCategory: true,
       boolScreen: false,
       startDate: '',
       endDate: '',
@@ -648,7 +648,7 @@ export default {
       this.overlay()
     },
     overlay () {
-      console.log('overlaycalled',this.$data.newItem.add2Inventory)
+      console.log('overlaycalled',this.$data.newItem.add2Inventory, this.$data.transaction.add2Pricelist)
       this.$data.newItem = {
         qty: '',
         item: '',
@@ -904,55 +904,27 @@ export default {
         // check if item is in pricelist
         let dex = _.findIndex(this.$data.pricelist, {item: item.item})
         console.log(item, dex)
-        if (dex < 0) {
-          console.log('item not in pricelist')
-          // create new item
-          let tmpObj = {
-            item: item.item,
-            taxable: item.taxable,
-            category: item.category,
-            vendors: [
-              {
-                unit: item.unit,
-                price: item.price,
-                updated: trans.date1,
-                vendor: trans.vendor
-              }
-            ]
-          }
-          this.$data.pricelist.push(tmpObj) //this should prevent new items getting added twice
-          api.service('pricelist').create(tmpObj).then((response)=> {
-            console.log('created new item')
-            let auditObj = {
-              table: 'priceList',
-              type: 'expense',
-              recordDate: trans.date1,
-              price: item.price,
-              item: item.item,
-              unit: item.unit,
-              vendor: trans.vendor,
-              expenseId: trans.expenseId,
-              user: this.$props.user.email
-            }
-            api.service('audit').create(auditObj)
-          })
-        } else {
-          // item is in pricelist, check if unit/vendor are listed
-          let tVendors = this.$data.pricelist[dex].vendors // is there reactivity? possibleBug*****
-          let itemId = this.$data.pricelist[dex].id
-          let d2 = _.findIndex(tVendors, {unit: item.unit, vendor: trans.vendor})
-          if (d2 < 0) {
-            // new unit/vendor
-            console.log('newUnit/Vendor not found')
+        // make sure item.item is not discount
+        if (item.item.toLowerCase() !== 'discount') {
+          if (dex < 0) {
+            console.log('item not in pricelist')
+            // create new item
             let tmpObj = {
-              unit: item.unit,
-              price: item.price,
-              updated: trans.date1,
-              vendor: trans.vendor
+              item: item.item,
+              taxable: item.taxable,
+              category: item.category,
+              vendors: [
+                {
+                  unit: item.unit,
+                  price: item.price,
+                  updated: trans.date1,
+                  vendor: trans.vendor
+                }
+              ]
             }
-            tVendors.push(tmpObj)
-            api.service('pricelist').patch(itemId, {vendors: tVendors}).then((response) => {
-              console.log('added unit/vendor to pricelist')
+            this.$data.pricelist.push(tmpObj) //this should prevent new items getting added twice
+            api.service('pricelist').create(tmpObj).then((response)=> {
+              console.log('created new item')
               let auditObj = {
                 table: 'priceList',
                 type: 'expense',
@@ -967,28 +939,27 @@ export default {
               api.service('audit').create(auditObj)
             })
           } else {
-            console.log(tVendors[d2].updated < trans.date1)
-            // unit/Vendor is present, check if this record is more recent
-            if (tVendors[d2].updated < trans.date1) {
-              // record needs updating
-              // first check if there is a price change
-              console.log('newRecord')
-              let diff = item.price - tVendors[d2].price
-              console.log(diff)
-              if (diff !== 0) {
-                console.log(item.item, item.unit, 'price changed by', diff)
+            // item is in pricelist, check if unit/vendor are listed
+            let tVendors = this.$data.pricelist[dex].vendors // is there reactivity? possibleBug*****
+            let itemId = this.$data.pricelist[dex].id
+            let d2 = _.findIndex(tVendors, {unit: item.unit, vendor: trans.vendor})
+            if (d2 < 0) {
+              // new unit/vendor
+              console.log('newUnit/Vendor not found')
+              let tmpObj = {
+                unit: item.unit,
+                price: item.price,
+                updated: trans.date1,
+                vendor: trans.vendor
               }
-              tVendors[d2] = { price: item.price , unit: item.unit, vendor: trans.vendor, updated: trans.date1 }
-              console.log('new Vendors', tVendors[d2])
-              // need to get item id, either by loading into transItems or lookup
-              api.service('pricelist').patch(itemId, {vendors: tVendors }).then((response)=> {
-                console.log('update pricelist', response)
+              tVendors.push(tmpObj)
+              api.service('pricelist').patch(itemId, {vendors: tVendors}).then((response) => {
+                console.log('added unit/vendor to pricelist')
                 let auditObj = {
                   table: 'priceList',
                   type: 'expense',
                   recordDate: trans.date1,
                   price: item.price,
-                  change: diff,
                   item: item.item,
                   unit: item.unit,
                   vendor: trans.vendor,
@@ -997,9 +968,41 @@ export default {
                 }
                 api.service('audit').create(auditObj)
               })
+            } else {
+              console.log(tVendors[d2].updated < trans.date1)
+              // unit/Vendor is present, check if this record is more recent
+              if (tVendors[d2].updated < trans.date1) {
+                // record needs updating
+                // first check if there is a price change
+                console.log('newRecord')
+                let diff = item.price - tVendors[d2].price
+                console.log(diff)
+                if (diff !== 0) {
+                  console.log(item.item, item.unit, 'price changed by', diff)
+                }
+                tVendors[d2] = { price: item.price , unit: item.unit, vendor: trans.vendor, updated: trans.date1 }
+                console.log('new Vendors', tVendors[d2])
+                // need to get item id, either by loading into transItems or lookup
+                api.service('pricelist').patch(itemId, {vendors: tVendors }).then((response)=> {
+                  console.log('update pricelist', response)
+                  let auditObj = {
+                    table: 'priceList',
+                    type: 'expense',
+                    recordDate: trans.date1,
+                    price: item.price,
+                    change: diff,
+                    item: item.item,
+                    unit: item.unit,
+                    vendor: trans.vendor,
+                    expenseId: trans.expenseId,
+                    user: this.$props.user.email
+                  }
+                  api.service('audit').create(auditObj)
+                })
+              }
             }
           }
-        }
+        } // skip everything if item is discount
       }, this)
     },
     loadExpenses(stDate, endDate) {
