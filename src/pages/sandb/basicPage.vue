@@ -4,11 +4,11 @@
       <div>
         <br>
         <q-table
-          :data="priceList"
+          :data="month"
           :columns="columns"
           :filter="filter"
           :visible-columns="visibleColumns"
-          row-key="id"
+          row-key="date1"
           :pagination.sync="pagination"
           hide-bottom >
           <template slot="top-left" slot-scope="props">
@@ -66,51 +66,14 @@ export default {
       message: '',
       messages: [],
       users: [],
-      priceList: [
-        {
-          id:  "adaaa2a3-2634-45ec-befd-f38c7e22e13f" ,
-          item:  "Balsamic" ,
-          taxable:  "yes" ,
-          unit: '1-gal',
-          vendor: 'Helen',
-          cost: 43 ,
-          updated:  "2018-08-16T19:51:25.991Z"
-        },
-        {
-          id:  "0301daa0-d637-440c-83de-8588dfdddc4b" ,
-          item:  "Balsamic" ,
-          taxable:  "yes" ,
-          unit: '1-gal',
-          vendor: 'Food&Bev',
-          cost: 35,
-          updated:  "2018-06-23T19:27:21.789Z"
-        },
-        {
-          id:  "09dbd628-881f-498d-a1f4-4f66802ab6fb" ,
-          item:  "Balsamic" ,
-          taxable:  "yes" ,
-          unit: '3-L',
-          vendor: 'Madisco',
-          cost: 45,
-          updated:  "2018-12-23T19:27:21.789Z"
-        },
-        {
-          id:  "17d662ce-18b5-4600-bcae-bce750f16f62" ,
-          item:  "Caper" ,
-          taxable:  "yes" ,
-          unit: '32-oz',
-          vendor: 'Food&Bev',
-          cost: 30,
-          updated:  "2018-15-23T19:27:21.789Z"
-        }
-      ],
       filter: '',
       pagination: {
-        sortBy: name, // String, column "item" property value
+        sortBy: name, // String, column 'item' property value
         descending: true,
         page: 1,
         rowsPerPage: 0 // current rows per page being displayed,
       },
+      month: [],
       columns: [
         {
           name: 'id',
@@ -118,47 +81,9 @@ export default {
           label: 'Id',
           align: 'left',
           field: 'id'
-        },
-        {
-          name: 'item',
-          required: true,
-          label: 'Item',
-          align: 'left',
-          field: 'item',
-          sortable: true
-        },
-        {
-          name: 'vendor',
-          label: 'Vendor',
-          align: 'left',
-          field: 'vendor'
-        },
-        {
-          name: 'unit',
-          label: 'Unit',
-          align: 'left',
-          field: 'unit'
-        },
-        {
-          name: 'cost',
-          label: 'Cost',
-          align: 'left',
-          field: 'cost'
-        },
-        {
-          name: 'taxable',
-          label: 'Taxable',
-          align: 'left',
-          field: 'taxable'
-        },
-        {
-          name: 'updated',
-          label: 'Updated',
-          align: 'left',
-          field: 'updated'
         }
       ],
-      visibleColumns: ['item', 'vendor', 'unit', 'cost']
+      visibleColumns: []
     }
   },
   computed: {
@@ -179,6 +104,24 @@ export default {
     },
     addStockUnit (itemId) {
       console.log(itemId)
+    },
+    generateWeek () {
+      let ima = moment()
+      let week = {}
+      this.$data.columns = []
+      for (let n = 0; n < 7; n++) {
+        week[ima.day(n).format('ddd')] = ima.format('DD-MMM') // {date: ima.format()} // would ima.day(n).format() be better?
+        this.$data.columns.push({
+          name: ima.format('ddd'),
+          required: false,
+          label: ima.format('ddd'),
+          align: 'center',
+          field: ima.format('ddd')
+        })
+        this.visibleColumns.push(ima.format('ddd'))
+      }
+      console.log(week)
+      this.$data.month.push(week)
     }
   },
   mounted () {
@@ -200,13 +143,7 @@ export default {
       .then((response) => {
         this.$data.users = response.data
       })
-    /*
-    pricelist.find()
-      .then((response) => {
-        // We want the latest inventory but in the reversed order
-        this.$data.priceList = response.data.reverse()
-      })
-    */
+   this.generateWeek()
     // Add new messages to the message list
     messages.on('created', message => {
       console.log('message received')

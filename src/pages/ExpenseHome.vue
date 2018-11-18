@@ -102,45 +102,45 @@
         <q-tr slot="body" slot-scope="props" :props="props">
           <q-td key="qty" :props="props" class="bg-deep-purple-1">
             {{ props.row.qty || '-' }}
-            <q-popup-edit v-model="props.row.qty" title="update" @save="editItemValues(props.row)" buttons>
+            <q-popup-edit v-model="props.row.qty" title="update" @save="editItemValues(props.row)" :persistent="true" buttons>
               <q-input v-model="props.row.qty" type="number" />
             </q-popup-edit>
           </q-td>
           <q-td key="item" :props="props" class="bg-deep-purple-1">
             {{ props.row.item || '-' }}
-            <q-popup-edit v-model="props.row.item" title="Update" buttons>
+            <q-popup-edit v-model="props.row.item" title="Update" :persistent="true" buttons>
               <q-input v-model="props.row.item" > <q-autocomplete :static-data="{field: 'value', list: itemList}" :filter="myFilter" /> </q-input>
             </q-popup-edit>
           </q-td>
           <q-td key="unit" :props="props" class="bg-deep-purple-1" >
             {{ props.row.unit || '-' }}
-            <q-popup-edit v-model="props.row.unit" title="Update" buttons>
+            <q-popup-edit v-model="props.row.unit" title="Update" :persistent="true" buttons>
               <q-input v-model="props.row.unit" />
             </q-popup-edit>
           </q-td>
           <q-td key="price" :props="props" class="bg-deep-purple-1" >{{ props.row.price || '-' }}</q-td>
           <q-td key="cost" :props="props" class="bg-deep-purple-1" >
             {{ props.row.cost || '-' }}
-            <q-popup-edit v-model="props.row.cost"  title="Update" @save="editCost(props.row)" buttons>
+            <q-popup-edit v-model="props.row.cost"  title="Update" @save="editCost(props.row)" :persistent="true" buttons>
               <q-input v-model="props.row.cost" type="number" />
             </q-popup-edit>
           </q-td>
           <q-td key="gst" :props="props" class="bg-deep-purple-1" >{{ props.row.gst || '-' }}</q-td>
           <q-td key="total" :props="props" class="bg-deep-purple-2" >
             {{ props.row.total || '-' }}
-            <q-popup-edit v-model="props.row.total" title="update" @save="editItemValues(props.row)" buttons>
+            <q-popup-edit v-model="props.row.total" title="update" @save="editItemValues(props.row)" :persistent="true" buttons>
               <q-input v-model="props.row.total" type="number" />
             </q-popup-edit>
           </q-td>
           <q-td key="expAccount" :props="props">
             {{ props.row.expAccount || '-' }}
-            <q-popup-edit v-model="props.row.expAccount" title="Update" buttons>
+            <q-popup-edit v-model="props.row.expAccount" title="Update" :persistent="true" buttons>
               <q-input v-model="props.row.expAccount" > <q-autocomplete :static-data="{field: 'value', list: expAccountList}" :filter="myFilter" /> </q-input>
             </q-popup-edit>
           </q-td>
           <q-td key="category" :props="props">
             {{ props.row.category || '-' }}
-            <q-popup-edit v-model="props.row.category" title="Update" buttons>
+            <q-popup-edit v-model="props.row.category" title="Update" :persistent="true" buttons>
               <q-input v-model="props.row.category" > <q-autocomplete :static-data="{field: 'value', list: categoryList}" :filter="myFilter" /> </q-input>
             </q-popup-edit>
           </q-td>
@@ -771,12 +771,33 @@ export default {
       // check if this is an exsisting transaction 
       let tmpId = this.$data.transaction.id
       if (tmpId) {
+        // if transaction is modified, changes need to be recorded
+        // if account changed, original acct needs to be reversed
         console.log('existing transaction', tmpId)
         // sdelete this.$data.transaction['id']
         api.service('expenses').update(tmpId, this.$data.transaction).then((response) => {
           console.log('sumbitted expense', response.id)
           delete response['id']
           api.service('audit').create(response)
+          // what payable account asset - liability
+          // whether it is asset or liability, will still be a creditEntry
+          journalObject.credit.push({
+            account: this.$data.transaction.paymentAccount,
+            amount: this.$data.transaction.grandTotal
+          })
+          let gstMonth = moment(this.$data.transaction.date1).format('MMM')  
+          if (this.$data.transaction.gstTotal) {
+            journalObject.debit.push({
+              account: 'preGst'+ gstMonth,
+              amount: this.$data.transaction.gstTotal
+            })
+          }
+          this.$data.transaction.transItems.forEach((item) => {
+            journal.Object.debit.push({
+              account: item.expAccount,
+              amount: item.trans
+            })
+          })
         })
         // need to handle any edits to inv changes
         // probably need og copy to track changes

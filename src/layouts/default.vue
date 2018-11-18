@@ -67,7 +67,7 @@
           <q-item-main label="PriceList" />
         </q-item>
 
-        <q-item to="/shoppingList" disable>
+        <q-item to="/shoppingList" disabled >
           <q-item-side icon="shopping_cart" />
           <q-item-main label="Shopping list" />
         </q-item>        
@@ -75,6 +75,11 @@
         <q-item to="/inventory">
           <q-item-side icon="assignment" />
           <q-item-main label="Inventory" />
+        </q-item>
+
+        <q-item to="/monthly">
+          <q-item-side icon="date_range" />
+          <q-item-main label="Monthly" />
         </q-item>
 
         <q-item to="/transfers">
