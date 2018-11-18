@@ -2,8 +2,8 @@
 <template>
   <q-page class="layout-padding">
     <div class="row no-wrap">
-      <q-datetime class= "col" minimal color="orange" v-model="startDate" type="date" float-label="StartDate" :first-day-of-week="6" />&nbsp;&nbsp;
-      <q-datetime class= "col" minimal color="orange" v-model="endDate" type="date" float-label="EndDate" :first-day-of-week="6" />&nbsp;&nbsp;
+      <q-datetime class= "col" minimal color="orange" v-model="startDate" type="date" float-label="StartDate" :first-day-of-week="0" />&nbsp;&nbsp;
+      <q-datetime class= "col" minimal color="orange" v-model="endDate" type="date" float-label="EndDate" :first-day-of-week="0" />&nbsp;&nbsp;
       <q-btn label="search" color="secondary" @click="loadExpenses(startDate, endDate)" />
     </div>
     <br>
@@ -73,7 +73,7 @@
       </div>
     <div class="q-pa-sm">
     <div class="row no-wrap">
-      <q-datetime class= "col" minimal color="orange" v-model="transaction.date1" type="date" float-label="Date" @input="selectDate" :first-day-of-week="6" />&nbsp;&nbsp;
+      <q-datetime class= "col" minimal color="orange" v-model="transaction.date1" type="date" float-label="Date" @input="selectDate" :first-day-of-week="0" />&nbsp;&nbsp;
       <q-input class= "col" ref="inputVendor" v-model="transaction.vendor" float-label="Vendor"  @blur="validateVendor"> <q-autocomplete :static-data="{field: 'value', list: vendorsList}" /></q-input>&nbsp;&nbsp;
       <q-input class= "col" ref="inputtransNum" v-model="transaction.transNum" float-label="Transaction Number"/>&nbsp;&nbsp;
       <q-input class= "col" v-model="transaction.paymentAccount" float-label="Payment Account" > <q-autocomplete :static-data="{field: 'value', list: paymentTypes}" /></q-input>
