@@ -47,7 +47,7 @@
     </div>
     <br>
     <!-- //////// START OF MODAL' ////////-->
-    <q-modal v-model="expenseModal" :maximized="boolScreen">
+    <q-modal v-model="expenseModal" :maximized="boolScreen" :no-backdrop-dismiss="true" >
     <q-modal-layout> <!-- class="q-pa-sm" -->
       <q-toolbar slot="header">
         <q-btn
@@ -1051,16 +1051,17 @@ export default {
         console.log('exp resp', response.data)
       })
     },
-    loadPricelistData() {
+    async loadPricelistData(skipNum) {
       // there will be a problem if docs exceed 200
       api.service('pricelist').find({
         query: {
           $sort: { item: 1 },
-          $limit: 500
+          $limit: 500,
+          $skip: skipNum * 200
         }
       }).then((response) => {
         // load pricelist data
-        this.$data.pricelist = response.data
+        this.$data.pricelist.push(response.data)
         this.$data.itemCategory = []
         let uniqueVendors = []
         response.data.forEach(item => {
@@ -1097,6 +1098,14 @@ export default {
         })
         console.log('LOAD INVENTORYDATA!!!!!!!!!!!!!')
         this.loadInventoryData()
+        console.log('response0', response.data.length)
+        // handle more than 200
+        if (response.data.length > 199) {
+          console.log('rerun load pricelist')
+          this.$data.skipCycles++
+          this.loadPricelistData(this.$data.skipCycles)
+        }
+        return response.data.length
       })
     },
     loadInventoryData () {
@@ -1134,6 +1143,19 @@ export default {
           // list = someVar.filter((x, i, a) => a.indexOf(x) == i) //sete list with unique values
         })
       })
+    },
+    async loadData () {
+      this.$data.pricelist = []
+      this.$data.skipCycles = 0
+      await this.loadPricelistData(this.$data.skipCycles).then(rec => {
+        console.log('response1', rec)
+        if (rec > 199) {
+        console.log('response length', rec)
+      }
+      })
+      //let rec = 0
+      // console.log('response1', rec)
+      // console.log('response2', rec)
     }
   },
   mounted () {
@@ -1144,7 +1166,8 @@ export default {
     this.loadExpenses(this.$data.startDate, this.$data.startDate)
     //// !!!! THERE WILL BE ISSUES ONCE RECORDS GO BEYOND 200 !!!!!!!
     // get pricelist data from rethinkdb
-    this.loadPricelistData()
+    // this.loadPricelistData()
+    this.loadData()
     // this.loadInventoryData() // if not using inventory data for item and unit list, unblock code in loadpricelistdata
     /*
     api.service('pricelist').find({
