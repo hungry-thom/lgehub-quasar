@@ -1051,7 +1051,7 @@ export default {
         console.log('exp resp', response.data)
       })
     },
-    async loadPricelistData(skipNum) {
+    loadPricelistData(skipNum) {
       // there will be a problem if docs exceed 200
       api.service('pricelist').find({
         query: {
@@ -1096,16 +1096,16 @@ export default {
           }, this)
           // list = someVar.filter((x, i, a) => a.indexOf(x) == i) //sete list with unique values
         })
-        console.log('LOAD INVENTORYDATA!!!!!!!!!!!!!')
-        this.loadInventoryData()
         console.log('response0', response.data.length)
         // handle more than 200
         if (response.data.length > 199) {
           console.log('rerun load pricelist')
           this.$data.skipCycles++
           this.loadPricelistData(this.$data.skipCycles)
+        } else {
+          console.log('LOAD INVENTORYDATA!!!!!!!!!!!!!')
+          this.loadInventoryData()
         }
-        return response.data.length
       })
     },
     loadInventoryData () {
@@ -1144,18 +1144,10 @@ export default {
         })
       })
     },
-    async loadData () {
+    loadData () {
       this.$data.pricelist = []
       this.$data.skipCycles = 0
-      await this.loadPricelistData(this.$data.skipCycles).then(rec => {
-        console.log('response1', rec)
-        if (rec > 199) {
-        console.log('response length', rec)
-      }
-      })
-      //let rec = 0
-      // console.log('response1', rec)
-      // console.log('response2', rec)
+      this.loadPricelistData(this.$data.skipCycles)
     }
   },
   mounted () {
