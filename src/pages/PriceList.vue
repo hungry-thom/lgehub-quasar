@@ -282,10 +282,11 @@ export default {
                   vendor.compBase = pBase
                 } else {
                   // base not same need to change
+                  // console.log(comp)
                   console.log('converting', item.item, pBase, comp.compBase, index,sortedVendors[index])
                   // check to see if compBase &&& pBase in convert units.
                   let possibleList = convert().possibilities()
-                  if (possibleList.includes(pBase) && possibleList.includes(compBase)) {
+                  if (possibleList.includes(pBase) && possibleList.includes(comp.compBase)) {
                     vendor.compQty = convert(pQty).from(pBase).to(comp.compBase)
                     vendor.compBase = comp.compBase
                   }
@@ -293,7 +294,7 @@ export default {
                   // vendor.compQty = convert(pQty).from(pBase).to(comp.compBase)
                   // vendor.compBase = comp.compBase
                 }
-                ////////Maybe can break out vvvvvvvv
+                //////// Maybe can break out vvvvvvvv
                 // base is same, get per unit price
                 vendor.compValue = vendor.price / vendor.compQty
                 let diff = vendor.compValue - comp.compValue

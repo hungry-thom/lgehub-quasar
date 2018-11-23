@@ -1103,7 +1103,7 @@ export default {
           this.$data.skipCycles++
           this.loadPricelistData(this.$data.skipCycles)
         } else {
-          console.log('LOAD INVENTORYDATA!!!!!!!!!!!!!')
+          console.log('LOAD INVENTORYDATA?!!!!!!!!!!!!!')
           this.loadInventoryData()
         }
       })
