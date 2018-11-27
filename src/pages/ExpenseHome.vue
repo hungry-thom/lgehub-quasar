@@ -634,6 +634,10 @@ export default {
         console.log(this.computedUnitsList)
         this.$data.newItem.unit = this.computedUnitsList[0].label
       }
+      let x = _.findIndex(this.$data.pricelist, {item: this.$data.newItem.item})
+      if (x > -1) {
+        this.$data.newItem.taxable = this.$data.pricelist[x].taxable
+      }
     },
     newExpense () {
       let carryOver = this.$data.transaction.add2Pricelist // maintain value
@@ -764,69 +768,79 @@ export default {
       }
     },
     submitExpense () {
-      // save computed values to transaction.object
-      this.$data.transaction.subTotal = this.subTotal
-      this.$data.transaction.gstTotal = this.gstTotal
-      this.$data.transaction.grandTotal = this.grandTotal
-      // check if this is an exsisting transaction 
-      let tmpId = this.$data.transaction.id
-      if (tmpId) {
-        // if transaction is modified, changes need to be recorded
-        // if account changed, original acct needs to be reversed
-        console.log('existing transaction', tmpId)
-        // sdelete this.$data.transaction['id']
-        api.service('expenses').update(tmpId, this.$data.transaction).then((response) => {
-          console.log('sumbitted expense', response.id)
-          delete response['id']
-          api.service('audit').create(response)
-          // what payable account asset - liability
-          // whether it is asset or liability, will still be a creditEntry
-          journalObject.credit.push({
-            account: this.$data.transaction.paymentAccount,
-            amount: this.$data.transaction.grandTotal
-          })
-          let gstMonth = moment(this.$data.transaction.date1).format('MMM')  
-          if (this.$data.transaction.gstTotal) {
-            journalObject.debit.push({
-              account: 'preGst'+ gstMonth,
-              amount: this.$data.transaction.gstTotal
-            })
-          }
-          this.$data.transaction.transItems.forEach((item) => {
-            journal.Object.debit.push({
-              account: item.expAccount,
-              amount: item.trans
-            })
-          })
+      console.log('test', this.$data.newItem.qty && this.$data.newItem.item && this.$data.newItem.unit && this.$data.newItem.amount)
+      console.log(this.$data.newItem.qty, this.$data.newItem.item, this.$data.newItem.unit, this.$data.newItem.amount)
+      if (this.$data.newItem.qty && this.$data.newItem.item && this.$data.newItem.unit && this.$data.newItem.amount) {
+        this.$q.notify({
+          message: 'new Item data not added to list',
+          timeout: 3000,
+          position: 'center'
         })
-        // need to handle any edits to inv changes
-        // probably need og copy to track changes
-        // lookup inv record based on an id?
       } else {
-        console.log('new transaction')
-        api.service('expenses').create(this.$data.transaction).then((response) => {
-          console.log('sumbitted expense', response.id)
-          // submit expense to audit trail. better to use same id for expense and audit, or create expenseId?
-          // probably expenseId to have seperate entries for edits (ie full trail)
-          this.$data.transaction.expenseId = response.id
-          let cleanTransactionData = JSON.parse(JSON.stringify(this.$data.transaction))
-          // can choose to not register to pricelist
-          if (this.$data.transaction.add2Pricelist) {
-            this.updatePrices(cleanTransactionData)
-          }
-          // inventory updata is based line by line
-          this.updateInventory(cleanTransactionData)
-          // submit expense record for audit after price and inv methods for separate table keys
-          this.$data.transaction.table = 'expenses'
-          api.service('audit').create(this.$data.transaction)
-        })
+        // save computed values to transaction.object
+        this.$data.transaction.subTotal = this.subTotal
+        this.$data.transaction.gstTotal = this.gstTotal
+        this.$data.transaction.grandTotal = this.grandTotal
+        // check if this is an exsisting transaction 
+        let tmpId = this.$data.transaction.id
+        if (tmpId) {
+          // if transaction is modified, changes need to be recorded
+          // if account changed, original acct needs to be reversed
+          console.log('existing transaction', tmpId)
+          // sdelete this.$data.transaction['id']
+          api.service('expenses').update(tmpId, this.$data.transaction).then((response) => {
+            console.log('sumbitted expense', response.id)
+            delete response['id']
+            api.service('audit').create(response)
+            // what payable account asset - liability
+            // whether it is asset or liability, will still be a creditEntry
+            journalObject.credit.push({
+              account: this.$data.transaction.paymentAccount,
+              amount: this.$data.transaction.grandTotal
+            })
+            let gstMonth = moment(this.$data.transaction.date1).format('MMM')  
+            if (this.$data.transaction.gstTotal) {
+              journalObject.debit.push({
+                account: 'preGst'+ gstMonth,
+                amount: this.$data.transaction.gstTotal
+              })
+            }
+            this.$data.transaction.transItems.forEach((item) => {
+              journal.Object.debit.push({
+                account: item.expAccount,
+                amount: item.trans
+              })
+            })
+          })
+          // need to handle any edits to inv changes
+          // probably need og copy to track changes
+          // lookup inv record based on an id?
+        } else {
+          console.log('new transaction')
+          api.service('expenses').create(this.$data.transaction).then((response) => {
+            console.log('sumbitted expense', response.id)
+            // submit expense to audit trail. better to use same id for expense and audit, or create expenseId?
+            // probably expenseId to have seperate entries for edits (ie full trail)
+            this.$data.transaction.expenseId = response.id
+            let cleanTransactionData = JSON.parse(JSON.stringify(this.$data.transaction))
+            // can choose to not register to pricelist
+            if (this.$data.transaction.add2Pricelist) {
+              this.updatePrices(cleanTransactionData)
+            }
+            // inventory updata is based line by line
+            this.updateInventory(cleanTransactionData)
+            // submit expense record for audit after price and inv methods for separate table keys
+            this.$data.transaction.table = 'expenses'
+            api.service('audit').create(this.$data.transaction)
+          })
+        }
+        // moved updatePrices and Inventory to 'newTransaction' to use transaction.id
+        // |-> no longer executed if loading existing transaction
+        // close overlay
+        this.overlay()
+        // reload expenses list from rethinkdb
+        this.loadExpenses(this.$data.startDate, this.$data.endDate)
       }
-      // moved updatePrices and Inventory to 'newTransaction' to use transaction.id
-      // |-> no longer executed if loading existing transaction
-      // close overlay
-      this.overlay()
-      // reload expenses list from rethinkdb
-      this.loadExpenses(this.$data.startDate, this.$data.endDate)
     },
     updateInventory (trans) {
       // first get inventory data (use store in future?)
@@ -857,7 +871,7 @@ export default {
               console.log(item.item,' not in inventory ')
               let tmpObj = {
                 item: item.item,
-                lastConf: 0,
+                lastConf: new Date().toISOString(),
                 category: item.category,
                 stock: [
                   {
@@ -990,9 +1004,9 @@ export default {
                 api.service('audit').create(auditObj)
               })
             } else {
-              console.log(tVendors[d2].updated < trans.date1)
+              console.log(new Date(tVendors[d2].updated) < new Date(trans.date1))
               // unit/Vendor is present, check if this record is more recent
-              if (tVendors[d2].updated < trans.date1) {
+              if (new Date(tVendors[d2].updated) < new Date(trans.date1)) {
                 // record needs updating
                 // first check if there is a price change
                 console.log('newRecord')
@@ -1060,11 +1074,10 @@ export default {
           $skip: skipNum * 200
         }
       }).then((response) => {
-        // load pricelist data
-        this.$data.pricelist.push(response.data)
-        this.$data.itemCategory = []
-        let uniqueVendors = []
+        // this.$data.itemCategory = [] // moved to loadData(), kept clearing on multiple loads
+        // let uniqueVendors = [] // moved to loadData(), kept clearing on multiple loads
         response.data.forEach(item => {
+          this.$data.pricelist.push(item)
           this.$data.itemCategory.push({item:item.item, category:item.category})
           let check = _.findIndex(this.$data.categoryList, {value: item.category})
           console.log('check',this.$data.categoryList, item.category)
@@ -1082,10 +1095,10 @@ export default {
           let uniqueUnits = []
           item.vendors.forEach(unit => {
             // vendor list, for purposed of autocomplete list make sure values aren't repeated
-            if (!uniqueVendors.includes(unit.vendor)) {
+            if (!this.$data.uniqueVendors.includes(unit.vendor)) {
               let v = {value: unit.vendor, label: unit.vendor}
               this.$data.vendorsList.push(v)
-              uniqueVendors.push(unit.vendor)
+              this.$data.uniqueVendors.push(unit.vendor)
             }
             // units list, for purposed of autocomplete list make sure values aren't repeated
             if (!uniqueUnits.includes(unit.unit)) {
@@ -1147,6 +1160,8 @@ export default {
     loadData () {
       this.$data.pricelist = []
       this.$data.skipCycles = 0
+      this.$data.itemCategory = []
+      this.$data.uniqueVendors = []
       this.loadPricelistData(this.$data.skipCycles)
     }
   },
