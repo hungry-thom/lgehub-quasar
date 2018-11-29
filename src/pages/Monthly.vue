@@ -51,23 +51,42 @@
               </q-td>
             </q-tr>
         </q-table>
-        <br>
+        <br>        
       </div>
-      <!--
-      <div class="row no-wrap">
-        <div v-for="day in month[0]" :key="day.date1" >
-          <q-card inline class="q-ma-sm" >
-            <q-card-media overlay-position="top" @click="clickCard">
-              <img src="assets/sad.svg">
-
-              <q-card-title slot="overlay">
-                <div slot="subtitle" class="text-right">{{ day.date1 }}</div>
-              </q-card-title>
-            </q-card-media>
-          </q-card>
-        </div>
+      <div>
+      <br>
+        <!-- ////////// start of journal datatable //////////// -->  
+        <q-table
+          :data="journal"
+          :columns="journalColumns"
+          :filter="filter"
+          :visible-columns="visibleJournalColumns"
+          row-key="date1"
+          :pagination.sync="pagination" >
+           <template slot="top-left" slot-scope="props">
+            <q-search
+              hide-underline
+              color="secondary"
+              v-model="filter"
+              class="col-6"
+            />
+          </template>
+          <template slot="top-right" slot-scope="props">
+            <q-table-columns
+              color="secondary"
+              class="q-mr-sm"
+              v-model="visibleJournalColumns"
+              :columns="journalColumns"
+            />
+          </template>
+          <q-tr slot="body" slot-scope="props" :props="props">
+              <q-td key="cash:" :props="props" >
+                {{ props.row }}
+              </q-td>
+          </q-tr>
+        </q-table>
       </div>
-      -->
+      <br>
   </q-page>
 </template>
 
@@ -133,7 +152,51 @@ export default {
           field: 'id'
         }
       ],
-      visibleColumns: []
+      visibleColumns: [],
+      journalObject: {
+        date1: '',
+        credit: '',
+        debit: ''
+      },
+      journal1: [
+        {
+          date1: '2018-11-19T03:30:54.661Z',
+          credit: [
+            {
+              account: 'cashMS',
+              amount: '360'
+            }
+          ],
+          debit: [
+            {
+              account: 'cogsMeatshop',
+              amount: '360'
+            }
+          ]
+        }
+      ],
+      journal: [
+        {
+          date1: '2018-11-19T03:30:54.661Z',
+          cash: [
+            {
+              account: 'cashMS',
+              amount: '360',
+              type: 'credit'
+            }
+          ],
+          expenses: [
+            {
+              account: 'cogsMeatshop',
+              amount: '360',
+              type: 'debit'
+            }
+          ]
+        }
+      ],
+      journalColumns: [],
+      visibleJournalColumns: [],
+      journalColumnList: []
     }
   },
   computed: {
@@ -176,6 +239,7 @@ export default {
         } else {
           c = 'bg-deep-purple-1'
         }
+        // create object key=dayofweek, day: date, color
         week[ima.day(n).format('ddd')] = {date1: ima.format('DD-MMM'), color: c} // ima.format('DD-MMM') // would ima.day(n).format() be better?
         this.$data.columns.push({
           name: ima.format('ddd'),
@@ -187,9 +251,41 @@ export default {
         })
         this.visibleColumns.push(ima.format('ddd'))
       }
-      console.log('month', this.$data.month)
+      console.log('month1', this.$data.month)
+      console.log('journal', this.$data.journal)
       console.log('week', week)
       this.$data.month.push(week)
+    },
+    generateJournalCols () {
+      console.log('journal', this.$data.journal)
+      let acctEqu = ['assets', 'liabilities', 'equity']
+      let equity = ['expenses', 'sales']
+      let liabilities = ['payable']
+      let assets = ['receivable', 'prepaid', 'inventory', 'cash', 'equipment']
+      let equation = assets.concat('=', liabilities, equity)
+      this.$data.journalColumnList = equation
+      let color = ''
+      for (let n = 0; n < equation.length; n++) {
+        let col = equation[n]
+        if (assets.includes(col)) {
+          color = 'bg-green-3'
+        }
+        if (equity.includes(col)) {
+          color = 'bg-deep-purple-2'
+        }
+        if (col.includes('=')) {
+          color = ''
+        }
+        this.$data.journalColumns.push({
+          name: col,
+          required: false,
+          label: col,
+          align: 'center',
+          field: col,
+          classes: color
+        })
+        this.visibleJournalColumns.push(col)
+      }
     }
   },
   mounted () {
@@ -212,6 +308,7 @@ export default {
         this.$data.users = response.data
       })
    this.generateWeek()
+   this.generateJournalCols()
     // Add new messages to the message list
     messages.on('created', message => {
       console.log('message received')
