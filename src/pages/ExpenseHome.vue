@@ -47,7 +47,7 @@
     </div>
     <br>
     <!-- //////// START OF MODAL' ////////-->
-    <q-modal v-model="expenseModal" :maximized="boolScreen" :no-backdrop-dismiss="true" >
+    <q-modal v-model="expenseModal" :maximized="boolScreen">
     <q-modal-layout> <!-- class="q-pa-sm" -->
       <q-toolbar slot="header">
         <q-btn
@@ -98,6 +98,7 @@
           <q-th key="expAccount" :props="props">expAccount</q-th>
           <q-th key="category" :props="props">Category</q-th>
           <q-th key="taxable" :props="props" >Taxable</q-th> <!-- width='25px'><q-btn size="sm" round dense color="secondary" icon="code" class="q-mr-xs" @click="expandCols" /></q-th> -->
+           <q-th key="expand" :props="props">Pricelist/Inv</q-th>
         </tr>
         <q-tr slot="body" slot-scope="props" :props="props">
           <q-td key="qty" :props="props" class="bg-deep-purple-1">
@@ -152,7 +153,9 @@
           </q-td>
           <q-td key="expand" :props="props">
             <div class="row items-center justify-between no-wrap">
-              <q-btn size="sm" round dense color="secondary" icon="delete" @click="deleteItemRow(props.row)" class="q-mr-xs" />
+              <q-checkbox v-model="props.row.add2Pricelist" checked-icon="attach_money" unchecked-icon="money_off" />
+              <q-checkbox v-model="props.row.add2Inventory" checked-icon="assignment" unchecked-icon="no_sim" class="q-mr-sm" />
+              <q-btn size="sm" round dense color="secondary" icon="delete" @click="deleteItemRow(props.row)" class="q-mx-xs" />
             </div>
           </q-td>
         </q-tr>
@@ -204,7 +207,7 @@
       <q-input class="col" float-label="Category" v-model="newItem.category" @keyup.enter="addItem"> <q-autocomplete :static-data="{field: 'value', list: categoryList}" :filter="myFilter" /> </q-input>&nbsp;&nbsp;
       <div class="q-pt-md">
         <q-checkbox v-model="newItem.add2Inventory" label="add2Inventory" tabindex=-1 /><br>
-        <q-checkbox v-model="transaction.add2Pricelist" label="add2Pricelist" tabindex=-1 /><br>
+        <q-checkbox v-model="newItem.add2Pricelist" label="add2Pricelist" tabindex=-1 /><br>
       </div>
     </div>
     <br>
@@ -281,8 +284,7 @@ export default {
         vendor: '',
         transNum: '',
         paymentAccount: '',
-        transItems: [],
-        add2Pricelist: true
+        transItems: []
       },
       itemList: [],
       categoryList: [],
@@ -362,7 +364,8 @@ export default {
         expAccount: '',
         category: '',
         taxable: 'yes',
-        add2Inventory: false
+        add2Inventory: false,
+        add2Pricelist: true
       },
       unitsList: {},
       pricelist: [],
@@ -634,10 +637,6 @@ export default {
         console.log(this.computedUnitsList)
         this.$data.newItem.unit = this.computedUnitsList[0].label
       }
-      let x = _.findIndex(this.$data.pricelist, {item: this.$data.newItem.item})
-      if (x > -1) {
-        this.$data.newItem.taxable = this.$data.pricelist[x].taxable
-      }
     },
     newExpense () {
       let carryOver = this.$data.transaction.add2Pricelist // maintain value
@@ -661,7 +660,8 @@ export default {
         expAccount: '',
         category: '',
         taxable: 'yes',
-        add2Inventory: false
+        add2Inventory: false,
+        add2Pricelist: true
       }
       this.$data.expenseModal = !this.$data.expenseModal
       this.$refs.inputVendor.focus()
@@ -736,13 +736,15 @@ export default {
           delete line['amount']
           this.$data.transaction.transItems.push(line)
           console.log('line Item', line)
+          // clear fields for new item
           let tempItem = {
             qty: '',
             item: '',
             unit: '',
             amount: '',
             taxable: this.$data.newItem.taxable,
-            add2Inventory: this.$data.newItem.add2Inventory
+            add2Inventory: this.$data.newItem.add2Inventory,
+            add2Pricelist: this.$data.newItem.add2Pricelist
           }
           if (this.$data.lockAccount) {
             tempItem.expAccount = this.$data.newItem.expAccount
@@ -768,79 +770,68 @@ export default {
       }
     },
     submitExpense () {
-      console.log('test', this.$data.newItem.qty && this.$data.newItem.item && this.$data.newItem.unit && this.$data.newItem.amount)
-      console.log(this.$data.newItem.qty, this.$data.newItem.item, this.$data.newItem.unit, this.$data.newItem.amount)
-      if (this.$data.newItem.qty && this.$data.newItem.item && this.$data.newItem.unit && this.$data.newItem.amount) {
-        this.$q.notify({
-          message: 'new Item data not added to list',
-          timeout: 3000,
-          position: 'center'
+      // save computed values to transaction.object
+      this.$data.transaction.subTotal = this.subTotal
+      this.$data.transaction.gstTotal = this.gstTotal
+      this.$data.transaction.grandTotal = this.grandTotal
+      // check if this is an exsisting transaction 
+      let tmpId = this.$data.transaction.id
+      if (tmpId) {
+        // if transaction is modified, changes need to be recorded
+        // if account changed, original acct needs to be reversed
+        console.log('existing transaction', tmpId)
+        // sdelete this.$data.transaction['id']
+        api.service('expenses').update(tmpId, this.$data.transaction).then((response) => {
+          console.log('sumbitted expense', response.id)
+          delete response['id']
+          api.service('audit').create(response)
+          // //////// journal entry
+          // what payable account asset - liability
+          // whether it is asset or liability, will still be a creditEntry
+          journalObject.credit.push({
+            account: this.$data.transaction.paymentAccount,
+            amount: this.$data.transaction.grandTotal
+          })
+          let gstMonth = moment(this.$data.transaction.date1).format('MMM')  
+          if (this.$data.transaction.gstTotal) {
+            journalObject.debit.push({
+              account: 'preGst'+ gstMonth,
+              amount: this.$data.transaction.gstTotal
+            })
+          }
+          this.$data.transaction.transItems.forEach((item) => {
+            journal.Object.debit.push({
+              account: item.expAccount,
+              amount: item.trans
+            })
+          })
         })
+        // need to handle any edits to inv changes
+        // probably need og copy to track changes
+        // lookup inv record based on an id?
       } else {
-        // save computed values to transaction.object
-        this.$data.transaction.subTotal = this.subTotal
-        this.$data.transaction.gstTotal = this.gstTotal
-        this.$data.transaction.grandTotal = this.grandTotal
-        // check if this is an exsisting transaction 
-        let tmpId = this.$data.transaction.id
-        if (tmpId) {
-          // if transaction is modified, changes need to be recorded
-          // if account changed, original acct needs to be reversed
-          console.log('existing transaction', tmpId)
-          // sdelete this.$data.transaction['id']
-          api.service('expenses').update(tmpId, this.$data.transaction).then((response) => {
-            console.log('sumbitted expense', response.id)
-            delete response['id']
-            api.service('audit').create(response)
-            // what payable account asset - liability
-            // whether it is asset or liability, will still be a creditEntry
-            journalObject.credit.push({
-              account: this.$data.transaction.paymentAccount,
-              amount: this.$data.transaction.grandTotal
-            })
-            let gstMonth = moment(this.$data.transaction.date1).format('MMM')  
-            if (this.$data.transaction.gstTotal) {
-              journalObject.debit.push({
-                account: 'preGst'+ gstMonth,
-                amount: this.$data.transaction.gstTotal
-              })
-            }
-            this.$data.transaction.transItems.forEach((item) => {
-              journal.Object.debit.push({
-                account: item.expAccount,
-                amount: item.trans
-              })
-            })
-          })
-          // need to handle any edits to inv changes
-          // probably need og copy to track changes
-          // lookup inv record based on an id?
-        } else {
-          console.log('new transaction')
-          api.service('expenses').create(this.$data.transaction).then((response) => {
-            console.log('sumbitted expense', response.id)
-            // submit expense to audit trail. better to use same id for expense and audit, or create expenseId?
-            // probably expenseId to have seperate entries for edits (ie full trail)
-            this.$data.transaction.expenseId = response.id
-            let cleanTransactionData = JSON.parse(JSON.stringify(this.$data.transaction))
-            // can choose to not register to pricelist
-            if (this.$data.transaction.add2Pricelist) {
-              this.updatePrices(cleanTransactionData)
-            }
-            // inventory updata is based line by line
-            this.updateInventory(cleanTransactionData)
-            // submit expense record for audit after price and inv methods for separate table keys
-            this.$data.transaction.table = 'expenses'
-            api.service('audit').create(this.$data.transaction)
-          })
-        }
-        // moved updatePrices and Inventory to 'newTransaction' to use transaction.id
-        // |-> no longer executed if loading existing transaction
-        // close overlay
-        this.overlay()
-        // reload expenses list from rethinkdb
-        this.loadExpenses(this.$data.startDate, this.$data.endDate)
+        console.log('new transaction')
+        api.service('expenses').create(this.$data.transaction).then((response) => {
+          console.log('sumbitted expense', response.id)
+          // submit expense to audit trail. better to use same id for expense and audit, or create expenseId?
+          // probably expenseId to have seperate entries for edits (ie full trail)
+          this.$data.transaction.expenseId = response.id
+          let cleanTransactionData = JSON.parse(JSON.stringify(this.$data.transaction))
+          // can choose to not register to pricelist
+          this.updatePrices(cleanTransactionData)
+          // inventory updata is based line by line
+          this.updateInventory(cleanTransactionData)
+          // submit expense record for audit after price and inv methods for separate table keys
+          this.$data.transaction.table = 'expenses'
+          api.service('audit').create(this.$data.transaction)
+        })
       }
+      // moved updatePrices and Inventory to 'newTransaction' to use transaction.id
+      // |-> no longer executed if loading existing transaction
+      // close overlay
+      this.overlay()
+      // reload expenses list from rethinkdb
+      this.loadExpenses(this.$data.startDate, this.$data.endDate)
     },
     updateInventory (trans) {
       // first get inventory data (use store in future?)
@@ -871,7 +862,7 @@ export default {
               console.log(item.item,' not in inventory ')
               let tmpObj = {
                 item: item.item,
-                lastConf: new Date().toISOString(),
+                lastConf: 0,
                 category: item.category,
                 stock: [
                   {
@@ -936,60 +927,31 @@ export default {
       console.log('updating prices',trans)
       console.log(this.$data.pricelist)
       trans.transItems.forEach(item => {
-        // check if item is in pricelist
-        let dex = _.findIndex(this.$data.pricelist, {item: item.item})
-        console.log(item, dex)
-        // make sure item.item is not discount
-        if (item.item.toLowerCase() !== 'discount') {
-          if (dex < 0) {
-            console.log('item not in pricelist')
-            // create new item
-            let tmpObj = {
-              item: item.item,
-              taxable: item.taxable,
-              category: item.category,
-              vendors: [
-                {
-                  unit: item.unit,
-                  price: item.price,
-                  updated: trans.date1,
-                  vendor: trans.vendor
-                }
-              ]
-            }
-            this.$data.pricelist.push(tmpObj) //this should prevent new items getting added twice
-            api.service('pricelist').create(tmpObj).then((response)=> {
-              console.log('created new item')
-              let auditObj = {
-                table: 'priceList',
-                type: 'expense',
-                recordDate: trans.date1,
-                price: item.price,
-                item: item.item,
-                unit: item.unit,
-                vendor: trans.vendor,
-                expenseId: trans.expenseId,
-                user: this.$props.user.email
-              }
-              api.service('audit').create(auditObj)
-            })
-          } else {
-            // item is in pricelist, check if unit/vendor are listed
-            let tVendors = this.$data.pricelist[dex].vendors // is there reactivity? possibleBug*****
-            let itemId = this.$data.pricelist[dex].id
-            let d2 = _.findIndex(tVendors, {unit: item.unit, vendor: trans.vendor})
-            if (d2 < 0) {
-              // new unit/vendor
-              console.log('newUnit/Vendor not found')
+        if (item.add2Pricelist) {
+          // check if item is in pricelist
+          let dex = _.findIndex(this.$data.pricelist, {item: item.item})
+          console.log(item, dex)
+          // make sure item.item is not discount
+          if (item.item.toLowerCase() !== 'discount') {
+            if (dex < 0) {
+              console.log('item not in pricelist')
+              // create new item
               let tmpObj = {
-                unit: item.unit,
-                price: item.price,
-                updated: trans.date1,
-                vendor: trans.vendor
+                item: item.item,
+                taxable: item.taxable,
+                category: item.category,
+                vendors: [
+                  {
+                    unit: item.unit,
+                    price: item.price,
+                    updated: trans.date1,
+                    vendor: trans.vendor
+                  }
+                ]
               }
-              tVendors.push(tmpObj)
-              api.service('pricelist').patch(itemId, {vendors: tVendors}).then((response) => {
-                console.log('added unit/vendor to pricelist')
+              this.$data.pricelist.push(tmpObj) //this should prevent new items getting added twice
+              api.service('pricelist').create(tmpObj).then((response)=> {
+                console.log('created new item')
                 let auditObj = {
                   table: 'priceList',
                   type: 'expense',
@@ -1004,28 +966,27 @@ export default {
                 api.service('audit').create(auditObj)
               })
             } else {
-              console.log(new Date(tVendors[d2].updated) < new Date(trans.date1))
-              // unit/Vendor is present, check if this record is more recent
-              if (new Date(tVendors[d2].updated) < new Date(trans.date1)) {
-                // record needs updating
-                // first check if there is a price change
-                console.log('newRecord')
-                let diff = item.price - tVendors[d2].price
-                console.log(diff)
-                if (diff !== 0) {
-                  console.log(item.item, item.unit, 'price changed by', diff)
+              // item is in pricelist, check if unit/vendor are listed
+              let tVendors = this.$data.pricelist[dex].vendors // is there reactivity? possibleBug*****
+              let itemId = this.$data.pricelist[dex].id
+              let d2 = _.findIndex(tVendors, {unit: item.unit, vendor: trans.vendor})
+              if (d2 < 0) {
+                // new unit/vendor
+                console.log('newUnit/Vendor not found')
+                let tmpObj = {
+                  unit: item.unit,
+                  price: item.price,
+                  updated: trans.date1,
+                  vendor: trans.vendor
                 }
-                tVendors[d2] = { price: item.price , unit: item.unit, vendor: trans.vendor, updated: trans.date1 }
-                console.log('new Vendors', tVendors[d2])
-                // need to get item id, either by loading into transItems or lookup
-                api.service('pricelist').patch(itemId, {vendors: tVendors }).then((response)=> {
-                  console.log('update pricelist', response)
+                tVendors.push(tmpObj)
+                api.service('pricelist').patch(itemId, {vendors: tVendors}).then((response) => {
+                  console.log('added unit/vendor to pricelist')
                   let auditObj = {
                     table: 'priceList',
                     type: 'expense',
                     recordDate: trans.date1,
                     price: item.price,
-                    change: diff,
                     item: item.item,
                     unit: item.unit,
                     vendor: trans.vendor,
@@ -1034,10 +995,42 @@ export default {
                   }
                   api.service('audit').create(auditObj)
                 })
+              } else {
+                console.log(tVendors[d2].updated < trans.date1)
+                // unit/Vendor is present, check if this record is more recent
+                if (tVendors[d2].updated < trans.date1) {
+                  // record needs updating
+                  // first check if there is a price change
+                  console.log('newRecord')
+                  let diff = item.price - tVendors[d2].price
+                  console.log(diff)
+                  if (diff !== 0) {
+                    console.log(item.item, item.unit, 'price changed by', diff)
+                  }
+                  tVendors[d2] = { price: item.price , unit: item.unit, vendor: trans.vendor, updated: trans.date1 }
+                  console.log('new Vendors', tVendors[d2])
+                  // need to get item id, either by loading into transItems or lookup
+                  api.service('pricelist').patch(itemId, {vendors: tVendors }).then((response)=> {
+                    console.log('update pricelist', response)
+                    let auditObj = {
+                      table: 'priceList',
+                      type: 'expense',
+                      recordDate: trans.date1,
+                      price: item.price,
+                      change: diff,
+                      item: item.item,
+                      unit: item.unit,
+                      vendor: trans.vendor,
+                      expenseId: trans.expenseId,
+                      user: this.$props.user.email
+                    }
+                    api.service('audit').create(auditObj)
+                  })
+                }
               }
             }
-          }
-        } // skip everything if item is discount
+          } // skip everything if item is discount
+        } // else -do not add to pricelist
       }, this)
     },
     loadExpenses(stDate, endDate) {
@@ -1065,19 +1058,19 @@ export default {
         console.log('exp resp', response.data)
       })
     },
-    loadPricelistData(skipNum) {
+    loadPricelistData() {
       // there will be a problem if docs exceed 200
       api.service('pricelist').find({
         query: {
           $sort: { item: 1 },
-          $limit: 500,
-          $skip: skipNum * 200
+          $limit: 500
         }
       }).then((response) => {
-        // this.$data.itemCategory = [] // moved to loadData(), kept clearing on multiple loads
-        // let uniqueVendors = [] // moved to loadData(), kept clearing on multiple loads
+        // load pricelist data
+        this.$data.pricelist = response.data
+        this.$data.itemCategory = []
+        let uniqueVendors = []
         response.data.forEach(item => {
-          this.$data.pricelist.push(item)
           this.$data.itemCategory.push({item:item.item, category:item.category})
           let check = _.findIndex(this.$data.categoryList, {value: item.category})
           console.log('check',this.$data.categoryList, item.category)
@@ -1095,10 +1088,10 @@ export default {
           let uniqueUnits = []
           item.vendors.forEach(unit => {
             // vendor list, for purposed of autocomplete list make sure values aren't repeated
-            if (!this.$data.uniqueVendors.includes(unit.vendor)) {
+            if (!uniqueVendors.includes(unit.vendor)) {
               let v = {value: unit.vendor, label: unit.vendor}
               this.$data.vendorsList.push(v)
-              this.$data.uniqueVendors.push(unit.vendor)
+              uniqueVendors.push(unit.vendor)
             }
             // units list, for purposed of autocomplete list make sure values aren't repeated
             if (!uniqueUnits.includes(unit.unit)) {
@@ -1109,16 +1102,8 @@ export default {
           }, this)
           // list = someVar.filter((x, i, a) => a.indexOf(x) == i) //sete list with unique values
         })
-        console.log('response0', response.data.length)
-        // handle more than 200
-        if (response.data.length > 199) {
-          console.log('rerun load pricelist')
-          this.$data.skipCycles++
-          this.loadPricelistData(this.$data.skipCycles)
-        } else {
-          console.log('LOAD INVENTORYDATA?!!!!!!!!!!!!!')
-          this.loadInventoryData()
-        }
+        console.log('LOAD INVENTORYDATA!!!!!!!!!!!!!')
+        this.loadInventoryData()
       })
     },
     loadInventoryData () {
@@ -1156,13 +1141,6 @@ export default {
           // list = someVar.filter((x, i, a) => a.indexOf(x) == i) //sete list with unique values
         })
       })
-    },
-    loadData () {
-      this.$data.pricelist = []
-      this.$data.skipCycles = 0
-      this.$data.itemCategory = []
-      this.$data.uniqueVendors = []
-      this.loadPricelistData(this.$data.skipCycles)
     }
   },
   mounted () {
@@ -1173,8 +1151,7 @@ export default {
     this.loadExpenses(this.$data.startDate, this.$data.startDate)
     //// !!!! THERE WILL BE ISSUES ONCE RECORDS GO BEYOND 200 !!!!!!!
     // get pricelist data from rethinkdb
-    // this.loadPricelistData()
-    this.loadData()
+    this.loadPricelistData()
     // this.loadInventoryData() // if not using inventory data for item and unit list, unblock code in loadpricelistdata
     /*
     api.service('pricelist').find({
