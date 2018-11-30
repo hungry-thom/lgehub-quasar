@@ -637,6 +637,10 @@ export default {
         console.log(this.computedUnitsList)
         this.$data.newItem.unit = this.computedUnitsList[0].label
       }
+      let x = _.findIndex(this.$data.pricelist, {item: this.$data.newItem.item})
+      if (x > -1) {
+        this.$data.newItem.taxable = this.$data.pricelist[x].taxable
+      }
     },
     newExpense () {
       let carryOver = this.$data.transaction.add2Pricelist // maintain value
