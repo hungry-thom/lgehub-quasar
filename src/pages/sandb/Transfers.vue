@@ -36,40 +36,27 @@
             <q-th key="item" :props="props">
               <u>Item</u>
             </q-th>
-             <q-th key="Sun" :props="props">
-              {{ weekDates[0] }} <br> Sun 
-            </q-th>
             <q-th key="Mon" :props="props">
-              {{ weekDates[1] }} <br> Mon 
+              {{ weekDates[0] }} <br> Mon 
             </q-th>
             <q-th key="Tue" :props="props">
-              {{ weekDates[2] }} <br> Tue
+              {{ weekDates[1] }} <br> Tue
             </q-th>
             <q-th key="Wed" :props="props">
-              {{ weekDates[3] }} <br> Wed
+              {{ weekDates[2] }} <br> Wed
             </q-th>
             <q-th key="Thu" :props="props">
-              {{ weekDates[4] }} <br> Thu
+              {{ weekDates[3] }} <br> Thu
             </q-th>
             <q-th key="Fri" :props="props">
-              {{ weekDates[5] }} <br> Fri
+              {{ weekDates[4] }} <br> Fri
             </q-th>
             <q-th key="Sat" :props="props">
-              {{ weekDates[6] }} <br> Sat
+              {{ weekDates[5] }} <br> Sat
             </q-th>
-            <q-th key="weekTotal" :props="props">weekTotal</q-th>
           </tr>
           <q-tr slot="body" slot-scope="props" :props="props">
             <q-td key="item" :props="props">{{ props.row.item }}</q-td>
-            <q-td key="Sun" :props="props">
-              {{ props.row.Sun.total || '-' }}
-                <q-popup-edit v-model="props.row.Sun" @save="updateCount(props.row, 'Sun')" buttons>
-                  <div class="row no-wrap" v-for="units in props.row.Sun.transfers" :key="units.unit">
-                    <q-field class="q-pt-xs">{{ units.unit }}:</q-field>&nbsp;&nbsp;
-                    <q-input type="number" v-model="units.qty" />
-                  </div>
-                </q-popup-edit>
-            </q-td>
             <q-td key="Mon" :props="props">
               {{ props.row.Mon.total || '-' }}
                 <q-popup-edit v-model="props.row.Mon" @save="updateCount(props.row, 'Mon')" buttons>
@@ -134,11 +121,6 @@
                 </q-popup-edit>
               </div>
             </q-td>
-            <q-td key="weekTotal" :props="props">
-              <div>
-                {{ props.row.weekTotal || '-' }}
-              </div>
-            </q-td>
           </q-tr>
         </q-table>
         <br>
@@ -191,7 +173,7 @@ export default {
       categoryArray: [],
       itemList: [],
       startingDate: moment(),
-      days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+      days: ['Mon','Tue','Wed','Thu','Fri','Sat'],
       weekDates: [],
       disablePrevWeek: true,
       disableNextWeek: true,
@@ -221,14 +203,6 @@ export default {
           label: 'Item',
           align: 'left',
           field: 'item',
-          sortable: true
-        },
-        {
-          name: 'Sun',
-          required: true,
-          label: 'Sun',
-          align: 'left',
-          field: 'Sun',
           sortable: true
         },
         {
@@ -272,16 +246,9 @@ export default {
           label: 'Sat',
           align: 'center',
           field: 'Sat'
-        },
-        {
-          name: 'weekTotal',
-          required: true,
-          label: 'weekTotal',
-          align: 'center',
-          field: 'weekTotal'
         }
       ],
-      visibleColumns: ['item','Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+      visibleColumns: ['item', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
     }
   },
   computed: {
@@ -341,15 +308,12 @@ export default {
       })
       console.log('loadTransferQty', transferUnit)
       item[day].total = t
-      // will wait to update transfers db until end to run weekTOtal loop
-      item.weekTotal = 0
-      Object.keys(item).forEach(row => {
-        console.log('weekTotal', row, item.weekTotal )
-        if (item[row].total) {
-          console.log('true', item[row].total)
-          item.weekTotal += item[row].total
-        }
+      api.service('transfers').patch(this.$data.inventory.id, {
+        items: this.$data.inventory.items // patches entire item list for the week. seems excessive
+      }).then((response) => {
+        api.service('audit').create(auditObj1)
       })
+      
       // audit trail type='transfer' for item --> day --> unit --> qty 
       api.service('inventory').get(item.id)
         .then((invItem) => {
@@ -367,7 +331,6 @@ export default {
 
           })
           console.log('patchInv', updatedStock)
-          /* disabled for testing purposes
           api.service('inventory').patch(invItem.id, {stock: updatedStock}).then((response) => {
             let auditObj2 = {
               recordDate: new Date(),
@@ -380,15 +343,8 @@ export default {
             }
               api.service('audit').create(auditObj2)
           })
-          */
         })
-      // updating transfers db at end so weekTotal can finish
-      api.service('transfers').patch(this.$data.inventory.id, {
-        items: this.$data.inventory.items // patches entire item list for the week. seems excessive
-      }).then((response) => {
-        console.log('updated transfers!!!', response)
-        api.service('audit').create(auditObj1)
-      })
+      
       /*
         r.db('test').table('transfers').get('0c3ac6e3-3b09-46b5-9e36-df8e725abe33').update( {
           items: r.row("items").map((item) => {
@@ -401,7 +357,6 @@ export default {
         })
    */
     },
-    // not in use
     confirmInv () {
       // .every() cycles through until first false encountered
       let test = this.$data.confirmations.every(item => {
@@ -465,7 +420,6 @@ export default {
     createBlankTransferRec() {
       // get all items for inventory to create transfer list
       console.log('creating new blank week')
-      // will have to update to accomodate more than 200 docs
       api.service('inventory').find({
         query: {
           $sort: { item: 1},
@@ -473,15 +427,13 @@ export default {
         }
       }).then((response2) => {
         let tempWeekTransfers = {}
-        let ima = moment()
-        tempWeekTransfers.week = ima.day(0).format('DD-MMM-YYYY')
+        tempWeekTransfers.week = this.currentMonday().format('DD-MMM-YYYY')
         console.log('call2 inventory',response2.data)
         response2.data.forEach(item => {
           // find base units
           let tempItem = {} // to be added to appropriate category list
           tempItem.item = item.item 
           tempItem.id = item.id
-          tempItem.weekTotal = 0
           let tempStock = []
           item.stock.forEach(stock => { 
             let tempUnit = {}
@@ -490,13 +442,12 @@ export default {
             tempStock.push(tempUnit) 
           }, this)
           // for each day add empty base units
-          // this.$data.days.forEach(day => {
-          for (let n = 0; n < 7; n++) {
+          this.$data.days.forEach(day => {
             let tmp = {}
             let cleanStock = JSON.parse(JSON.stringify(tempStock))
-            tempItem[ima.day(n).format('ddd')] = { total: 0, transfers: cleanStock }
+            tempItem[day] = { total: 0, transfers: cleanStock }
             // tempWeekTransfers.items[day] = {total:0 , transfers: tempStock }
-          } // , this)
+          }, this)
           if (!tempWeekTransfers[item.category]) {
             tempWeekTransfers[item.category] = []
           }
@@ -533,49 +484,25 @@ export default {
       // end createBlankTransferRec
       
     },
-    generateWeek () {
-      let ima = moment()
-      let week = {}
-      this.$data.columns = []
-      for (let n = 0; n < 7; n++) {
-        // create object key=dayofweek, day: date, color
-        week[ima.day(n).format('ddd')] = {date1: ima.format('DD-MMM'), color: c} // ima.format('DD-MMM') // would ima.day(n).format() be better?
-        this.$data.columns.push({
-          name: ima.format('ddd'),
-          required: false,
-          label: ima.format('ddd'),
-          align: 'center',
-          field: ima.format('ddd'),
-          // classes: 'bg-deep-purple-1'
-        })
-        this.visibleColumns.push(ima.format('ddd'))
-      }
-    },
     initializeData () {
-      // find transfer record (week) using current sunday's date
-      // let cMonday = this.currentMonday()
-      let ima = moment()
-      let currentSunday = ima.day(0)
-      // console.log('current Monday', cMonday)
+      // find transfer record (week) using this monday's date
+      let cMonday = this.currentMonday()
+      // cMonday = '01-Oct-2018'
+      console.log('current Monday', cMonday)
       // this.$data.startingDate = moment(cMonday)
       // find transfer record of current week
       // set starting date
-      // let d = new Date(this.$data.inventory.week) // ??
-      // this.$data.startingDate = moment(d)
-      // let dateDay = moment(cMonday)
+      let d = new Date(this.$data.inventory.week)
+      this.$data.startingDate = moment(d)
+      let dateDay = moment(cMonday)
       let dateWeek = []
-      for (let n = 0; n < 7; n++) {
-        dateWeek.push(ima.day(n).format('DD-MMM'))
-      }
-      /*
       this.$data.days.forEach(day =>{
         dateWeek.push(dateDay.format('DD-MMM'))
         dateDay.add(1, 'days')
       })
-      */
       this.$data.weekDates = dateWeek
       console.log('dateWeek', dateWeek)
-      this.loadTransferData(ima.day(0).format('DD-MMM-YYYY'))
+      this.loadTransferData(cMonday.format('DD-MMM-YYYY'))
     },
     loadTransferData(lookupDate) {
       // find transfer record (week) using this monday's date

@@ -830,9 +830,7 @@ export default {
             this.$data.transaction.expenseId = response.id
             let cleanTransactionData = JSON.parse(JSON.stringify(this.$data.transaction))
             // can choose to not register to pricelist
-            if (this.$data.transaction.add2Pricelist) {
-              this.updatePrices(cleanTransactionData)
-            }
+            this.updatePrices(cleanTransactionData)
             // inventory updata is based line by line
             this.updateInventory(cleanTransactionData)
             // submit expense record for audit after price and inv methods for separate table keys
