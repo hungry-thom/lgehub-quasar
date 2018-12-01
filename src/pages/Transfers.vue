@@ -383,12 +383,17 @@ export default {
           */
         })
       // updating transfers db at end so weekTotal can finish
-      api.service('transfers').patch(this.$data.inventory.id, {
-        items: this.$data.inventory.items // patches entire item list for the week. seems excessive
-      }).then((response) => {
-        console.log('updated transfers!!!', response)
-        api.service('audit').create(auditObj1)
-      })
+      let pos = this.$data.categoryArray.indexOf(this.$data.categoryValue)
+      if (pos > -1) {
+        api.service('transfers').patch(this.$data.inventory.id, {
+          categoryArray.pos: this.$data.inventory.items // patches entire item list for the week. seems excessive
+        }).then((response) => {
+          console.log('updated transfers!!!', response)
+          api.service('audit').create(auditObj1)
+        })
+      } else {
+        console.log('error, item category not found. transfer db not updated')
+      }
       /*
         r.db('test').table('transfers').get('0c3ac6e3-3b09-46b5-9e36-df8e725abe33').update( {
           items: r.row("items").map((item) => {
