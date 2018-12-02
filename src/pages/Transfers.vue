@@ -4,13 +4,12 @@
       <div>
         <br>
         <q-table
-          :data="itemList"
+          :data="transfers.itemList"
           :columns="columns"
           :filter="filter"
           :visible-columns="visibleColumns"
           row-key="item"
-          :pagination.sync="pagination"
-          hide-bottom >
+          :pagination.sync="pagination" >
           <template slot="top-left" slot-scope="props">
             <q-btn icon="navigate_before" color="secondary" :disable="disablePrevWeek" @click="clickPrevWeek"/>&nbsp;&nbsp;
             <q-btn icon="navigate_next" color="secondary"  :disable="disableNextWeek" @click="clickNextWeek" />&nbsp;&nbsp;
@@ -187,9 +186,10 @@ export default {
   props: ['user'],
   data () {
     return {
+      transfers: {},
       categoryValue: 'DryFood',
       categoryArray: [],
-      itemList: [],
+      // itemList: [],
       startingDate: moment(),
       days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
       weekDates: [],
@@ -384,6 +384,7 @@ export default {
         })
       // updating transfers db at end so weekTotal can finish
       let pos = this.$data.categoryArray.indexOf(this.$data.categoryValue)
+      /*
       if (pos > -1) {
         api.service('transfers').patch(this.$data.inventory.id, {
           categoryArray.pos: this.$data.inventory.items // patches entire item list for the week. seems excessive
@@ -394,6 +395,7 @@ export default {
       } else {
         console.log('error, item category not found. transfer db not updated')
       }
+      */
       /*
         r.db('test').table('transfers').get('0c3ac6e3-3b09-46b5-9e36-df8e725abe33').update( {
           items: r.row("items").map((item) => {
@@ -479,7 +481,7 @@ export default {
       }).then((response2) => {
         let tempWeekTransfers = {}
         let ima = moment()
-        tempWeekTransfers.week = ima.day(0).format('DD-MMM-YYYY')
+        tempWeekTransfers.week = ima.day(0).format('DD-MMM-YYYY') // set sunday as start of week / lookup value
         console.log('call2 inventory',response2.data)
         response2.data.forEach(item => {
           // find base units
@@ -593,19 +595,18 @@ export default {
         query: {
           week: {
             $search: lookupDate
-          },
-          $select: ['week','id',this.$data.categoryValue]
+          }
         }
       }).then((response) => {
         if (response.data.length > 0) {
           // what if more than 1 record found?
           console.log('record found', response)
           this.$data.inventory = response.data[0]
-          this.$data.itemList = this.$data.inventory[this.$data.categoryValue] // is this a pointer or double the data?
+          // this.$data.itemList = this.$data.inventory[this.$data.categoryValue] // is this a pointer or double the data?
           console.log('inventory',this.$data.inventory)
           // load new starting date
           let d = new Date(this.$data.inventory.week)
-          this.$data.startingDate = moment(d)
+          this.$data.startingDate = moment(d) // used for nav buttons, should probably be replaced
           let dateDay = moment(d)
           let dateWeek = []
           this.$data.days.forEach(day =>{
@@ -615,14 +616,15 @@ export default {
           this.$data.weekDates = dateWeek
           console.log('dateWeek', dateWeek)
           // create copy of loaded data for original Values
-          console.log('creating copy of data for og vals')
-          this.$data.originalTransferVals = JSON.parse(JSON.stringify(this.$data.inventory[this.$data.categoryValue]))
+          console.log('creating copy of data for og vals', this.$data.inventory)
+          this.$data.originalTransferVals = JSON.parse(JSON.stringify(this.$data.inventory.itemList))
           console.log(this.$data.originalTransferVals)
           // check for previous and next week
           this.checkPrevNextButtons()
         } else {
           console.log('no record', response)
-          this.createBlankTransferRec()
+          this.setupNewTransferWeek()
+          // this.createBlankTransferRec()
           // starting date already set with initialization
           // original transfer vals and navigation buttons loaded in createBlankTransferRec()
         }
@@ -656,11 +658,77 @@ export default {
       }).then((response) => {
         this.$data.disablePrevWeek = (response.data.length > 0) ? false : true // if record found, do not disable button
       })
+    },
+    setupNewTransferWeek () {
+      // this.$data.itemCategory = []
+      let ima = moment()
+      this.$data.transfers.week = ima.day(0).format('DD-MMM-YYYY') // set sunday as start of week / lookup value
+      this.$data.transfers.itemList = []
+      this.loadInventoryData(0) // zero initializes the skip cycle, if there are more than 200 records
+    },
+    loadInventoryData(skipNum) {
+      // there will be a problem if docs exceed 200
+      api.service('inventory').find({
+        query: {
+          $sort: { item: 1 }, // alphabetical
+          $limit: 500, // 200 is max
+          $skip: skipNum * 200
+        }
+      }).then((response) => {
+        // this.$data.itemCategory = [] // moved to loadData(), kept clearing on multiple loads
+        // let uniqueVendors = [] // moved to loadData(), kept clearing on multiple loads
+        let tempWeekTransfers = {}
+        response.data.forEach(item => {
+          //this.$data.inventory.push(item)
+          // let check = _.findIndex(this.$data.categoryList, {value: item.category})
+          // console.log('check',this.$data.categoryList, item.category)
+          
+          let tempItem = {} // to be added to appropriate category list
+          tempItem.item = item.item 
+          tempItem.id = item.id
+          tempItem.weekTotal = 0
+          tempItem.category = item.category
+          let tempStock = []
+          item.stock.forEach(stock => { 
+            let tempUnit = {}
+            tempUnit.unit = stock.unit
+            tempUnit.qty = 0
+            tempStock.push(tempUnit) 
+          }, this)
+          // for each day add empty base units
+          // this.$data.days.forEach(day => {
+          let ima = moment()
+          for (let n = 0; n < 7; n++) {
+            let tmp = {}
+            let cleanStock = JSON.parse(JSON.stringify(tempStock))
+            tempItem[ima.day(n).format('ddd')] = { total: 0, transfers: cleanStock }
+          } // , this)
+          console.log('itemObj', tempItem)
+          this.$data.transfers.itemList.push(tempItem) // change
+          console.log('itemList', this.$data.transfers)
+        }, this)
+        console.log('response0', response.data.length)
+        // handle more than 200
+        if (response.data.length > 199) {
+          console.log('rerun load pricelist')
+          skipNum++
+          this.loadInventoryData(skipNum)
+        } else {
+          console.log('LOAD INVENTORYDATA?!!!!!!!!!!!!!', this.$data.transfers)
+          // this.loadInventoryData()
+          api.service('transfers').create(this.$data.transfers).then((response) => {
+          console.log('created week2', response)
+          this.$data.transfers.id = response.id
+          // this.loadTransferData(tempWeekTransfers.week)
+        })
+        }
+      })
     }
   },
   mounted () {
-    //load tranfer data (api.service('transfers'))
-    //this.$data.startingDate = this.currentMonday()
+    // load tranfer data (api.service('transfers'))
+    // this.$data.startingDate = this.currentMonday()
+    // api.service('transfers').remove('e1afc841-2727-468a-8e9a-c7fcaa252f23')
     this.initializeData()
     this.loadCategories()
     // this.loadTransferData()
