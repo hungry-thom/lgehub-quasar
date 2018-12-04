@@ -4,7 +4,7 @@
       <div>
         <br>
         <q-table
-          :data="transfers.itemList"
+          :data="inventory.itemList"
           :columns="columns"
           :filter="filter"
           :visible-columns="visibleColumns"
@@ -186,7 +186,6 @@ export default {
   props: ['user'],
   data () {
     return {
-      transfers: {},
       categoryValue: 'DryFood',
       categoryArray: [],
       // itemList: [],
@@ -198,7 +197,7 @@ export default {
       message: '',
       messages: [],
       users: [],
-      inventory: [],
+      inventory: {},
       originalTransferVals: {},
       filter: '',
       pagination: {
@@ -662,8 +661,8 @@ export default {
     setupNewTransferWeek () {
       // this.$data.itemCategory = []
       let ima = moment()
-      this.$data.transfers.week = ima.day(0).format('DD-MMM-YYYY') // set sunday as start of week / lookup value
-      this.$data.transfers.itemList = []
+      this.$data.inventory.week = ima.day(0).format('DD-MMM-YYYY') // set sunday as start of week / lookup value
+      this.$data.inventory.itemList = []
       this.loadInventoryData(0) // zero initializes the skip cycle, if there are more than 200 records
     },
     loadInventoryData(skipNum) {
@@ -677,7 +676,6 @@ export default {
       }).then((response) => {
         // this.$data.itemCategory = [] // moved to loadData(), kept clearing on multiple loads
         // let uniqueVendors = [] // moved to loadData(), kept clearing on multiple loads
-        let tempWeekTransfers = {}
         response.data.forEach(item => {
           //this.$data.inventory.push(item)
           // let check = _.findIndex(this.$data.categoryList, {value: item.category})
@@ -704,8 +702,8 @@ export default {
             tempItem[ima.day(n).format('ddd')] = { total: 0, transfers: cleanStock }
           } // , this)
           console.log('itemObj', tempItem)
-          this.$data.transfers.itemList.push(tempItem) // change
-          console.log('itemList', this.$data.transfers)
+          this.$data.inventory.itemList.push(tempItem) // change
+          console.log('itemList', this.$data.inventory)
         }, this)
         console.log('response0', response.data.length)
         // handle more than 200
@@ -714,13 +712,12 @@ export default {
           skipNum++
           this.loadInventoryData(skipNum)
         } else {
-          console.log('LOAD INVENTORYDATA?!!!!!!!!!!!!!', this.$data.transfers)
-          // this.loadInventoryData()
-          api.service('transfers').create(this.$data.transfers).then((response) => {
-          console.log('created week2', response)
-          this.$data.transfers.id = response.id
-          // this.loadTransferData(tempWeekTransfers.week)
-        })
+          console.log('LOAD INVENTORYDATA?!!!!!!!!!!!!!', this.$data.inventory)
+          api.service('transfers').create(this.$data.inventory).then((response) => {
+            console.log('created week2', response)
+            this.$data.inventory.id = response.id
+            this.loadTransferData(this.$data.inventory.week)
+          })
         }
       })
     }
