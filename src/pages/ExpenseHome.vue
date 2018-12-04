@@ -550,8 +550,12 @@ export default {
   },
   computed: {
     computedUnitsList () {
-      return this.$data.unitsList[this.$data.newItem.item]
-    },
+      if (this.$data.unitsList[this.$data.newItem.item]) {
+        return this.$data.unitsList[this.$data.newItem.item]
+      } else {
+        return []
+      }
+  },
     subTotal () {
       let t = 0
       this.$data.transaction.transItems.forEach(item => {
@@ -633,9 +637,11 @@ export default {
       if (n > -1) {
         this.$data.newItem.category = this.$data.itemCategory[n].category
       }
-      if (this.computedUnitsList.length === 1) {
-        console.log(this.computedUnitsList)
-        this.$data.newItem.unit = this.computedUnitsList[0].label
+      if (this.computedUnitsList) {
+        if (this.computedUnitsList.length === 1) {
+          console.log(this.computedUnitsList)
+          this.$data.newItem.unit = this.computedUnitsList[0].label
+        }
       }
       let x = _.findIndex(this.$data.pricelist, {item: this.$data.newItem.item})
       if (x > -1) {
