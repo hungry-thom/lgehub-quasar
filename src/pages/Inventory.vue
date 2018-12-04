@@ -379,12 +379,14 @@ export default {
     confirmInv (row) {
       console.log('check',this.$data.confirmations[row.__index].confirmed)
       // send current item stock values to audit, only if going from unchecked --> checked
+      let d = moment()
+      d.add(5, 'seconds')
       if (this.$data.confirmations[row.__index].confirmed) {
         row.stock.forEach(unit => {
           let auditObj = {
             table: 'inventory',
             type: 'confirmation',
-            recordDate: new Date(),
+            recordDate: d.toISOString(),
             confirmedAmt: unit.qty,
             item: row.item,
             unit: unit.unit,
