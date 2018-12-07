@@ -10,7 +10,7 @@
           :visible-columns="visibleColumns"
           row-key="item"
           :pagination.sync="pagination"
-          hide-bottom >
+          :loading="loading" >
           <template slot="top-left" slot-scope="props">
             <q-btn icon="navigate_before" color="secondary" :disable="disablePrevWeek" @click="clickPrevWeek"/>&nbsp;&nbsp;
             <q-btn icon="navigate_next" color="secondary"  :disable="disableNextWeek" @click="clickNextWeek" />&nbsp;&nbsp;
@@ -187,6 +187,7 @@ export default {
   props: ['user'],
   data () {
     return {
+      loading: true,
       categoryValue: 'DryFood',
       categoryArray: [],
       itemList: [],
@@ -198,7 +199,7 @@ export default {
       message: '',
       messages: [],
       users: [],
-      inventory: [],
+      inventory: {},
       originalTransferVals: {},
       filter: '',
       pagination: {
@@ -288,6 +289,7 @@ export default {
   },
   methods: {
     showNotification (val) {
+      this.$data.loading = true
       console.log(val)
       this.$data.categoryValue = val
       this.loadTransferData(this.$data.inventory.week)
@@ -299,7 +301,6 @@ export default {
         }
       }).then(response=> {
         response.data.forEach(category => {
-          console.log('ccc',category)
           if (!this.$data.categoryArray.includes(category.category)) {
             this.$data.categoryArray.push(category.category)
           }
@@ -391,7 +392,7 @@ export default {
       // patches entire category, seems excessive
       api.service('transfers').patch(this.$data.inventory.id, patchObj).then((response) => {
         console.log('updated transfers!!!', response)
-        // disabled for testing api.service('audit').create(auditObj1)
+        api.service('audit').create(auditObj1)
       })
       /*
         r.db('test').table('transfers').get('0c3ac6e3-3b09-46b5-9e36-df8e725abe33').update( {
@@ -407,23 +408,6 @@ export default {
     },
     // not in use
     confirmInv () {
-      // .every() cycles through until first false encountered
-      let test = this.$data.confirmations.every(item => {
-        console.log(item.item, item.confirmed)
-        // this.$data.conf = item.confirmed
-        return item.confirmed
-      })
-      if (test) {
-        // submit inv
-        console.log('submitting audit')
-        api.service('audit').create(this.$data.confirmations)
-      } else {
-        this.$q.notify({
-          message: 'Not all inventory items confirmed',
-          timeout: 3000,
-          position: 'center'
-        })
-      }
     },
     clickNextWeek() {
       let d = new Date(this.$data.inventory.week)
@@ -466,19 +450,27 @@ export default {
       let cMon = today.subtract(dex, 'days')
       return cMon
     },
-    createBlankTransferRec() {
+    setupNewTransferWeek () {
+      // this.$data.itemCategory = []
+      let ima = moment()
+      this.$data.inventory.week = ima.day(0).format('DD-MMM-YYYY') // set sunday as start of week / lookup value
+      // this.$data.inventory.itemList = []
+      this.loadInventoryData(0) // zero initializes the skip cycle, if there are more than 200 records
+    },
+    loadInventoryData(skipNum) {
       // get all items for inventory to create transfer list
       console.log('creating new blank week')
       // will have to update to accomodate more than 200 docs
       api.service('inventory').find({
         query: {
-          $sort: { item: 1},
-          $limit: 500
+          $sort: { item: 1 }, // alphabetical
+          $limit: 500, // 200 is max
+          $skip: skipNum * 200
         }
       }).then((response2) => {
-        let tempWeekTransfers = {}
+        let tempWeekTransfers = this.$data.inventory
         let ima = moment()
-        tempWeekTransfers.week = ima.day(0).format('DD-MMM-YYYY')
+        // tempWeekTransfers.week = ima.day(0).format('DD-MMM-YYYY')
         console.log('call2 inventory',response2.data)
         response2.data.forEach(item => {
           // find base units
@@ -508,11 +500,25 @@ export default {
         }, this)
         console.log('NewTransferWeek', tempWeekTransfers)
         this.$data.inventory = tempWeekTransfers /////IMPORTANT Maybe leave out and just make a call to transfer db
+        if (response2.data.length > 199) {
+          console.log('rerun load pricelist')
+          skipNum++
+          this.loadInventoryData(skipNum)
+        } else {
+          console.log('LOAD INVENTORYDATA?!!!!!!!!!!!!!', this.$data.inventory)
+          api.service('transfers').create(this.$data.inventory).then((response) => {
+            console.log('created week2', response)
+            this.$data.inventory.id = response.id
+            this.loadTransferData(this.$data.inventory.week) // datatable does not load data on its own
+          })
+        }
+        /*
         api.service('transfers').create(tempWeekTransfers).then((response) => {
           console.log('created week', response.id)
           // this.$data.inventory.id = response.id
           this.loadTransferData(tempWeekTransfers.week)
         })
+        */
         /*vvvvvvvvMIGHT BE ABLE TO ELIMINATE ALL THIS IF CALL TO LOAD IS BETTER vvvvvvvvvvvvvv
         // load new starting date
         let d = new Date(this.$data.inventory.week)
@@ -534,7 +540,7 @@ export default {
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^*/
       })
       // this.$data.inventory = this.$data.inventory2
-      // end createBlankTransferRec
+      // end loadInventoryData
       
     },
     generateWeek () {
@@ -583,7 +589,7 @@ export default {
     },
     loadTransferData(lookupDate) {
       // find transfer record (week) using this monday's date
-      //let cMonday = this.currentMonday()
+      // let cMonday = this.currentMonday()
       // cMonday = '01-Oct-2018'
       console.log('looking up ', lookupDate, 'in transfers')
       // this.$data.startingDate = moment(cMonday)
@@ -619,11 +625,10 @@ export default {
           console.log(this.$data.originalTransferVals)
           // check for previous and next week
           this.checkPrevNextButtons()
+          this.$data.loading = false
         } else {
           console.log('no record', response)
-          this.createBlankTransferRec()
-          // starting date already set with initialization
-          // original transfer vals and navigation buttons loaded in createBlankTransferRec()
+          this.setupNewTransferWeek()
         }
       })
       // vvv-- the following code is executed while waiting for response from database --vvv
