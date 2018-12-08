@@ -297,11 +297,12 @@ export default {
       }
       // cylce through all categories and format to add to worksheet
       let cats = ['DryFood', 'NonFoodstuff', 'Togo', 'Office', 'RefrigeratedFood', 'Alcohol']
-      let wsHeader = ['Item', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'weekTotal']
+      let wsHeader = ['', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'weekTotal']
       let ws = XLSX.utils.aoa_to_sheet([wsHeader]);
+      ws['!cols'] = [{width: 25}]
+      ws['!margins'] = {left: 0.25, right: 0.25, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3}
       let wsArray = []
-      for (let cat of cats) {
-        XLSX.utils.sheet_add_aoa(ws, [[cat]], {origin: -1});
+      for (let [index1, cat] of cats.entries()) {
         api.service('transfers').find({
           query: {
             week: {
@@ -310,24 +311,30 @@ export default {
             $select: ['item', cat]
           }
         }).then(response => {
+          XLSX.utils.sheet_add_aoa(ws, [[cat]], {origin: -1});
           console.log('response', response)
           let c = response.data[0][cat]
-          for (let item of c) {
+          for (let [index2, item] of c.entries()) {
             console.log(item.item)
             XLSX.utils.sheet_add_aoa(ws, [[item.item]], {origin: -1}); // , '', '', '', '', '', '', '', '']
+            console.log('t1', index1, cats.length -1)
+            if (index1 === cats.length - 1) {
+              console.log('t2', index2, c.length -1)
+              if (index2 === c.length - 1) {
+                /* add to workbook */
+                console.log('workbook');
+                var wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "itemList");
+                /* generate an XLSX file */
+                XLSX.writeFile(wb, "sheetjs.xlsx");
+              }
+            }
           }
+          XLSX.utils.sheet_add_aoa(ws, [['']], {origin: -1});
         })
       }
       /* make the worksheet */
       // var ws = XLSX.utils.json_to_sheet(this.$data.itemList);
-
-      /* add to workbook */
-      console.log('workbook')
-      var wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "itemList");
-
-      /* generate an XLSX file */
-      XLSX.writeFile(wb, "sheetjs.xlsx");
     },
     showNotification (val) {
       this.$data.loading = true

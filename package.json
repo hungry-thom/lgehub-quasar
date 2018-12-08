@@ -21,7 +21,8 @@
     "moment": "^2.22.2",
     "rethinkdbdash": "^2.3.31",
     "socket.io-client": "^2.1.1",
-    "xlsx": "^0.14.1"
+    "xlsx": "^0.14.1",
+    "xlsx-style": "^0.8.13"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.1",
