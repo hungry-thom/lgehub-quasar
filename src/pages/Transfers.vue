@@ -22,6 +22,7 @@
             />
           </template>
           <template slot="top-right" slot-scope="props">
+            <q-btn color="primary" label="xlsx" @click="toXlsx" />
             <q-btn-dropdown color="primary" :label="categoryValue" >
               <q-list link>
                 <q-item v-for="n in categoryArray" :key="`1.${n}`" v-close-overlay @click.native="showNotification(n)">
@@ -153,6 +154,7 @@
 import moment from 'moment'
 import api from 'src/api'
 import _ from 'lodash'
+let XLSX = require('xlsx')
 import {
   QChatMessage,
   QTable,
@@ -288,6 +290,45 @@ export default {
   computed: {
   },
   methods: {
+    toXlsx () {
+      if(typeof XLSX == 'undefined') 
+      {
+        XLSX = require('xlsx');
+      }
+      // cylce through all categories and format to add to worksheet
+      let cats = ['DryFood', 'NonFoodstuff', 'Togo', 'Office', 'RefrigeratedFood', 'Alcohol']
+      let wsHeader = ['Item', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'weekTotal']
+      let ws = XLSX.utils.aoa_to_sheet([wsHeader]);
+      let wsArray = []
+      for (let cat of cats) {
+        XLSX.utils.sheet_add_aoa(ws, [[cat]], {origin: -1});
+        api.service('transfers').find({
+          query: {
+            week: {
+              $search: this.$data.inventory.week
+            },
+            $select: ['item', cat]
+          }
+        }).then(response => {
+          console.log('response', response)
+          let c = response.data[0][cat]
+          for (let item of c) {
+            console.log(item.item)
+            XLSX.utils.sheet_add_aoa(ws, [[item.item]], {origin: -1}); // , '', '', '', '', '', '', '', '']
+          }
+        })
+      }
+      /* make the worksheet */
+      // var ws = XLSX.utils.json_to_sheet(this.$data.itemList);
+
+      /* add to workbook */
+      console.log('workbook')
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "itemList");
+
+      /* generate an XLSX file */
+      XLSX.writeFile(wb, "sheetjs.xlsx");
+    },
     showNotification (val) {
       this.$data.loading = true
       console.log(val)
