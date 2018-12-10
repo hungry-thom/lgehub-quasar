@@ -155,7 +155,7 @@ import moment from 'moment'
 import api from 'src/api'
 import _ from 'lodash'
 // let XLSX = require('xlsx')
-import * as XLSX from 'exceljs'
+let EXCEL = require('exceljs/dist/es5/exceljs.browser')
 import {
   QChatMessage,
   QTable,
@@ -292,7 +292,88 @@ export default {
   },
   methods: {
     toXlsx () {
-      
+      if(typeof EXCEL == 'undefined') 
+      {
+        EXCEL = require('exceljs/dist/es5/exceljs.browser');
+      }
+      // cylce through all categories and format to add to worksheet
+      let cats = ['DryFood', 'NonFoodstuff', 'Togo', 'Office', 'RefrigeratedFood', 'Alcohol']
+      let wsHeader = ['', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'weekTotal']
+      // let ws = XLSX.utils.aoa_to_sheet([wsHeader]);
+      // ws['!cols'] = [{width: 25}]
+      // ws['!margins'] = {left: 0.25, right: 0.25, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3}
+      let wsArray = []
+      // exceljs
+      let workbook = new EXCEL.Workbook();
+      let worksheet = workbook.addWorksheet('ItemList', {
+        properties: {defaultRowHeight: 15},
+        pageSetup: {printTitlesRow: '1:2'}
+        });
+      worksheet.pageSetup.margins = {
+        left: 0.25, right: 0.25,
+        top: 0.75, bottom: 0.75,
+        header: 0.3, footer: 0.3
+      };
+      worksheet.columns = [
+        { width: 25 },
+        { width: 8 },
+        { width: 8 },
+        { width: 8 },
+        { width: 8 },
+        { width: 8 },
+        { width: 8 },
+        { width: 8 },
+        { width: 8 },
+        { width: 8 }
+      ];
+      worksheet.addRow(wsHeader);
+      worksheet.addRow(['']);
+      for (let [index1, cat] of cats.entries()) {
+        api.service('transfers').find({
+          query: {
+            week: {
+              $search: this.$data.inventory.week
+            },
+            $select: ['item', cat]
+          }
+        }).then(response => {
+          // XLSX.utils.sheet_add_aoa(ws, [[cat]], {origin: -1});
+          console.log('response', response)
+          let c = response.data[0][cat]
+          for (let [index2, item] of c.entries()) {
+            console.log(item.item)
+            // XLSX.utils.sheet_add_aoa(ws, [[item.item]], {origin: -1}); // , '', '', '', '', '', '', '', '']
+            worksheet.addRow([item.item])
+            // style for category title
+            console.log('t1', index1, cats.length -1)
+            if (index1 === cats.length - 1) {
+              console.log('t2', index2, c.length -1)
+              if (index2 === c.length - 1) {
+                /* add to workbook */
+                console.log('workbook');
+                /*
+                workbook.xlsx.writeBuffer()
+                  .then(buffer => FileSaver.saveAs(new Blob([buffer]), `${Date.now()}_feedback.xlsx`))
+                  .catch(err => console.log('Error writing excel export', err)
+                */
+                // var wb = XLSX.utils.book_new();
+                // XLSX.utils.book_append_sheet(wb, ws, "itemList");
+                /* generate an XLSX file */
+                // XLSX.writeFile(wb, "sheetjs.xlsx");
+                /*
+                workbook.xlsx.writeFile('Itemlist.xlsx').then(function() {
+                  callback(null);
+                });
+                */
+              }
+            }
+          }
+          // XLSX.utils.sheet_add_aoa(ws, [['']], {origin: -1});
+          worksheet.addRow(['']);
+        })
+      }
+      /* make the worksheet */
+      // var ws = XLSX.utils.json_to_sheet(this.$data.itemList);
     },
     showNotification (val) {
       this.$data.loading = true
