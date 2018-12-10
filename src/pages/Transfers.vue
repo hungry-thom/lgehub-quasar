@@ -156,6 +156,7 @@ import api from 'src/api'
 import _ from 'lodash'
 // let XLSX = require('xlsx')
 let EXCEL = require('exceljs/dist/es5/exceljs.browser')
+import saveAs from 'file-saver';
 import {
   QChatMessage,
   QTable,
@@ -351,11 +352,10 @@ export default {
               if (index2 === c.length - 1) {
                 /* add to workbook */
                 console.log('workbook');
-                /*
                 workbook.xlsx.writeBuffer()
-                  .then(buffer => FileSaver.saveAs(new Blob([buffer]), `${Date.now()}_feedback.xlsx`))
-                  .catch(err => console.log('Error writing excel export', err)
-                */
+                  .then(buffer => {
+                    saveAs(new Blob([buffer]), `${Date.now()}_feedback.xlsx`)})
+                  .catch(err => {console.log('Error writing excel export', err)})
                 // var wb = XLSX.utils.book_new();
                 // XLSX.utils.book_append_sheet(wb, ws, "itemList");
                 /* generate an XLSX file */
