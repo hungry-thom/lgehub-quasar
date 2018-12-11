@@ -3,7 +3,7 @@
   <q-page class="layout-padding">
     <div class="row no-wrap">
       <q-datetime class= "col" minimal color="orange" v-model="startDate" type="date" float-label="StartDate" :first-day-of-week="0" />&nbsp;&nbsp;
-      <q-datetime class= "col" minimal color="orange" v-model="endDate" type="date" float-label="EndDate" :first-day-of-week="0" />&nbsp;&nbsp;
+      <!-- <q-datetime class= "col" minimal color="orange" v-model="endDate" type="date" float-label="EndDate" :first-day-of-week="0" />&nbsp;&nbsp; -->
       <q-btn label="search" color="secondary" @click="loadExpenses(startDate, endDate)" />
     </div>
     <br>
@@ -651,7 +651,7 @@ export default {
     newExpense () {
       let carryOver = this.$data.transaction.add2Pricelist // maintain value
       this.$data.transaction = {
-        date1: new Date(),
+        date1: this.$data.startDate,
         vendor: '',
         transNum: '',
         paymentAccount: '',
@@ -849,7 +849,9 @@ export default {
         // close overlay
         this.overlay()
         // reload expenses list from rethinkdb
-        this.loadExpenses(this.$data.startDate, this.$data.endDate)
+        // this.loadExpenses(this.$data.startDate, this.$data.endDate)
+        this.$data.startDate = this.$data.transaction.date1
+        this.loadExpenses(this.$data.transaction.date1, this.$data.transaction.date1)
       }
     },
     updateInventory (trans) {
@@ -1181,7 +1183,7 @@ export default {
     const inventory = api.service('inventory')
     // load expenses
     this.$data.startDate = new Date()
-    this.$data.endDate = new Date()
+    this.$data.endDate = this.$data.startDate // new Date()
     this.loadExpenses(this.$data.startDate, this.$data.startDate)
     //// !!!! THERE WILL BE ISSUES ONCE RECORDS GO BEYOND 200 !!!!!!!
     // get pricelist data from rethinkdb
