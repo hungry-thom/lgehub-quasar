@@ -155,7 +155,7 @@ import moment from 'moment'
 import api from 'src/api'
 import _ from 'lodash'
 let EXCEL = require('exceljs/dist/es5/exceljs.browser')
-import saveAs from 'file-saver';
+import saveAs from 'file-saver'
 import {
   QChatMessage,
   QTable,
@@ -307,17 +307,6 @@ export default {
         top: 0.75, bottom: 0.75,
         header: 0.3, footer: 0.3
       };
-      worksheet.columns = [
-        { width: 25 },
-        { width: 8, style: { fill: { type: 'pattern', pattern: 'gray0625'} } },
-        { width: 8 },
-        { width: 8, style: { fill: { type: 'pattern', pattern: 'gray0625'} } },
-        { width: 8 },
-        { width: 8, style: { fill: { type: 'pattern', pattern: 'gray0625'} } },
-        { width: 8 },
-        { width: 8, style: { fill: { type: 'pattern', pattern: 'gray0625'} } },
-        { width: 8 }
-      ];
       // cylce through all categories and format to add to worksheet
       let cats = ['DryFood', 'NonFoodstuff', 'Togo', 'Office', 'Alcohol', 'RefrigeratedFood'];
       let m = moment()
@@ -354,9 +343,17 @@ export default {
         for (let [index1, cat] of cats.entries()) {
           console.log('cat', cat)
           worksheet.addRow([cat])
+          let tmpCell = 'A' + worksheet.rowCount
+          worksheet.getCell(tmpCell).font = {
+            bold: true,
+            underline: true
+          }
           for (let [index2, item] of c[cat].entries()) {
             console.log('item', item.item);
             worksheet.addRow([item.item])
+            worksheet.getRow(worksheet.rowCount).border = {
+              bottom: {style:'thin'}
+            }
             console.log('t1', index1, cats.length -1)
             if (index1 === cats.length - 1) {
               console.log('t2', index2, c[cat].length - 1)
@@ -364,7 +361,7 @@ export default {
                 /* add to workbook */
                 console.log('workbook');
                 workbook.xlsx.writeBuffer().then(buffer => {
-                  saveAs(new Blob([buffer]), `${Date.now()}_itemList.xlsx`)
+                  saveAs(new Blob([buffer]), `${m.day(0).format('DD-MMM')}_itemList.xlsx`)
                 }).catch(err => {
                     console.log('Error writing excel export', err)
                 })
@@ -375,6 +372,17 @@ export default {
           // check to see how many remaining rows and if page break is warranted
         }
       })
+      worksheet.columns = [
+        { width: 25 },
+        { width: 8 },
+        { width: 8 },
+        { width: 8 },
+        { width: 8 },
+        { width: 8 },
+        { width: 8 },
+        { width: 8 },
+        { width: 8 }
+      ];
       /* make the worksheet */
       // var ws = XLSX.utils.json_to_sheet(this.$data.itemList);
     },
