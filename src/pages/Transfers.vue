@@ -309,29 +309,36 @@ export default {
       };
       worksheet.columns = [
         { width: 25 },
+        { width: 8, style: { fill: { type: 'pattern', pattern: 'gray0625'} } },
         { width: 8 },
+        { width: 8, style: { fill: { type: 'pattern', pattern: 'gray0625'} } },
         { width: 8 },
+        { width: 8, style: { fill: { type: 'pattern', pattern: 'gray0625'} } },
         { width: 8 },
-        { width: 8 },
-        { width: 8 },
-        { width: 8 },
-        { width: 8 },
-        { width: 8 },
+        { width: 8, style: { fill: { type: 'pattern', pattern: 'gray0625'} } },
         { width: 8 }
       ];
       // cylce through all categories and format to add to worksheet
-      let cats = ['DryFood', 'NonFoodstuff', 'Togo', 'Office', 'RefrigeratedFood', 'Alcohol'];
+      let cats = ['DryFood', 'NonFoodstuff', 'Togo', 'Office', 'Alcohol', 'RefrigeratedFood'];
       let m = moment()
       let wsDates = ['']
       for (let n = 0; n < 7; n++) {
-        wsDates.push(m.day(n).format('DD-ddd'));
+        wsDates.push(m.day(n).format('DD-MMM'));
       }
       let wsHeader = ['', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'weekTotal'];
-      let wsArray = [];
+      let wsRows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+      /*
+      for (let dex in wsRows) {
+        let tmpRow = dex + ws.rowCount()
+        get(tmpRow).border  = {
+        bottom: {style:'thin'}
+      }
+      */
       worksheet.addRow(wsDates)
       worksheet.addRow(wsHeader);
-      wsArray.push([wsHeader]);
-      wsArray.push(['']);
+      worksheet.getRow(2).border = {
+        bottom: {style:'thin'}
+      }
       worksheet.addRow(['']);
       // for (let [index1, cat] of cats.entries()) {
       api.service('transfers').find({
