@@ -12,6 +12,7 @@
           :pagination.sync="pagination"
           hide-bottom >
           <template slot="top-left" slot-scope="props">
+            <q-datetime class= "col" minimal color="orange" v-model="selectWeek" float-label="Week" :first-day-of-week="0" />&nbsp;&nbsp;
             <q-search
               hide-underline
               color="secondary"
@@ -108,7 +109,8 @@ import {
   QCardMain,
   QCardMedia,
   QCardSeparator,
-  QCardActions
+  QCardActions,
+  QDatetime
 } from 'quasar'
 
 export default {
@@ -127,11 +129,13 @@ export default {
     QCardMain,
     QCardMedia,
     QCardSeparator,
-    QCardActions
+    QCardActions,
+    QDatetime
   },
   props: ['user'],
   data () {
     return {
+      selectWeek: '',
       message: '',
       messages: [],
       users: [],

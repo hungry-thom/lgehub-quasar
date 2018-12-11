@@ -4,7 +4,7 @@
     <div class="row no-wrap">
       <q-datetime class= "col" minimal color="orange" v-model="startDate" type="date" float-label="StartDate" :first-day-of-week="0" />&nbsp;&nbsp;
       <!-- <q-datetime class= "col" minimal color="orange" v-model="endDate" type="date" float-label="EndDate" :first-day-of-week="0" />&nbsp;&nbsp; -->
-      <q-btn label="search" color="secondary" @click="loadExpenses(startDate, endDate)" />
+      <q-btn label="search" color="secondary" @click="loadExpenses(startDate, startDate)" />
     </div>
     <br>
     <div>
@@ -1185,47 +1185,27 @@ export default {
     this.$data.startDate = new Date()
     this.$data.endDate = this.$data.startDate // new Date()
     this.loadExpenses(this.$data.startDate, this.$data.startDate)
-    //// !!!! THERE WILL BE ISSUES ONCE RECORDS GO BEYOND 200 !!!!!!!
-    // get pricelist data from rethinkdb
-    // this.loadPricelistData()
     this.loadData()
-    // this.loadInventoryData() // if not using inventory data for item and unit list, unblock code in loadpricelistdata
-    /*
-    api.service('pricelist').find({
-      query: {
-        $sort: { item: 1 }
-      }
-    }).then((response) => {
-      // load pricelist data
-      this.$data.pricelist = response.data
-      let uniqueVendors = []
-      response.data.forEach(item => {
-        // create item list for autocomplete
-        let o = {value: item.item, label: item.item}
-        this.$data.itemList.push(o)
-        //create list for each item units list for autocomplete
-        this.$data.unitsList[item.item] = []
-        let uniqueUnits = []
-        item.vendors.forEach(unit => {
-          // vendor list, for purposed of autocomplete list make sure values aren't repeated
-          if (!uniqueVendors.includes(unit.vendor)) {
-            let v = {value: unit.vendor, label: unit.vendor}
-            this.$data.vendorsList.push(v)
-            uniqueVendors.push(unit.vendor)
-          }
-          // units list, for purposed of autocomplete list make sure values aren't repeated
-          if (!uniqueUnits.includes(unit.unit)) {
-            let u = {value: unit.unit, label: unit.unit}
-            this.$data.unitsList[item.item].push(u) //may have to load to temp list and push outside this loop
-            uniqueUnits.push(unit.unit)
-          }
-        }, this)
-        // list = someVar.filter((x, i, a) => a.indexOf(x) == i) //sete list with unique values
-      })
-    })
     /* //// 'created' service executed multiple time for one submission
     api.service('expenses').on('created', expense => {
       console.log('expense added', expense)
+      // check if expense is already added, in cases where created service is executed multiple times
+      let i = _.findIndex(this.$data.expenses, {id: expense.id})
+      if (i > -1) {
+        this.$data.expenses[i] = expense
+      } else {
+        this.$data.expenses.push(expense)
+      }
+    })
+    api.service('expenses').on('updated', expense => {
+      console.log('expense added', expense)
+      // check if expense is already added, in cases where created service is executed multiple times
+      let i = _.findIndex(this.$data.expenses, {id: expense.id})
+      if (i > -1) {
+        this.$data.expenses[i] = expense
+      } else {
+        this.$data.expenses.push(expense)
+      }
     })
     */
   },
