@@ -636,6 +636,14 @@ export default {
       let n = _.findIndex(this.$data.itemCategory, {item: this.$data.newItem.item})
       if (n > -1) {
         this.$data.newItem.category = this.$data.itemCategory[n].category
+        console.log('link', this.$data.itemCategory[n])
+        if (this.$data.itemCategory[n].inventory) {
+          this.$data.newItem.add2Inventory = true 
+        } else {
+          this.$data.newItem.add2Inventory = false
+        }
+      } else {
+        this.$data.newItem.add2Inventory = false
       }
       if (this.computedUnitsList) {
         if (this.computedUnitsList.length === 1) {
@@ -1084,7 +1092,7 @@ export default {
       api.service('pricelist').find({
         query: {
           $sort: { item: 1 },
-          $limit: 500,
+          $limit: 500, // maximum is 200
           $skip: skipNum * 200
         }
       }).then((response) => {
@@ -1131,16 +1139,17 @@ export default {
           this.loadPricelistData(this.$data.skipCycles)
         } else {
           console.log('LOAD INVENTORYDATA?!!!!!!!!!!!!!')
-          this.loadInventoryData()
+          this.loadInventoryData(0)
         }
       })
     },
-    loadInventoryData () {
+    loadInventoryData (skipNum) {
       // temp function, eventually all will be handled by pricelist data
       api.service('inventory').find({
         query: {
           $sort: { item: 1 },
-          $limit: 200
+          $limit: 500, // maximum is 200
+          $skip: skipNum * 200
         }
       }).then((response) => {
         // code: this.$data.itemCategory = []
@@ -1149,6 +1158,9 @@ export default {
           // code: this.$data.itemCategory.push({item:item.item, category:item.category})
           // create item list for autocomplete
           let d = _.findIndex(this.$data.itemList, {value: item.item})
+          if (item.item === 'BalsamicVinegar') { // REMOVE
+            console.log('WHat', d, item)
+          }
           if (d < 0) {
             let o = {value: item.item, label: item.item}
             this.$data.itemList.push(o)
@@ -1159,16 +1171,30 @@ export default {
               let u = {value: unit.unit, label: unit.unit}
               this.$data.unitsList[item.item].push(u)
             }, this)
-            this.$data.itemCategory.push({item:item.item, category:item.category})
+            this.$data.itemCategory.push({item: item.item, category: item.category, inventory: true})
+            if (item.item === 'BalsamicVinegar') { // REMOVE
+              console.log('WHat2', _.findIndex(this.$data.itemCategory, {item: item.item}), this.$data.itemCategory)
+            }
             let check = _.findIndex(this.$data.categoryList, {value: item.category})
             console.log('check',this.$data.categoryList, item.category)
             if (check < 0) {
               let c = {value: item.category, label: item.category}
               this.$data.categoryList.push(c)
             }
+          } else {
+            let ind = _.findIndex(this.$data.itemCategory, {item: item.item})
+            if (ind > -1) {
+              console.log('inventory true', item.item)
+              this.$data.itemCategory[ind].inventory = true
+            }
           }
           // list = someVar.filter((x, i, a) => a.indexOf(x) == i) //sete list with unique values
         })
+        if (response.data.length > 199) {
+          console.log('rerun load pricelist')
+          skipNum++
+          this.loadPricelistData(skipNum)
+        }
       })
     },
     loadData () {
