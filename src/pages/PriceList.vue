@@ -32,7 +32,16 @@
           <template slot="body" slot-scope="props">
             <q-tr :props="props">
               <q-context-menu>
-                <q-btn size="md" color="primary" :label="props.row.item" /> 
+                <q-field
+                  icon="add_circle"
+                  :label="props.row.item"
+                  orientation="vertical" >
+                  <q-input class= "col" minimal color="orange" float-label="Vendor" v-model="context.vendor" />
+                  <q-input class= "col" minimal color="orange" float-label="Unit" v-model="context.unit" />
+                  <q-input minimal color="orange" float-label="Price" v-model="context.price" />
+                </q-field>
+                <br>
+                <q-btn v-close-overlay label="addNew" color="secondary" @click="addStockUnit(context)" />
               </q-context-menu>
               <q-td key="item" :props="props">
                 <q-checkbox color="primary" v-model="props.expand" unchecked-icon="add" checked-icon="remove" class="q-mr-md" />
@@ -48,8 +57,29 @@
                 <q-table
                   :data="props.row.vendors"
                   :columns="columns2"
+                  :visible-columns="visibleColumns2"
                   row-key="props.row.vendors.vendor"
-                  hide-bottom />
+                  hide-bottom >
+                  <q-tr slot="header" slot-scope="props">
+                    <q-th key="vendor" :props="props">Vendor</q-th>
+                    <q-th key="unit" :props="props">Unit</q-th>
+                    <q-th key="price" :props="props">Price</q-th>
+                    <q-th key="compValue" :props="props">compValue</q-th>
+                    <q-th key="compBase" :props="props">compBase</q-th>
+                    <q-th key="custom" :props="props">custom</q-th>
+                    <q-th key="buttons" :props="props" width='25px'>
+                      <q-btn size="sm" round dense color="secondary" icon="add_circle" class="q-mr-xs" />
+                    </q-th>
+                  </q-tr>
+                  <q-tr slot="body" slot-scope="props" :props="props">
+                    <q-td key="vendor" :props="props">{{ props.row.vendor }}</q-td>
+                    <q-td key="unit" :props="props">{{ props.row.unit }}</q-td>
+                    <q-td key="price" :props="props">{{ props.row.price }}</q-td>
+                    <q-td key="compValue" :props="props">{{ props.row.compValue }}</q-td>
+                    <q-td key="compBase" :props="props">{{ props.row.compBase }}</q-td>
+                    <q-td key="custom" :props="props">{{ props.row.custom }}</q-td>
+                  </q-tr>
+                </q-table>
               </q-td>
             </q-tr>
           </template>
@@ -68,11 +98,13 @@ import {
   QTable,
   QTr,
   QTd,
+  QTh,
   QSearch,
   QPopupEdit,
   QCheckbox,
   QBtnDropdown,
-  QContextMenu
+  QContextMenu,
+  QField
 } from 'quasar'
 
 export default {
@@ -82,15 +114,22 @@ export default {
     QTable,
     QTr,
     QTd,
+    QTh,
     QSearch,
     QPopupEdit,
     QCheckbox,
     QBtnDropdown,
-    QContextMenu
+    QContextMenu,
+    QField
   },
   props: ['user'],
   data () {
     return {
+      context: {
+        price: '',
+        unit: '',
+        vendor: ''
+      },
       categoryArray: [],
       categoryValue: 'DryFood',
       message: '',
@@ -202,8 +241,23 @@ export default {
           label: 'updated',
           align: 'left',
           field: 'updated'
+        },
+        {
+          name: 'custom',
+          required: false,
+          label: 'custom',
+          align: 'left',
+          field: 'custom'
+        },
+        {
+          name: 'buttons',
+          required: false,
+          label: 'buttons',
+          align: 'left',
+          field: 'buttons'
         }
-      ]
+      ],
+      visibleColumns2: ['vendor', 'unit', 'price', 'compValue', 'compBase', 'custom', 'buttons' ]
     }
   },
   computed: {
