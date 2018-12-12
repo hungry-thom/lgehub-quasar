@@ -36,12 +36,12 @@
                   icon="add_circle"
                   :label="props.row.item"
                   orientation="vertical" >
-                  <q-input class= "col" minimal color="orange" float-label="Vendor" v-model="context.vendor" />
-                  <q-input class= "col" minimal color="orange" float-label="Unit" v-model="context.unit" />
-                  <q-input minimal color="orange" float-label="Price" v-model="context.price" />
+                  <q-input class= "col" minimal color="orange" float-label="Vendor" v-model="contextValues.vendor" />
+                  <q-input class= "col" minimal color="orange" float-label="Unit" v-model="contextValues.unit" />
+                  <q-input minimal color="orange" float-label="Price" v-model="contextValues.price" />
                 </q-field>
                 <br>
-                <q-btn v-close-overlay label="addNew" color="secondary" @click="addStockUnit(context)" />
+                <q-btn v-close-overlay label="addNew" color="secondary" @click="addStockUnit(props.row)" />
               </q-context-menu>
               <q-td key="item" :props="props">
                 <q-checkbox color="primary" v-model="props.expand" unchecked-icon="add" checked-icon="remove" class="q-mr-md" />
@@ -125,7 +125,7 @@ export default {
   props: ['user'],
   data () {
     return {
-      context: {
+      contextValues: {
         price: '',
         unit: '',
         vendor: ''
@@ -281,8 +281,21 @@ export default {
         })
       }
     },
-    addStockUnit (itemId) {
-      console.log(itemId)
+    addStockUnit (row) {
+      console.log(row)
+      let c = this.$data.contextValues
+      c.updated = new Date()
+      row.vendors.push(c)
+      // could also send entire item as update
+      api.service('pricelist').update(row.id, row).then(response => {
+        console.log('added item to pricelist')
+      })
+      this.$data.contextValues = {
+        price: '',
+        unit: '',
+        vendor: ''
+      }
+      // need to run compValues
     },
     loadPricelistData () {
       api.service('pricelist').find({
