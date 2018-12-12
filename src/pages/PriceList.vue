@@ -9,8 +9,7 @@
           :filter="filter"
           :visible-columns="visibleColumns"
           row-key="item"
-          :pagination.sync="pagination"
-          hide-bottom >
+          :pagination.sync="pagination" >
           <template slot="top-left" slot-scope="props">
             <q-search
               hide-underline
@@ -32,6 +31,9 @@
           </template>
           <template slot="body" slot-scope="props">
             <q-tr :props="props">
+              <q-context-menu>
+                <q-btn size="md" color="primary" :label="props.row.item" /> 
+              </q-context-menu>
               <q-td key="item" :props="props">
                 <q-checkbox color="primary" v-model="props.expand" unchecked-icon="add" checked-icon="remove" class="q-mr-md" />
                 {{ props.row.item }}
@@ -69,7 +71,8 @@ import {
   QSearch,
   QPopupEdit,
   QCheckbox,
-  QBtnDropdown
+  QBtnDropdown,
+  QContextMenu
 } from 'quasar'
 
 export default {
@@ -82,7 +85,8 @@ export default {
     QSearch,
     QPopupEdit,
     QCheckbox,
-    QBtnDropdown
+    QBtnDropdown,
+    QContextMenu
   },
   props: ['user'],
   data () {

@@ -892,7 +892,7 @@ export default {
         // reload expenses list from rethinkdb
         // this.loadExpenses(this.$data.startDate, this.$data.endDate)
         this.$data.startDate = this.$data.transaction.date1
-        // this.loadExpenses(this.$data.transaction.date1, this.$data.transaction.date1)
+        this.loadExpenses()
       }
     },
     updateInventory (trans) {
