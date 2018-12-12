@@ -1,8 +1,33 @@
 <!-- ExpenseHome.vue -->
 <template>
   <q-page class="layout-padding">
+    <div>
+      <q-field helper="Search Options">
+        <q-option-group
+          inline
+          type="radio"
+          v-model="dateOption"
+          :options="[
+            { label: 'Date', value: 'date' },
+            { label: 'Range', value: 'range',  },
+            { label: 'noDate', value: 'noDate' }
+          ]"
+        />
+        <q-option-group
+          inline
+          type="checkbox"
+          v-model="searchOption"
+          :options="[
+            { label: 'Vendor', value: 'vendor' }
+          ]"
+        />
+      </q-field>
+    </div>
     <div class="row no-wrap">
-      <q-datetime class= "col" minimal color="orange" v-model="startDate" type="date" float-label="StartDate" :first-day-of-week="0" />&nbsp;&nbsp;
+      <q-datetime class= "col" minimal color="orange" stack-label="Date" v-model="startDate" type="date" :first-day-of-week="0" v-if="dateOption !== 'noDate'" />&nbsp;&nbsp;
+      <q-datetime class= "col" minimal color="orange" stack-label="endDate" v-model="endDate" type="date" :first-day-of-week="0" v-if="dateOption.includes('range')" />&nbsp;&nbsp;
+      <q-input class= "col" split minimal color="orange" v-model="searchVendor" stack-label="Vendor" v-if="searchOption.includes('vendor')"> <q-autocomplete :static-data="{field: 'value', list: vendorsList}" /></q-input>&nbsp;&nbsp;
+      <q-input class= "col" minimal color="orange" stack-label="Item" v-model="searchItem" v-if="searchOption.includes('item')" />&nbsp;&nbsp;
       <!-- <q-datetime class= "col" minimal color="orange" v-model="endDate" type="date" float-label="EndDate" :first-day-of-week="0" />&nbsp;&nbsp; -->
       <q-btn label="search" color="secondary" @click="loadExpenses(startDate, startDate)" />
     </div>
@@ -246,7 +271,9 @@ import {
   QDatetimePicker,
   QAutocomplete,
   QModal,
-  QModalLayout
+  QModalLayout,
+  QOptionGroup,
+  QField
 } from 'quasar'
 
 export default {
@@ -265,11 +292,17 @@ export default {
     QDatetimePicker,
     QAutocomplete,
     QModal,
-    QModalLayout
+    QModalLayout,
+    QOptionGroup,
+    QField
   },
   props: ['user'],
   data () {
     return {
+      dateOption: 'date',
+      searchOption: [''],
+      searchVendor: '',
+      searchItem: '',
       lockAccount: true,
       lockCategory: true,
       boolScreen: false,
@@ -659,7 +692,7 @@ export default {
     newExpense () {
       let carryOver = this.$data.transaction.add2Pricelist // maintain value
       this.$data.transaction = {
-        date1: this.$data.startDate,
+        date1: this.$data.startDate, // may have to alter with new search options
         vendor: '',
         transNum: '',
         paymentAccount: '',
@@ -859,7 +892,7 @@ export default {
         // reload expenses list from rethinkdb
         // this.loadExpenses(this.$data.startDate, this.$data.endDate)
         this.$data.startDate = this.$data.transaction.date1
-        this.loadExpenses(this.$data.transaction.date1, this.$data.transaction.date1)
+        // this.loadExpenses(this.$data.transaction.date1, this.$data.transaction.date1)
       }
     },
     updateInventory (trans) {
@@ -1062,30 +1095,48 @@ export default {
         } // else -do not add to pricelist
       }, this)
     },
-    loadExpenses(stDate, endDate) {
-      let sDate = moment(new Date(stDate))
-      sDate.startOf('day')
-      //sDate.subtract(1, 'days')
-      // console.log('stDate', stDate)
-      let eDate = moment(new Date(endDate))
-      //console.log(eDate)
-      // eDate.add(1,'days').calendar()
-      eDate.endOf('day')
-      console.log('stD',sDate.format(),'end',eDate)
-      api.service('expenses').find({
-        paginate: false,
-        query: {
-          date1: {
-            $gte: sDate.format(),
-            $lte: eDate.format()
-          },
-          $sort: { date1: -1 },
-          $limit: 50
-        }
-      }).then((response) => {
-        this.$data.expenses = response.data
-        console.log('exp resp', response.data)
-      })
+    loadExpenses() {
+      // create query based on search options
+      // date
+      let queryStr = '{'
+      if (this.$data.dateOption !== 'noDate') {
+        let sDate = moment(new Date(this.$data.startDate))
+        sDate.startOf('day')
+        queryStr = `${queryStr} "date1": { "$gte": "${sDate.format()}"`
+      }
+      if (this.$data.dateOption === 'range') {
+        let eDate = moment(new Date(this.$data.endDate))
+        eDate.endOf('day')
+        queryStr = `${queryStr}, "$lte": "${eDate.format()}" }`
+      } else if (this.$data.dateOption !== 'noDate') {
+        let eDate = moment(new Date(this.$data.startDate))
+        eDate.endOf('day')
+        queryStr = `${queryStr}, "$lte": "${eDate.format()}" }`
+      }
+      if (this.$data.dateOption !== 'noDate' && this.$data.searchOption.length !== 0){
+        queryStr = `${queryStr},`
+      }
+      if (this.$data.searchOption.includes('vendor')) {
+        queryStr = `${queryStr} "vendor": "${this.$data.searchVendor}",`
+      }
+      queryStr = `${queryStr} "$sort": { "date1": -1}, "$limit": 200 }`
+      console.log(queryStr)
+      let queryObj = JSON.parse(queryStr)
+      if (this.$data.dateOption === 'noDate' && this.$data.searchOption[0] === '') {
+        this.$q.notify({
+          message: 'Select a field to search',
+          timeout: 3000,
+          position: 'center'
+        })
+      } else {
+        api.service('expenses').find({
+          paginate: false,
+          query: queryObj
+        }).then((response) => {
+          this.$data.expenses = response.data
+          console.log('exp resp', response.data)
+        })
+      }
     },
     loadPricelistData(skipNum) {
       // there will be a problem if docs exceed 200
