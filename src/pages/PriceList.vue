@@ -286,10 +286,92 @@ export default {
       let c = this.$data.contextValues
       c.updated = new Date()
       row.vendors.push(c)
-      // could also send entire item as update
+      // update entire item
       api.service('pricelist').update(row.id, row).then(response => {
         console.log('added item to pricelist')
       })
+      // run comparison
+      let sortedVendors = []
+      row.vendors.forEach(vendor => {
+        // console.log( item.item, vendor.vendor, vendor. unit)
+        // check if it is a case unit
+        let pUnit = ''
+        let caseQty = null
+        let i = vendor.unit.search('x')
+        if (i > -1) {
+          pUnit = vendor.unit.substr(i + 1)
+          caseQty = vendor.unit.substr(0,i)
+        } else {
+          pUnit = vendor.unit
+        }
+        // parse qty and base
+        let i2 = pUnit.search('-')
+        let pQty = pUnit.substr(0,i2)
+        if (caseQty) {
+          pQty = pQty * caseQty
+        }
+        let pBase = pUnit.substr(i2 + 1)
+        // conform pBase to convert-units definition
+        if (pBase === 'L') {
+          pBase = 'l'
+        }
+        if (pBase === 'Fl.oz') {
+          pBase = 'fl-oz'
+        }
+        if (pBase === 'lbs') {
+          pBase = 'lb'
+        }
+        // check if sortedVendors is empty
+        if (sortedVendors.length === 0){
+          vendor.compQty = pQty
+          vendor.compBase = pBase
+          vendor.compUnit = pUnit
+          vendor.compValue = vendor.price / vendor.compQty
+          sortedVendors.push(vendor)
+        } else {
+          // compare vendor to sortedVendors list find place in order
+          sortedVendors.forEach((comp, index) => {
+            // check if same base unit
+            if (pBase === comp.compBase) {
+              vendor.compQty = pQty
+              vendor.compBase = pBase
+            } else {
+              // base not same need to change
+              // console.log(comp)
+              // console.log('converting', item.item, pBase, comp.compBase, index,sortedVendors[index])
+              // check to see if compBase &&& pBase in convert units.
+              let possibleList = convert().possibilities()
+              if (possibleList.includes(pBase) && possibleList.includes(comp.compBase)) {
+                vendor.compQty = convert(pQty).from(pBase).to(comp.compBase)
+                vendor.compBase = comp.compBase
+              } // need to handle incompaible/nonvalid base
+              // vendor.compQty = convert(pQty).from(pBase).to(comp.compBase)
+              // vendor.compBase = comp.compBase
+            }
+            //////// Maybe can break out vvvvvvvv
+            // base is same, get per unit price
+            vendor.compValue = vendor.price / vendor.compQty
+            let diff = vendor.compValue - comp.compValue
+            if (diff > 0) {
+              // more expensive than comp
+            } else {
+              // cheaper than comp, vendor replaces position in sortedVendors and comp becomes new vendor value to evaluate
+              let holder = JSON.parse(JSON.stringify(comp)) // sanitize?
+              sortedVendors[index] = JSON.parse(JSON.stringify(vendor))
+              vendor = holder
+            }
+            if (index === (sortedVendors.length - 1)) {
+              sortedVendors.push(vendor)
+            }
+            /////////Maybe can break out^^^^^^
+          })
+        // push vendor to  item
+        }
+      })
+      row.vendors = sortedVendors
+      // push item to $data.pricelist
+      // tempList.push(tempItem)
+      // clear context values
       this.$data.contextValues = {
         price: '',
         unit: '',
@@ -309,6 +391,7 @@ export default {
         // for each item need to sort vendors list
         response.data.forEach((item,z) => {
           console.log('index', z, item)
+          // start compareFunction()
           let tempItem = item
           let sortedVendors = []
           item.vendors.forEach(vendor => {
@@ -337,6 +420,9 @@ export default {
             if (pBase === 'Fl.oz') {
               pBase = 'fl-oz'
             }
+            if (pBase === 'lbs') {
+              pBase = 'lb'
+            }
             // check if sortedVendors is empty
             if (sortedVendors.length === 0){
               vendor.compQty = pQty
@@ -360,8 +446,7 @@ export default {
                   if (possibleList.includes(pBase) && possibleList.includes(comp.compBase)) {
                     vendor.compQty = convert(pQty).from(pBase).to(comp.compBase)
                     vendor.compBase = comp.compBase
-                  }
-                  
+                  } // need to handle incompaible/nonvalid base
                   // vendor.compQty = convert(pQty).from(pBase).to(comp.compBase)
                   // vendor.compBase = comp.compBase
                 }
