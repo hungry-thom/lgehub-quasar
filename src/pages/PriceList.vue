@@ -30,19 +30,7 @@
             </q-btn-dropdown>
           </template>
           <template slot="body" slot-scope="props">
-            <q-tr :props="props">
-              <q-context-menu>
-                <q-field
-                  icon="add_circle"
-                  :label="props.row.item"
-                  orientation="vertical" >
-                  <q-input class= "col" minimal color="orange" float-label="Vendor" v-model="contextValues.vendor" />
-                  <q-input class= "col" minimal color="orange" float-label="Unit" v-model="contextValues.unit" />
-                  <q-input minimal color="orange" float-label="Price" v-model="contextValues.price" />
-                </q-field>
-                <br>
-                <q-btn v-close-overlay label="addNew" color="secondary" @click="addStockUnit(props.row)" />
-              </q-context-menu>
+            <q-tr :props="props" @dblclick.native="overlay(props.row)">
               <q-td key="item" :props="props">
                 <q-checkbox color="primary" v-model="props.expand" unchecked-icon="add" checked-icon="remove" class="q-mr-md" />
                 {{ props.row.item }}
@@ -68,7 +56,7 @@
                     <q-th key="compBase" :props="props">compBase</q-th>
                     <q-th key="custom" :props="props">custom</q-th>
                     <q-th key="buttons" :props="props" width='25px'>
-                      <q-btn size="sm" round dense color="secondary" icon="add_circle" class="q-mr-xs" />
+                      <q-btn size="sm" round dense color="secondary" icon="add_circle" @click="overlay(props.row)" class="q-mr-xs" />
                     </q-th>
                   </q-tr>
                   <q-tr slot="body" slot-scope="props" :props="props">
@@ -86,6 +74,34 @@
         </q-table>
         <br>
       </div>
+      <!-- //////// START OF AUDIT MODAL  ////////-->
+      <q-modal v-model="addItemModal">
+        <q-modal-layout>
+          <q-toolbar slot="header">
+            <q-btn
+              flat
+              icon="keyboard_backspace"
+              v-close-overlay
+            />
+            <q-toolbar-title>
+              Add Item
+            </q-toolbar-title>
+          </q-toolbar>
+          <div  class="q-pa-sm" >
+          <q-field
+            icon="add_circle"
+            :label="modalMeta.label"
+            orientation="vertical" >
+            <q-input class= "col" minimal color="orange" float-label="Vendor" v-model="modalValues.vendor" />
+            <q-input class= "col" minimal color="orange" float-label="Unit" v-model="modalValues.unit" />
+            <q-input minimal color="orange" float-label="Price" v-model="modalValues.price" />
+          <br>
+          <q-btn v-close-overlay label="addNew" color="secondary" />&nbsp;&nbsp;
+          <q-checkbox v-model="modalMeta.wGST" label="gst included" />
+          </q-field>
+          </div>
+        </q-modal-layout>
+      </q-modal>
   </q-page>
 </template>
 
@@ -104,7 +120,9 @@ import {
   QCheckbox,
   QBtnDropdown,
   QContextMenu,
-  QField
+  QField,
+  QModal,
+  QModalLayout
 } from 'quasar'
 
 export default {
@@ -120,12 +138,20 @@ export default {
     QCheckbox,
     QBtnDropdown,
     QContextMenu,
-    QField
+    QField,
+    QModal,
+    QModalLayout
   },
   props: ['user'],
   data () {
     return {
-      contextValues: {
+      addItemModal: false,
+      modalMeta: {
+        label: '',
+        item: '',
+        wGST: true
+      },
+      modalValues: {
         price: '',
         unit: '',
         vendor: ''
@@ -263,6 +289,16 @@ export default {
   computed: {
   },
   methods: {
+    overlay (row) {
+      this.$data.addItemModal = true
+      console.log('overlay', row)
+      this.$data.modalMeta.label = row.item
+      this.$data.modalValues = {
+        price: '',
+        unit: '',
+        vendor: ''
+      }
+    },
     showNotification (val) {
       console.log(val)
       this.$data.categoryValue = val
@@ -283,8 +319,11 @@ export default {
     },
     addStockUnit (row) {
       console.log(row)
-      let c = this.$data.contextValues
+      let c = this.$data.modalValues
       c.updated = new Date()
+      if (this.$data.modalMeta.wGST) {
+        c.price = _.round((row.price / 1.125), 2)
+      }
       row.vendors.push(c)
       // update entire item
       api.service('pricelist').update(row.id, row).then(response => {
@@ -371,12 +410,6 @@ export default {
       row.vendors = sortedVendors
       // push item to $data.pricelist
       // tempList.push(tempItem)
-      // clear context values
-      this.$data.contextValues = {
-        price: '',
-        unit: '',
-        vendor: ''
-      }
       // need to run compValues
     },
     loadPricelistData () {
