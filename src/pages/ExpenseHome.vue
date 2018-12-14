@@ -39,7 +39,7 @@
         :visible-columns="visibleColumns"
         row-key="item"
         :pagination.sync="pagination"
-        hide-bottom
+        :loading="loading"
         class="col" >
         <tr slot="header" slot-scope="props">
           <!-- 
@@ -299,6 +299,7 @@ export default {
   props: ['user'],
   data () {
     return {
+      loading: true,
       dateOption: 'date',
       searchOption: [''],
       searchVendor: '',
@@ -1096,6 +1097,7 @@ export default {
       }, this)
     },
     loadExpenses() {
+      this.$data.loading = true
       // create query based on search options
       // date
       let queryStr = '{'
@@ -1135,6 +1137,7 @@ export default {
         }).then((response) => {
           this.$data.expenses = response.data
           console.log('exp resp', response.data)
+          this.$data.loading = false
         })
       }
     },

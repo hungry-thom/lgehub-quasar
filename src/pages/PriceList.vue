@@ -9,7 +9,8 @@
           :filter="filter"
           :visible-columns="visibleColumns"
           row-key="item"
-          :pagination.sync="pagination" >
+          :pagination.sync="pagination"
+          :loading="loading" >
           <template slot="top-left" slot-scope="props">
             <q-search
               hide-underline
@@ -145,6 +146,7 @@ export default {
   props: ['user'],
   data () {
     return {
+      loading: true,
       addItemModal: false,
       modalMeta: {
         label: '',
@@ -413,6 +415,7 @@ export default {
       // need to run compValues
     },
     loadPricelistData () {
+      this.$data.loading = true
       api.service('pricelist').find({
         query: {
           $sort: { item: 1 },
@@ -506,6 +509,7 @@ export default {
           tempItem.vendors = sortedVendors
           // push item to $data.pricelist
           tempList.push(tempItem)
+          this.$data.loading = false
         }) 
         console.log('set pricelist')
         this.$data.pricelist = tempList

@@ -9,7 +9,8 @@
           :filter="filter"
           :visible-columns="visibleColumns"
           row-key="item"
-          :pagination.sync="pagination">
+          :pagination.sync="pagination"
+          :loading="loading" >
           <!--hide-bottom >-->
           <template slot="top-left" slot-scope="props">
             <q-search
@@ -150,6 +151,7 @@ export default {
   props: ['user'],
   data () {
     return {
+      loading: true,
       categoryArray: [],
       categoryValue: 'DryFood',
       filter: '',
@@ -400,6 +402,7 @@ export default {
       }
     },
     loadInventoryData () {
+      this.$data.loading = true
       this.$data.inventory = []
       this.$data.confirmations = []
       api.service('inventory').find({
@@ -437,6 +440,7 @@ export default {
             this.$data.confirmations.push( {item: item.item, confirmed: item.confirmed, warning: item.warning, originalStock: og} )
           }, this) // this necessary?
           console.log(this.$data.confirmations)
+          this.$data.loading = false
         })
     }
   },
