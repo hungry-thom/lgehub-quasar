@@ -97,7 +97,7 @@
             <q-input class= "col" minimal color="orange" float-label="Unit" v-model="modalValues.unit" />
             <q-input minimal color="orange" float-label="Price" v-model="modalValues.price" />
           <br>
-          <q-btn v-close-overlay label="addNew" color="secondary" />&nbsp;&nbsp;
+          <q-btn v-close-overlay label="addNew" color="secondary" @click="addStockUnit" />&nbsp;&nbsp;
           <q-checkbox v-model="modalMeta.wGST" label="gst included" />
           </q-field>
           </div>
@@ -326,6 +326,12 @@ export default {
       if (this.$data.modalMeta.wGST) {
         c.price = _.round((row.price / 1.125), 2)
       }
+      let dex = _.findIndex(this.$data.pricelist, {item: this.$data.modalMeta.label})
+      console.log(this.$data.modalMeta)
+      if (dex > -1) {
+        row = this.$data.pricelist[dex]
+      }
+      console.log(row)
       row.vendors.push(c)
       // update entire item
       api.service('pricelist').update(row.id, row).then(response => {

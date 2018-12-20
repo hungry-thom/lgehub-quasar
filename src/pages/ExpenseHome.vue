@@ -1247,7 +1247,7 @@ export default {
         if (response.data.length > 199) {
           console.log('rerun load pricelist')
           skipNum++
-          this.loadPricelistData(skipNum)
+          this.loadInventoryData(skipNum)
         }
       })
     },
