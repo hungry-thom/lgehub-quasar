@@ -419,7 +419,13 @@ export default {
           this.$data.inventory.forEach(item => {
             console.log(item)
             console.log('----------')
-            let timeDiff = moment().dayOfYear() - moment(item.lastConf).dayOfYear()
+            let timeDiff = 0
+            if (moment(item.lastConf).year() == 2018) {
+              timeDiff = moment().dayOfYear() - (moment(item.lastConf).dayOfYear() * -1)
+            } else {
+              timeDiff = moment().dayOfYear() - moment(item.lastConf).dayOfYear()
+            }
+            // timeDiff = moment().dayOfYear() - moment(item.lastConf).dayOfYear()
             if (timeDiff > 1) {
               item.confirmed = false
               if (timeDiff > 7) {
