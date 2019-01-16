@@ -484,11 +484,18 @@ export default {
                   // console.log(comp)
                   console.log('converting', item.item, pBase, comp.compBase, index,sortedVendors[index])
                   // check to see if compBase &&& pBase in convert units.
-                  let possibleList = convert().possibilities()
-                  if (possibleList.includes(pBase) && possibleList.includes(comp.compBase)) {
+                  let possibleList = convert().from(comp.compBase).possibilities() // convert().possibilities() 
+                  if (possibleList.includes(pBase)) { // && possibleList.includes(comp.compBase)) {
                     vendor.compQty = convert(pQty).from(pBase).to(comp.compBase)
                     vendor.compBase = comp.compBase
-                  } // need to handle incompaible/nonvalid base
+                  } else { // need to handle incompaible/nonvalid base
+                    console.log('ERROR: Incompatible bases for ', item.item)
+                    this.$q.notify({
+                      message: `Incompatible bases for ${item.item}`,
+                      timeout: 3000,
+                      position: 'center'
+                    })
+                  }
                   // vendor.compQty = convert(pQty).from(pBase).to(comp.compBase)
                   // vendor.compBase = comp.compBase
                 }
