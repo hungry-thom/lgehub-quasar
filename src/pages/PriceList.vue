@@ -528,18 +528,24 @@ export default {
         this.$data.pricelist = tempList
       })
     },
-    loadCategories () {
+    loadCategories (skipNum) {
       api.service('pricelist').find({
         query: {
-          $select: ['category']
+          $select: ['category'],
+          $skip: skipNum * 200
         }
       }).then(response=> {
         response.data.forEach(category => {
-          console.log('ccc',category)
+          // console.log('ccc',category)
           if (!this.$data.categoryArray.includes(category.category)) {
             this.$data.categoryArray.push(category.category)
           }
         })
+        if (response.data.length > 199) {
+          console.log('rerun loadCategories')
+          skipNum++
+          this.loadCategories(skipNum)
+        }
       })
     }
   },
@@ -563,7 +569,7 @@ export default {
         this.$data.users = response.data
       })
     this.loadPricelistData()
-    this.loadCategories()
+    this.loadCategories(0)
     /*
     pricelist.find({
       query: {
