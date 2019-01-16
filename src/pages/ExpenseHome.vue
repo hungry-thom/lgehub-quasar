@@ -403,6 +403,7 @@ export default {
       },
       unitsList: {},
       pricelist: [],
+      inventoryData: [],
       gstIncluded: 'yes',
       pagination: {
         sortBy: name, // String, column 'item' property value
@@ -898,92 +899,86 @@ export default {
     },
     updateInventory (trans) {
       // first get inventory data (use store in future?)
-      let inventoryData = []
-      api.service('inventory').find().then((response) => {
-        inventoryData = response.data
-        console.log('inventoryData loaded', inventoryData)
-      }).then((response) => {
-        trans.transItems.forEach(item => {
-          if (item.add2Inventory) {
-            let actualUnit = ''
-            let actualQty = 0
-            // need to break out unit if entered as a case
-            let i = item.unit.search('x')
-            if (i > -1) {
-              // multiple number before 'x' to get qty
-              actualQty = item.qty * item.unit.substr(0,i)
-              // get the actual unit
-              actualUnit = item.unit.substr(i + 1)
-            } else {
-              actualUnit = item.unit
-              actualQty = item.qty
-            }
-            let tmpStock = []
-            let dex = _.findIndex(inventoryData, {item: item.item}) //possible use of item.id (still need to load id to transItems)
-            if ( dex < 0 ) {
-              // item not in inventory. add new item
-              console.log(item.item,' not in inventory ')
-              let tmpObj = {
-                item: item.item,
-                lastConf: new Date().toISOString(),
-                category: item.category,
-                stock: [
-                  {
-                    unit: actualUnit,
-                    qty: actualQty
-                  }
-                ]
-              }
-              inventoryData.push(tmpObj)
-              api.service('inventory').create(tmpObj).then(response => {
-                console.log('created new inventory item', response)
-                // create audit trail
-                let auditObj = {
-                  table: 'inventory',
-                  type: 'expense',
-                  recordDate: trans.date1,
-                  change: actualQty,
-                  item: item.item,
-                  unit: actualUnit,
-                  expenseId: trans.expenseId,
-                  user: this.$props.user.email
-                }
-                api.service('audit').create(auditObj)
-              })
-            } else {
-              // update item inv
-              console.log('item in inv', inventoryData)
-              tmpStock = inventoryData[dex].stock // stock is a list
-              let dex2 = _.findIndex(tmpStock, {unit: actualUnit})
-              if (dex2 < 0) {
-                // no match, add unit to stock
-                tmpStock.push({unit: actualUnit, qty: actualQty})
-              } else {
-                let newQty = tmpStock[dex2].qty + actualQty // tmpStock[dex2].qty += actualQty
-                tmpStock[dex2].qty = newQty 
-              }
-              // may not be needed // inventoryData[dex].stock = tmpStock
-              // is it better to send entire inventory or item by item* (item by item leaves easier trail?)
-              console.log(inventoryData[dex])
-              api.service('inventory').patch(inventoryData[dex].id, {stock: tmpStock}).then((response) => {
-                console.log(item.item, 'inventory updated +', actualUnit, actualQty )
-                // creat audit trail for inventory table
-                let auditObj = {
-                  table: 'inventory',
-                  type: 'expense',
-                  recordDate: trans.date1,
-                  item: item.item,
-                  unit: actualUnit,
-                  change: actualQty,
-                  expenseId: trans.expenseId,
-                  user: this.$props.user.email
-                }
-                api.service('audit').create(auditObj)
-              }) 
-            }
+      trans.transItems.forEach(item => {
+        if (item.add2Inventory) {
+          let actualUnit = ''
+          let actualQty = 0
+          // need to break out unit if entered as a case
+          let i = item.unit.search('x')
+          if (i > -1) {
+            // multiple number before 'x' to get qty
+            actualQty = item.qty * item.unit.substr(0,i)
+            // get the actual unit
+            actualUnit = item.unit.substr(i + 1)
+          } else {
+            actualUnit = item.unit
+            actualQty = item.qty
           }
-        }, this)
-      })
+          let tmpStock = []
+          let dex = _.findIndex(this.inventoryData, {item: item.item}) //possible use of item.id (still need to load id to transItems)
+          if ( dex < 0 ) {
+            // item not in inventory. add new item
+            console.log(item.item,' not in inventory ')
+            let tmpObj = {
+              item: item.item,
+              lastConf: new Date().toISOString(),
+              category: item.category,
+              stock: [
+                {
+                  unit: actualUnit,
+                  qty: actualQty
+                }
+              ]
+            }
+            this.inventoryData.push(tmpObj)
+            api.service('inventory').create(tmpObj).then(response => {
+              console.log('created new inventory item', response)
+              // create audit trail
+              let auditObj = {
+                table: 'inventory',
+                type: 'expense',
+                recordDate: trans.date1,
+                change: actualQty,
+                item: item.item,
+                unit: actualUnit,
+                expenseId: trans.expenseId,
+                user: this.$props.user.email
+              }
+              api.service('audit').create(auditObj)
+            })
+          } else {
+            // update item inv
+            console.log('item in inv', this.inventoryData)
+            tmpStock = this.inventoryData[dex].stock // stock is a list
+            let dex2 = _.findIndex(tmpStock, {unit: actualUnit})
+            if (dex2 < 0) {
+              // no match, add unit to stock
+              tmpStock.push({unit: actualUnit, qty: actualQty})
+            } else {
+              let newQty = tmpStock[dex2].qty + actualQty // tmpStock[dex2].qty += actualQty
+              tmpStock[dex2].qty = newQty 
+            }
+            // may not be needed // inventoryData[dex].stock = tmpStock
+            // is it better to send entire inventory or item by item* (item by item leaves easier trail?)
+            console.log(this.inventoryData[dex])
+            api.service('inventory').patch(this.inventoryData[dex].id, {stock: tmpStock}).then((response) => {
+              console.log(item.item, 'inventory updated +', actualUnit, actualQty )
+              // creat audit trail for inventory table
+              let auditObj = {
+                table: 'inventory',
+                type: 'expense',
+                recordDate: trans.date1,
+                item: item.item,
+                unit: actualUnit,
+                change: actualQty,
+                expenseId: trans.expenseId,
+                user: this.$props.user.email
+              }
+              api.service('audit').create(auditObj)
+            }) 
+          }
+        }
+      }, this)
     },
     updatePrices (trans) {
       // clean transaction data is being used
@@ -1193,6 +1188,7 @@ export default {
           this.loadPricelistData(this.$data.skipCycles)
         } else {
           console.log('LOAD INVENTORYDATA?!!!!!!!!!!!!!')
+          this.inventoryData = []
           this.loadInventoryData(0)
         }
       })
@@ -1209,6 +1205,7 @@ export default {
         // code: this.$data.itemCategory = []
         console.log(response)
         response.data.forEach(item => {
+          this.inventoryData.push(item)
           // code: this.$data.itemCategory.push({item:item.item, category:item.category})
           // create item list for autocomplete
           let d = _.findIndex(this.$data.itemList, {value: item.item})
