@@ -422,6 +422,7 @@ export default {
     },
     loadPricelistData () {
       this.$data.loading = true
+      // we look up by category value, so little risk of records over 200
       api.service('pricelist').find({
         query: {
           $sort: { item: 1 },
