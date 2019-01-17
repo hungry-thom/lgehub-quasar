@@ -330,11 +330,6 @@ export default {
       }
       let dex = _.findIndex(this.$data.pricelist, {item: this.$data.modalMeta.label})
       console.log(this.$data.modalMeta)
-      // check if addItem exists, and load data
-      // no way to change label, so following doesn't seem necessary 
-      if (dex > -1) {
-        row = this.$data.pricelist[dex]
-      }
       // no catch of newItem not in pricelist; info 
       console.log(row)
       row.vendors.push(c)
