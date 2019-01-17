@@ -95,7 +95,7 @@
             orientation="vertical" >
             <q-input class= "col" minimal color="orange" float-label="Vendor" v-model="modalValues.vendor" /> <!-- add autocomplete -->
             <q-input class= "col" minimal color="orange" float-label="Unit" v-model="modalValues.unit" />
-            <q-input minimal color="orange" float-label="Price" v-model="modalValues.price" />
+            <q-input minimal color="orange" float-label="Price" type="number" v-model="modalValues.price" />
           <br>
           <q-btn v-close-overlay label="addNew" color="secondary" @click="addStockUnit" />&nbsp;&nbsp;
           <q-checkbox v-model="modalMeta.wGST" label="gst included" />
@@ -154,7 +154,7 @@ export default {
         wGST: true
       },
       modalValues: {
-        price: '',
+        price: 0,
         unit: '',
         vendor: ''
       },
@@ -295,6 +295,11 @@ export default {
       this.$data.addItemModal = true
       console.log('overlay', row)
       this.$data.modalMeta.label = row.item
+      if (row.taxable === 'yes') {
+        this.$data.modalMeta.wGST = true
+      } else {
+        this.$data.modalMeta.wGST = false
+      }
       this.$data.modalValues = {
         price: '',
         unit: '',
@@ -319,104 +324,36 @@ export default {
         })
       }
     },
-    addStockUnit (row) {
+    addStockUnit () {
       // exectued on add item modal save
-      console.log(row)
+      // get item info based on modalMeta.label
+      let dex = _.findIndex(this.$data.pricelist, {item: this.$data.modalMeta.label})
+      let row = this.$data.pricelist[dex]
+      console.log('row1', row) // somehow 'c' vendor data is already loaded to row???
       let c = this.$data.modalValues // entered price, unit, vendor
+      console.log('c', c)
       c.updated = new Date()
       // check inherited item info; 'wGST' selected on modal; 'label' loaded on dblclick
       if (this.$data.modalMeta.wGST) { 
-        c.price = _.round((row.price / 1.125), 2)
+        c.price = _.round((c.price / 1.125), 2)
       }
       // push new stock unit/vendor to item
-      console.log(row)
-      row.vendors.push(c)
-      // update entire item, can't just update stock
-      api.service('pricelist').update(row.id, row).then(response => {
-        console.log('added item to pricelist')
+      row.vendors.push(c) // not sure how this executes before row1 console.log
+      console.log('row2', row)
+      // update entire item, can't just update stock; row has added comp fields from initial itemPriceSort
+      let tmpRow = row
+      tmpRow.vendors.forEach(ven => {
+        delete ven['__index']
+        delete ven['compBase']
+        delete ven['compQty']
+        delete ven['compUnit']
+        delete ven['compValue']
       })
-      // run comparison
-      let sortedVendors = []
-      row.vendors.forEach(vendor => {
-        // console.log( item.item, vendor.vendor, vendor. unit)
-        // check if it is a case unit
-        let pUnit = ''
-        let caseQty = null
-        let i = vendor.unit.search('x')
-        if (i > -1) {
-          pUnit = vendor.unit.substr(i + 1)
-          caseQty = vendor.unit.substr(0,i)
-        } else {
-          pUnit = vendor.unit
-        }
-        // parse qty and base
-        let i2 = pUnit.search('-')
-        let pQty = pUnit.substr(0,i2)
-        if (caseQty) {
-          pQty = pQty * caseQty
-        }
-        let pBase = pUnit.substr(i2 + 1)
-        // conform pBase to convert-units definition
-        if (pBase === 'L') {
-          pBase = 'l'
-        }
-        if (pBase === 'Fl.oz') {
-          pBase = 'fl-oz'
-        }
-        if (pBase === 'lbs') {
-          pBase = 'lb'
-        }
-        // check if sortedVendors is empty
-        if (sortedVendors.length === 0){
-          vendor.compQty = pQty
-          vendor.compBase = pBase
-          vendor.compUnit = pUnit
-          vendor.compValue = vendor.price / vendor.compQty
-          sortedVendors.push(vendor)
-        } else {
-          // compare vendor to sortedVendors list find place in order
-          sortedVendors.forEach((comp, index) => {
-            // check if same base unit
-            if (pBase === comp.compBase) {
-              vendor.compQty = pQty
-              vendor.compBase = pBase
-            } else {
-              // base not same need to change
-              // console.log(comp)
-              // console.log('converting', item.item, pBase, comp.compBase, index,sortedVendors[index])
-              // check to see if compBase &&& pBase in convert units.
-              let possibleList = convert().possibilities()
-              if (possibleList.includes(pBase) && possibleList.includes(comp.compBase)) {
-                vendor.compQty = convert(pQty).from(pBase).to(comp.compBase)
-                vendor.compBase = comp.compBase
-              } // need to handle incompaible/nonvalid base
-              // vendor.compQty = convert(pQty).from(pBase).to(comp.compBase)
-              // vendor.compBase = comp.compBase
-            }
-            //////// Maybe can break out vvvvvvvv
-            // base is same, get per unit price
-            vendor.compValue = vendor.price / vendor.compQty
-            let diff = vendor.compValue - comp.compValue
-            if (diff > 0) {
-              // more expensive than comp
-            } else {
-              // cheaper than comp, vendor replaces position in sortedVendors and comp becomes new vendor value to evaluate
-              let holder = JSON.parse(JSON.stringify(comp)) // sanitize?
-              sortedVendors[index] = JSON.parse(JSON.stringify(vendor))
-              vendor = holder
-            }
-            if (index === (sortedVendors.length - 1)) {
-              sortedVendors.push(vendor)
-            }
-            /////////Maybe can break out^^^^^^
-          })
-        // push vendor to  item
-        }
+      api.service('pricelist').update(tmpRow.id, tmpRow).then(response => {
+        console.log('added item to pricelist, addstockunit')
+        // run comparison
+        this.itemPriceSort([row])
       })
-      row.vendors = sortedVendors
-      // push item to $data.pricelist
-      // tempList.push(tempItem)
-      // need to run compValues
     },
     loadPricelistData () {
       this.$data.loading = true
@@ -428,109 +365,118 @@ export default {
         }
       }).then((response) => {
         let tempList = []
-        // this.$data.pricelist = response.data
-        // for each item need to sort vendors list
-        response.data.forEach((item,z) => {
-          console.log('index', z, item)
-          // start compareFunction()
-          let tempItem = item
-          let sortedVendors = []
-          item.vendors.forEach(vendor => {
-            console.log( item.item, vendor.vendor, vendor. unit)
-            // check if it is a case unit
-            let pUnit = ''
-            let caseQty = null
-            let i = vendor.unit.search('x')
-            if (i > -1) {
-              pUnit = vendor.unit.substr(i + 1)
-              caseQty = vendor.unit.substr(0,i)
-            } else {
-              pUnit = vendor.unit
-            }
-            // parse qty and base
-            let i2 = pUnit.search('-')
-            let pQty = pUnit.substr(0,i2)
-            if (caseQty) {
-              pQty = pQty * caseQty
-            }
-            let pBase = pUnit.substr(i2 + 1)
-            // conform pBase to convert-units definition
-            if (pBase === 'L') {
-              pBase = 'l'
-            }
-            if (pBase === 'Fl.oz') {
-              pBase = 'fl-oz'
-            }
-            if (pBase === 'lbs') {
-              pBase = 'lb'
-            }
-            if (pBase === 'sack') {
-              pBase = 'ea'
-            }
-            // check if sortedVendors is empty
-            if (sortedVendors.length === 0){
-              vendor.compQty = pQty
-              vendor.compBase = pBase
-              vendor.compUnit = pUnit
-              vendor.compValue = vendor.price / vendor.compQty
-              sortedVendors.push(vendor)
-            } else {
-              // compare vendor to sortedVendors list find place in order
-              sortedVendors.forEach((comp, index) => {
-                // check if same base unit
-                if (pBase === comp.compBase) {
-                  vendor.compQty = pQty
-                  vendor.compBase = pBase
-                } else {
-                  // base not same need to change
-                  // console.log(comp)
-                  console.log('converting', item.item, pBase, comp.compBase, index, sortedVendors[index])
-                  // check to see if compBase &&& pBase in convert units.
-                  if (comp.compBase) {
-                    let possibleList = convert().from(comp.compBase).possibilities() // convert().possibilities() 
-                    if (possibleList.includes(pBase)) { // && possibleList.includes(comp.compBase)) {
-                      vendor.compQty = convert(pQty).from(pBase).to(comp.compBase)
-                      vendor.compBase = comp.compBase
-                    } else { // need to handle incompaible/nonvalid base
-                      console.log('ERROR: Incompatible bases for ', item.item)
-                      this.$q.notify({
-                        message: `Incompatible bases for ${item.item}`,
-                        timeout: 3000,
-                        position: 'center'
-                      })
-                    } 
-                  }
-                  // vendor.compQty = convert(pQty).from(pBase).to(comp.compBase)
-                  // vendor.compBase = comp.compBase
-                }
-                //////// Maybe can break out vvvvvvvv
-                // base is same, get per unit price
-                vendor.compValue = vendor.price / vendor.compQty
-                let diff = vendor.compValue - comp.compValue
-                if (diff > 0) {
-                  // more expensive than comp
-                } else {
-                  // cheaper than comp, vendor replaces position in sortedVendors and comp becomes new vendor value to evaluate
-                  let holder = JSON.parse(JSON.stringify(comp)) // sanitize?
-                  sortedVendors[index] = JSON.parse(JSON.stringify(vendor))
-                  vendor = holder
-                }
-                if (index === (sortedVendors.length - 1)) {
-                  sortedVendors.push(vendor)
-                }
-                /////////Maybe can break out^^^^^^
-              })
-            // push vendor to  item
-            }
-          })
-          tempItem.vendors = sortedVendors
-          // push item to $data.pricelist
-          tempList.push(tempItem)
-          this.$data.loading = false
-        }) 
-        console.log('set pricelist')
-        this.$data.pricelist = tempList
+        // load pricelist data to datatable
+        this.$data.pricelist = response.data
+        // run price sort on all items
+        this.itemPriceSort(response.data)
       })
+    },
+    itemPriceSort(items) {
+      // for each item need to sort vendors list
+      items.forEach((item,z) => {
+        console.log('index', z, item)
+        // start compareFunction()
+        let tempItem = item
+        let sortedVendors = []
+        item.vendors.forEach(vendor => {
+          // vendor: vendor, unit, price, updated
+          console.log( item.item, vendor.vendor, vendor. unit)
+          // will need to breakout single values
+          let pUnit = ''
+          let caseQty = null
+          // check if unit is by the case eg 12x8-oz
+          let i = vendor.unit.search('x')
+          if (i > -1) {
+            pUnit = vendor.unit.substr(i + 1)
+            caseQty = vendor.unit.substr(0,i)
+          } else {
+            pUnit = vendor.unit
+          }
+          // parse qty and base
+          let i2 = pUnit.search('-')
+          let pQty = pUnit.substr(0,i2)
+          if (caseQty) {
+            pQty = pQty * caseQty
+          }
+          let pBase = pUnit.substr(i2 + 1)
+          // conform pBase to convert-units definition
+          if (pBase === 'L') {
+            pBase = 'l'
+          }
+          if (pBase === 'Fl.oz') {
+            pBase = 'fl-oz'
+          }
+          if (pBase === 'lbs') {
+            pBase = 'lb'
+          }
+          if (pBase === 'sack') {
+            pBase = 'ea'
+          }
+          // check if sortedVendors is empty, that is no comp to be made yet
+          if (sortedVendors.length === 0){
+            // add new comparison fields to vendor
+            vendor.compQty = pQty
+            vendor.compBase = pBase
+            vendor.compUnit = pUnit
+            vendor.compValue = vendor.price / vendor.compQty
+            sortedVendors.push(vendor)
+          } else {
+            // compare vendor to sortedVendors list find place in order
+            sortedVendors.forEach((comp, index) => {
+              // comp is part of sortedVendors; vendor & p-var is vendor to be placed
+              // need to get common base
+              if (pBase === comp.compBase) {
+                vendor.compQty = pQty
+                vendor.compBase = pBase
+              } else {
+                // base not same need to change
+                // console.log(comp)
+                console.log('converting', item.item, pBase, comp.compBase, index, sortedVendors[index])
+                // check to see if compBase &&& pBase in convert units.
+                if (comp.compBase) {
+                  let possibleList = convert().from(comp.compBase).possibilities() // convert().possibilities() 
+                  if (possibleList.includes(pBase)) { // && possibleList.includes(comp.compBase)) {
+                    vendor.compQty = convert(pQty).from(pBase).to(comp.compBase)
+                    vendor.compBase = comp.compBase
+                  } else { // need to handle incompaible/nonvalid base
+                    console.log('ERROR: Incompatible bases for ', item.item)
+                    this.$q.notify({
+                      message: `Incompatible bases for ${item.item}`,
+                      timeout: 3000,
+                      position: 'center'
+                    })
+                  } 
+                }
+              }
+              //////// Maybe can break out vvvvvvvv
+              // base is same now, get per unit price
+              vendor.compValue = vendor.price / vendor.compQty
+              // check difference between current vendor and sorted vendor
+              let diff = vendor.compValue - comp.compValue
+              if (diff > 0) {
+                // more expensive than comp, cyle to next sortedVendor
+              } else {
+                // cheaper than comp, vendor replaces position in sortedVendors and comp becomes new vendor value to evaluate
+                let holder = JSON.parse(JSON.stringify(comp)) // sanitize?
+                sortedVendors[index] = JSON.parse(JSON.stringify(vendor))
+                vendor = holder
+              }
+              // if no more sortedVendors to compare, current vendor is most expensive 
+              if (index === (sortedVendors.length - 1)) {
+                sortedVendors.push(vendor)
+              }
+              /////////Maybe can break out^^^^^^
+            }) // end of comparison to sorted vendors, more vendors to be sorted
+          // push vendor to  item
+          }
+        }) // end of all vendors, on to next item
+        // find item in pricelist and update vendors to sortedVendors
+        let plIndex = _.findIndex(this.$data.pricelist, {item: item.item})
+        console.log(item, plIndex, this.$data.pricelist)
+        this.$data.pricelist[plIndex].vendors = sortedVendors
+      }) // end of all items
+      this.$data.loading = false
+      console.log('set pricelist')
     },
     loadCategories (skipNum) {
       api.service('pricelist').find({
