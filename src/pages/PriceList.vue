@@ -328,12 +328,10 @@ export default {
       if (this.$data.modalMeta.wGST) { 
         c.price = _.round((row.price / 1.125), 2)
       }
-      let dex = _.findIndex(this.$data.pricelist, {item: this.$data.modalMeta.label})
-      console.log(this.$data.modalMeta)
-      // no catch of newItem not in pricelist; info 
+      // push new stock unit/vendor to item
       console.log(row)
       row.vendors.push(c)
-      // update entire item
+      // update entire item, can't just update stock
       api.service('pricelist').update(row.id, row).then(response => {
         console.log('added item to pricelist')
       })

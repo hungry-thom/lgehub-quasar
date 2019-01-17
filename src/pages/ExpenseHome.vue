@@ -846,7 +846,7 @@ export default {
           api.service('expenses').update(tmpId, this.$data.transaction).then((response) => {
             console.log('sumbitted expense', response.id)
             delete response['id']
-            api.service('audit').create(response)
+            api.service('audit').create(response) // no indication that this was an update?
             // what payable account asset - liability
             // whether it is asset or liability, will still be a creditEntry
             journalObject.credit.push({
