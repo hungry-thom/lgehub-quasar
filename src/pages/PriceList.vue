@@ -75,7 +75,7 @@
         </q-table>
         <br>
       </div>
-      <!-- //////// START OF AUDIT MODAL  ////////-->
+      <!-- //////// START OF add stock MODAL  ////////-->
       <q-modal v-model="addItemModal">
         <q-modal-layout>
           <q-toolbar slot="header">
@@ -93,7 +93,7 @@
             icon="add_circle"
             :label="modalMeta.label"
             orientation="vertical" >
-            <q-input class= "col" minimal color="orange" float-label="Vendor" v-model="modalValues.vendor" />
+            <q-input class= "col" minimal color="orange" float-label="Vendor" v-model="modalValues.vendor" /> <!-- add autocomplete -->
             <q-input class= "col" minimal color="orange" float-label="Unit" v-model="modalValues.unit" />
             <q-input minimal color="orange" float-label="Price" v-model="modalValues.price" />
           <br>
@@ -320,17 +320,22 @@ export default {
       }
     },
     addStockUnit (row) {
+      // exectued on add item modal save
       console.log(row)
-      let c = this.$data.modalValues
+      let c = this.$data.modalValues // entered price, unit, vendor
       c.updated = new Date()
-      if (this.$data.modalMeta.wGST) {
+      // check inherited item info; 'wGST' selected on modal; 'label' loaded on dblclick
+      if (this.$data.modalMeta.wGST) { 
         c.price = _.round((row.price / 1.125), 2)
       }
       let dex = _.findIndex(this.$data.pricelist, {item: this.$data.modalMeta.label})
       console.log(this.$data.modalMeta)
+      // check if addItem exists, and load data
+      // no way to change label, so following doesn't seem necessary 
       if (dex > -1) {
         row = this.$data.pricelist[dex]
       }
+      // no catch of newItem not in pricelist; info 
       console.log(row)
       row.vendors.push(c)
       // update entire item
