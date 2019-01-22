@@ -110,6 +110,7 @@
 import moment from 'moment'
 import api from 'src/api'
 import convert from 'convert-units'
+import _ from 'lodash'
 import {
   QChatMessage,
   QTable,
