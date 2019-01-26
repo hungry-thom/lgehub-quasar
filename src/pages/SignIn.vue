@@ -1,15 +1,15 @@
 <template>
   <q-page class="flex flex-center">
-    <q-dialog v-model="showDialog" :title="title" @ok="onOk" @hide="onHide" >
+    <q-dialog v-model="showDialog" :title="title" @ok="onOk" @hide="onHide" @show="onFocus" >
       <div slot="body">
         <div class="row q-mb-md">
           <q-input
-            v-model="email" type="email" name="email" stack-label="E-mail" class="full-width" autofocus
+            v-model="email" type="email" name="email" stack-label="E-mail" class="full-width" ref="mail"
           />
         </div>
         <div class="row">
           <q-input
-            v-model="password" type="password" name="email" stack-label="Password" class="full-width"
+            v-model="password" type="password" name="email" stack-label="Password" class="full-width" @keyup.enter="onOk"
           />
         </div>
       </div>
@@ -38,6 +38,9 @@ export default {
   computed: {
   },
   methods: {
+    onFocus () {
+      this.$refs.mail.focus()
+    },
     goHome() {
       this.$router.push({ name: 'home' })
     },
