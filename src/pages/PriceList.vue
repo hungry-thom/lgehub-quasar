@@ -57,7 +57,7 @@
                     <q-th key="compBase" :props="props">compBase</q-th>
                     <q-th key="custom" :props="props">custom</q-th>
                     <q-th key="buttons" :props="props" width='25px'>
-                      <q-btn size="sm" round dense color="secondary" icon="add_circle" @click="overlay(props.row)" class="q-mr-xs" />
+                      <q-btn size="sm" round dense color="secondary" icon="info" @click="overlay(props.row)" class="q-mr-xs" />
                     </q-th>
                   </q-tr>
                   <q-tr slot="body" slot-scope="props" :props="props">
