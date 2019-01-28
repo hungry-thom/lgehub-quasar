@@ -42,16 +42,22 @@ export default {
       this.$refs.mail.focus()
     },
     goHome() {
-      this.$router.push({ name: 'home' })
+      // this.$router.push({ name: 'home' })
+      this.$router.go(-1)
+      console.log('hide')
+      this.$q.loading.hide()
     },
     onHide() {
       // Workaround needed because of timing issues (sequencing of 'hide' and 'ok' events) ...
       setTimeout(() => {
         this.goHome()
-      }, 50)
+      }, 10)
 
     },
     onOk(data) {
+      this.$q.loading.show({
+        delay: 10 // ms
+      })
       if (this.isRegistration()) {
         this.register(this.email, this.password)
           .then(() => {
@@ -68,6 +74,7 @@ export default {
         this.login(this.email, this.password)
           .then(_ => {
             this.$q.notify({type: 'positive', message: 'You are now logged in'})
+            this.goHome()
           })
           .catch(_ => {
             this.$q.notify({type: 'positive', message: 'Cannot sign in, please check your e-mail or password'})

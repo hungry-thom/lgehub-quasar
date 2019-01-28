@@ -1133,6 +1133,19 @@ export default {
           this.$data.expenses = response.data
           console.log('exp resp', response.data)
           this.$data.loading = false
+        }).catch((err) => {
+          this.$q.notify({
+            message: `Error: ${err}`,
+            timeout: 3000,
+            position: 'center'
+          })
+          this.$data.loading = true
+          console.log(err)
+          if (err.code === 401) {
+            console.log('code check', err.code)
+            // console.log(this.$data.showDialog) // = true
+            this.$router.push({ name: 'signin' })
+          }
         })
       }
     },
