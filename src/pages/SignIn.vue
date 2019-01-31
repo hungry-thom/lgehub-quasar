@@ -43,20 +43,24 @@ export default {
     },
     goHome() {
       // this.$router.push({ name: 'home' })
-      this.$router.go(-1)
+      setTimeout(() => {
+        this.$router.go(-1)
+      }, 150)
       console.log('hide')
-      this.$q.loading.hide()
+      // this.$q.loading.hide()
     },
     onHide() {
       // Workaround needed because of timing issues (sequencing of 'hide' and 'ok' events) ...
+      // does not execute on 'keydown:Enter'
       setTimeout(() => {
+        console.log('timeout')
         this.goHome()
       }, 10)
-
+      console.log('does onHide() execute with onOk()?')
     },
     onOk(data) {
       this.$q.loading.show({
-        delay: 10 // ms
+        // delay: 10 // ms
       })
       if (this.isRegistration()) {
         this.register(this.email, this.password)
@@ -74,7 +78,8 @@ export default {
         this.login(this.email, this.password)
           .then(_ => {
             this.$q.notify({type: 'positive', message: 'You are now logged in'})
-            this.goHome()
+            this.$q.loading.hide()
+            // this.goHome()
           })
           .catch(_ => {
             this.$q.notify({type: 'positive', message: 'Cannot sign in, please check your e-mail or password'})

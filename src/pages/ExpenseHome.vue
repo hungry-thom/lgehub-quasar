@@ -1145,6 +1145,7 @@ export default {
             console.log('code check', err.code)
             // console.log(this.$data.showDialog) // = true
             this.$router.push({ name: 'signin' })
+            // sign in page is loaded, but comes back too quickly, before token is registered and gets kicked to home
           }
         })
       }
