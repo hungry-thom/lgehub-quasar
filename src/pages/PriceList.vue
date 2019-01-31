@@ -32,12 +32,17 @@
           </template>
           <template slot="body" slot-scope="props">
             <q-tr :props="props" @dblclick.native="overlay(props.row)">
+              <q-tooltip :delay="1000">Double Click to add to {{ props.row.item }} </q-tooltip>
               <q-td key="item" :props="props">
                 <q-checkbox color="primary" v-model="props.expand" unchecked-icon="add" checked-icon="remove" class="q-mr-md" />
                 {{ props.row.item }}
               </q-td>
               <q-td key="taxable" :props="props">
                 {{ props.row.taxable }}
+              </q-td>
+              <q-td key="track" :props="props">
+                <q-btn size="sm" round dense color="secondary" icon="info" @click="priceOverlay(props.row)" class="q-mr-xs" />
+                <q-btn size="sm" round dense color="secondary" icon="add_circle" @click="overlay(props.row)" class="q-mr-xs" />
               </q-td>
               <!--<q-tooltip>I'd like to eat "{{ props.row.name }}"</q-tooltip>-->
             </q-tr>
@@ -103,6 +108,48 @@
           </div>
         </q-modal-layout>
       </q-modal>
+      <!-- //////// START OF priceTrack MODAL  ////////-->
+      <q-modal v-model="priceTrackModal">
+        <q-modal-layout>
+          <q-toolbar slot="header">
+            <q-btn
+              flat
+              icon="keyboard_backspace"
+              v-close-overlay
+            />
+            <q-toolbar-title>
+              Track price
+            </q-toolbar-title>
+          </q-toolbar>
+          <div class="q-pa-sm" >
+            <q-table
+              :data="priceTrackData"
+              :columns="ptColumns"
+              :filter="ptFilter"
+              :visible-columns="ptVisibleColumns"
+              row-key="recordDate"
+              :pagination.sync="pagination"
+              hide-bottom >
+              <template slot="top-left" slot-scope="props">
+                <q-search
+                  hide-underline
+                  color="secondary"
+                  v-model="filter"
+                  class="col-6"
+                />
+              </template>
+              <template slot="top-right" slot-scope="props">
+                <q-table-columns
+                  color="secondary"
+                  class="q-mr-sm"
+                  v-model="ptVisibleColumns"
+                  :columns="ptColumns"
+                />
+              </template>
+            </q-table>
+          </div>
+        </q-modal-layout>
+      </q-modal>
   </q-page>
 </template>
 
@@ -117,6 +164,7 @@ import {
   QTr,
   QTd,
   QTh,
+  QTableColumns,
   QSearch,
   QPopupEdit,
   QCheckbox,
@@ -135,6 +183,7 @@ export default {
     QTr,
     QTd,
     QTh,
+    QTableColumns,
     QSearch,
     QPopupEdit,
     QCheckbox,
@@ -148,6 +197,9 @@ export default {
   data () {
     return {
       loading: true,
+      ptFilter: '',
+      priceTrackModal: false,
+      priceTrackData: [],
       addItemModal: false,
       modalMeta: {
         label: '',
@@ -222,9 +274,16 @@ export default {
           label: 'Units',
           align: 'left',
           field: 'unit'
+        },
+        {
+          name: 'track',
+          required: false,
+          label: '',
+          align: 'left',
+          field: 'track'
         }
       ],
-      visibleColumns: ['item'],
+      visibleColumns: ['item', 'track'],
       columns2: [
         {
           name: 'vendor',
@@ -286,12 +345,71 @@ export default {
           field: 'buttons'
         }
       ],
-      visibleColumns2: ['vendor', 'unit', 'price', 'compValue', 'compBase', 'custom', 'buttons' ]
+      visibleColumns2: ['vendor', 'unit', 'price', 'compValue', 'compBase', 'custom', 'buttons' ],
+      ptColumns: [
+        {
+          name: 'price',
+          required: false,
+          label: 'price',
+          align: 'left',
+          field: 'price'
+        },
+        {
+          name: 'unit',
+          required: false,
+          label: 'unit',
+          align: 'left',
+          field: 'unit'
+        },
+        {
+          name: 'vendor',
+          required: false,
+          label: 'vendor',
+          align: 'left',
+          field: 'vendor'
+        },
+        {
+          name: 'recordDate',
+          required: false,
+          label: 'recordDate',
+          align: 'left',
+          field: 'recordDate'
+        },
+        {
+          name: 'expenseId',
+          required: false,
+          label: 'expenseId',
+          align: 'left',
+          field: 'expenseId'
+        },
+        {
+          name: 'user',
+          required: false,
+          label: 'user',
+          align: 'left',
+          field: 'user'
+        }
+      ],
+      ptVisibleColumns: ['price', 'unit', 'vendor', 'recordDate', 'expenseId', 'user']
     }
   },
   computed: {
   },
   methods: {
+    priceOverlay (row) {
+      console.log('priceOverlay')
+      api.service('audit').find({
+        query: {
+          table: 'priceList',
+          item: row.item,
+          $sort: { recordDate: 1 },
+          $limit: 100 // max is 200
+        }
+      }).then((response) => {
+        this.$data.priceTrackData = response.data
+        this.$data.priceTrackModal = true
+      })
+    },
     overlay (row) {
       this.$data.addItemModal = true
       console.log('overlay', row)
