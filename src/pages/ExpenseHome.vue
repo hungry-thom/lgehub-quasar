@@ -18,7 +18,9 @@
           type="checkbox"
           v-model="searchOption"
           :options="[
-            { label: 'Vendor', value: 'vendor' }
+            { label: 'Vendor', value: 'vendor' },
+            { label: 'PaymentAcct', value: 'paymentAccount' },
+            { label: 'ID', value: 'id' }
           ]"
         />
       </q-field>
@@ -1119,7 +1121,8 @@ export default {
       queryStr = `${queryStr} "$sort": { "date1": -1}, "$limit": 200 }`
       console.log(queryStr)
       let queryObj = JSON.parse(queryStr)
-      if (this.$data.dateOption === 'noDate' && this.$data.searchOption[0] === '') {
+      if (this.$data.dateOption === 'noDate' && this.$data.searchVendor[0] === '') {
+        console.log(this.$data.searchOption)
         this.$q.notify({
           message: 'Select a field to search',
           timeout: 3000,
