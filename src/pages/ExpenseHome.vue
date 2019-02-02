@@ -52,8 +52,8 @@
           <q-th key="vendor" :props="props" class="bg-deep-purple-1">Vendor</q-th>
           <q-th key="subTotal" :props="props" class="bg-deep-purple-1">Cost</q-th>
           <q-th key="gstTotal" :props="props" class="bg-deep-purple-1">prepaidGST</q-th>
-          <q-th key="grandTotal" :props="props" class="bg-deep-purple-1">Total</q-th>
-          <q-th key="paymentAccount" :props="props" class="bg-deep-purple-2">Payment</q-th>
+          <q-th key="grandTotal" :props="props" class="bg-deep-purple-2">Total</q-th>
+          <q-th key="paymentAccount" :props="props">Payment</q-th>
         </tr>
         <template slot="body" slot-scope="props">
           <tr :props="props" @click="popup(props.row)">
@@ -65,10 +65,18 @@
             <q-td key="vendor" :props="props" class="bg-deep-purple-1">{{ props.row.vendor }}</q-td>
             <q-td key="subTotal" :props="props" class="bg-deep-purple-1">{{ props.row.subTotal }}</q-td>
             <q-td key="gstTotal" :props="props" class="bg-deep-purple-1">{{ props.row.gstTotal }}</q-td>
-            <q-td key="grandTotal" :props="props" class="bg-deep-purple-1">{{ props.row.grandTotal }}</q-td>
-            <q-td key="paymentAccount" :props="props" class="bg-deep-purple-2">{{ props.row.paymentAccount }}</q-td>
+            <q-td key="grandTotal" :props="props" class="bg-deep-purple-2">{{ props.row.grandTotal }}</q-td>
+            <q-td key="paymentAccount" :props="props" >{{ props.row.paymentAccount }}</q-td>
           </tr>
         </template>
+        <q-tr slot="bottom-row" slot-scope="props" align="left">
+            <q-td></q-td>
+            <q-td></q-td>
+            <q-td class="bg-deep-purple-2">{{ expSubTotal || '-' }}</q-td>
+            <q-td class="bg-deep-purple-2">{{ expGstTotal || '-' }}</q-td>
+            <q-td class="bg-deep-purple-3">{{ expGrandTotal || '-' }}</q-td>
+            <q-td></q-td>
+        </q-tr>
       </q-table>
       <q-btn flat round size="xl" color="secondary" @click="newExpense" icon="add_circle" />
     </div>
@@ -613,6 +621,29 @@ export default {
       let gt = 0
       this.$data.transaction.transItems.forEach(item => {
         gt += item.total
+      })
+      return _.round(gt,2)
+    },
+    expSubTotal () {
+      let t = 0
+      this.$data.expenses.forEach(exp => {
+        console.log('t', t, exp.subTotal)
+        t += exp.subTotal
+      })
+      return _.round(t,2)
+    },
+    expGstTotal () {
+      let g = 0
+      this.$data.expenses.forEach(exp => {
+        console.log('g', g, exp.gstTotal)
+        g += exp.gstTotal
+      })
+      return _.round(g,2)
+    },
+    expGrandTotal () {
+      let gt = 0
+      this.$data.expenses.forEach(exp => {
+        gt += exp.grandTotal
       })
       return _.round(gt,2)
     },

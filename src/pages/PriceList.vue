@@ -402,7 +402,7 @@ export default {
         query: {
           table: 'priceList',
           item: row.item,
-          $sort: { recordDate: 1 },
+          $sort: { recordDate: -1 },
           $limit: 100 // max is 200
         }
       }).then((response) => {
