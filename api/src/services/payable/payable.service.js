@@ -1,9 +1,11 @@
 // Initializes the `payable` service on path `/payable`
 const createService = require('feathers-rethinkdb');
+const createModel = require('../../models/inventory.model');
 const hooks = require('./payable.hooks');
 
 module.exports = function (app) {
-  const Model = app.get('rethinkdbClient');
+  // const Model = app.get('rethinkdbClient');
+  const Model = createModel(app);
   const paginate = app.get('paginate');
 
   const options = {

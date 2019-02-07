@@ -940,8 +940,63 @@ export default {
       // service call
       let checkInfo = {
         checkDate: trans.date1,
-        checkNum: trans.paymentAccount.substr(9) // 'checkAtl#9999' -> 9999
+        checkNum: trans.paymentAccount.substr(9), // 'checkAtl#9999' -> 9999
+        vendor: trans.vendor,
+        amount: trans.grandTotal,
+        cashed: '',
+        transNum: trans.transNum,
+        expenseId: trans.expenseId
       }
+      api.service('checks').create(checkInfo).then((response) => {
+        // response
+      }).catch((err) => {
+        // error
+        console.log(`Error: ${err}`)
+        this.$q.notify({
+          message: `Checks Error: ${err}`,
+          timeout: 3000,
+          position: 'center'
+        })
+      })
+    },
+    updateCreditCard (trans) {
+      let ccardInfo = {
+        expDate: trans.date1,
+        vendor: trans.vendor,
+        amount: trans.grandTotal,
+        transNum: trans.transNum,
+        expenseId: trans.expenseId
+      }
+      api.service('ccard').create(checkInfo).then((response) => {
+        // response
+      }).catch((err) => {
+        // error
+        console.log(`Error: ${err}`)
+        this.$q.notify({
+          message: `ccard Error: ${err}`,
+          timeout: 3000,
+          position: 'center'
+        })
+      })
+    },
+    updatePayable (trans) {
+      let payableInfo = {
+        expDate: trans.date1,
+        vendor: trans.vendor,
+        amount: trans.grandTotal,
+        transNum: trans.transNum,
+        expenseId: trans.expenseId
+      }
+      api.service('payable').create(payableInfo).then((response) => {
+        // response
+      }).catch((err) => {
+        console.log(`Error: ${err}`)
+        this.$q.notify({
+          message: `Payable Error: ${err}`,
+          timeout: 3000,
+          position: 'center'
+        })
+      })
     },
     updateInventory (trans) {
       // first get inventory data (use store in future?)
