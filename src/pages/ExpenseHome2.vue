@@ -1,4 +1,4 @@
-<!-- ExpenseHome.vue -->
+<!-- ExpenseHome2.vue -->
 <template>
   <q-page class="layout-padding">
     <div>
@@ -915,6 +915,12 @@ export default {
             this.updatePrices(cleanTransactionData)
             // inventory updata is based line by line
             this.updateInventory(cleanTransactionData)
+            // TODO: record checks (date, vendor, amount, checknum, transNum, expId)
+            if (this.$data.transaction.paymentAccount.includes('checkAtl#')) {
+              this.updateChecks(cleanTransactionData)
+            }
+            // TODO: creditcard exp (date, vendor, amount, transNum, expId)
+            // TODO: payable exp (date, vendor, amount, transNum, expId)
             // submit expense record for audit after price and inv methods for separate table keys
             this.$data.transaction.table = 'expenses'
             api.service('audit').create(this.$data.transaction)
@@ -928,6 +934,13 @@ export default {
         // this.loadExpenses(this.$data.startDate, this.$data.endDate)
         this.$data.startDate = this.$data.transaction.date1
         this.loadExpenses()
+      }
+    },
+    updateChecks (trans) {
+      // service call
+      let checkInfo = {
+        checkDate: trans.date1,
+        checkNum: trans.paymentAccount.substr(9) // 'checkAtl#9999' -> 9999
       }
     },
     updateInventory (trans) {
