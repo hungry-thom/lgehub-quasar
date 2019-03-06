@@ -228,7 +228,7 @@
     <br>
     <div class="row no-wrap">
       <q-input class="col" ref="newEntry" float-label="Qty" type="number" v-model="newItem.qty" />&nbsp;&nbsp;
-      <q-input class="col" float-label="Item" v-model="newItem.item" @blur="linkCategory" > <q-autocomplete :static-data="{field: 'value', list: itemList}" :filter="myFilter"/> </q-input>&nbsp;&nbsp;
+      <q-input class="col" float-label="Item" v-model="newItem.item" @blur="linkCategory" > <q-autocomplete :max-results="8" :static-data="{field: 'value', list: itemList}" :filter="myFilter"/> </q-input>&nbsp;&nbsp;
       <q-input class="col" float-label="Unit" v-model="newItem.unit" @click="popupUnitList" > <q-autocomplete :static-data="{field: 'value', list: computedUnitsList}" :filter="myFilter"/> </q-input>&nbsp;&nbsp;
       <q-input class="col" float-label="Cost" type="number" v-model="newItem.amount" @keyup.enter="addItem" />
       <div class="q-pt-md">
@@ -921,6 +921,9 @@ export default {
             }
             // TODO: creditcard exp (date, vendor, amount, transNum, expId)
             // TODO: payable exp (date, vendor, amount, transNum, expId)
+            if (this.$data.transaction.paymentAccount.includes('payable')) {
+              this.updatePayable(cleanTransactionData)
+            }
             // submit expense record for audit after price and inv methods for separate table keys
             this.$data.transaction.table = 'expenses'
             api.service('audit').create(this.$data.transaction)
