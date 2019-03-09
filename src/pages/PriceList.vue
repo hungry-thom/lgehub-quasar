@@ -38,11 +38,15 @@
                 {{ props.row.item }}
               </q-td>
               <q-td key="taxable" :props="props">
-                {{ props.row.taxable }}
+                taxable: {{ props.row.taxable }}
+              </q-td>
+              <q-td key="customLabel" :props="props">
+                {{ props.row.customLabel || '' }}
               </q-td>
               <q-td key="track" :props="props">
-                <q-btn size="sm" round dense color="secondary" icon="info" @click="priceOverlay(props.row)" class="q-mr-xs" />
-                <q-btn size="sm" round dense color="secondary" icon="add_circle" @click="overlay(props.row)" class="q-mr-xs" />
+                <q-btn size="sm" round color="secondary" icon="info" @click="priceOverlay(props.row)" class="q-mr-xs" />
+                <q-btn size="sm" round dense color="secondary" icon="edit" @click="customValueDialog(props.row)" class="q-mr-xs" />
+                <q-btn size="sm" round color="secondary" icon="add" @click="overlay(props.row)" class="q-mr-xs" />
               </q-td>
               <!--<q-tooltip>I'd like to eat "{{ props.row.name }}"</q-tooltip>-->
             </q-tr>
@@ -146,6 +150,14 @@
                   :columns="ptColumns"
                 />
               </template>
+              <q-tr slot="body" slot-scope="props" :props="props">
+                <q-td key="price" :props="props">{{ props.row.price }}</q-td>
+                <q-td key="unit" :props="props">{{ props.row.unit }}</q-td>
+                <q-td key="vendor" :props="props">{{ props.row.vendor }}</q-td>
+                <q-td key="recordDate" :props="props">{{ props.row.recordDate }}</q-td>
+                <q-td key="expenseId" :props="props">{{ props.row.expenseId }}</q-td>
+                <q-td key="user" :props="props">{{ props.row.user }}</q-td>
+              </q-tr>
             </q-table>
           </div>
         </q-modal-layout>
@@ -269,6 +281,13 @@ export default {
           field: 'taxable'
         },
         {
+          name: 'customLabel',
+          required: false,
+          label: 'custom',
+          align: 'left',
+          field: 'customLabel'
+        },
+        {
           name: 'units',
           required: false,
           label: 'Units',
@@ -283,7 +302,7 @@ export default {
           field: 'track'
         }
       ],
-      visibleColumns: ['item', 'track'],
+      visibleColumns: ['item', 'taxable', 'customLabel', 'track'],
       columns2: [
         {
           name: 'vendor',
@@ -396,7 +415,69 @@ export default {
   computed: {
   },
   methods: {
+    customValueDialog (row) {
+      // needs input for custom value, on enter-> custom Field is filled with data
+      this.$q.dialog({
+        title: 'CustomValue',
+        message: `Enter a custom value for ${row.item}`,
+        prompt: {
+          model: '',
+          type: 'text' // optional
+        },
+        cancel: true,
+        color: 'secondary'
+      }).then(data => {
+        this.$q.notify(`You typed: "${data}"`)
+        console.log(row)
+        // custom label
+        row.customLabel = data
+        // parse entered value eg '1-gal' or '4x1-gal'
+        // customQty, customBase
+        let customUnit = ''
+        let caseQty = null
+        let i = data.search('x')
+        if (i > -1) {
+          customUnit = data.substr(i + 1)
+          caseQty = data.substr(0,i)
+        } else {
+          console.log('data', data)
+          customUnit = data
+        }
+        // parse qty and base
+        console.log('check')
+        console.log(customUnit)
+        let i2 = customUnit.search('-')
+        console.log('check1')
+        let customQty = customUnit.substr(0,i2)
+        if (caseQty) {
+          customQty = customQty * caseQty
+        }
+        let customBase = customUnit.substr(i2 + 1)
+        let customValue = ''
+        console.log('check2')
+        row.vendors.forEach(ven => {
+          ven.customLabel = data
+          if (ven.compBase === customBase) {
+            console.log('check3', ven.compBase, customBase, ven.compBase === customBase)
+            console.log('cust', customValue, customQty, ven.compValue)
+            customValue = customQty * ven.compValue
+            console.log(customValue)
+          } else {
+            // need to check for compatibility
+            console.log('check4')
+            let customConversion = convert(customQty).from(customBase).to(ven.compBase)
+            customValue = customConversion * ven.compValue
+          }
+          ven.custom = customValue
+          console.log(row)
+          console.log('custom', customValue, customBase, customQty)
+        })
+      }).catch((err) => {
+        this.$q.notify(err)
+      })
+    },
     priceOverlay (row) {
+      // queries audit db for item and loads data to popup modal with datatable
       console.log('priceOverlay')
       api.service('audit').find({
         query: {
@@ -504,6 +585,8 @@ export default {
           let pUnit = ''
           let caseQty = null
           // check if unit is by the case eg 12x8-oz
+          ////////////
+          //////////// potential method
           let i = vendor.unit.search('x')
           if (i > -1) {
             pUnit = vendor.unit.substr(i + 1)
@@ -518,6 +601,8 @@ export default {
             pQty = pQty * caseQty
           }
           let pBase = pUnit.substr(i2 + 1)
+          //////////////
+          //////////////
           // conform pBase to convert-units definition
           if (pBase === 'L') {
             pBase = 'l'
