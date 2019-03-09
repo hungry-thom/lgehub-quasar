@@ -155,7 +155,7 @@
                 <q-td key="unit" :props="props">{{ props.row.unit }}</q-td>
                 <q-td key="vendor" :props="props">{{ props.row.vendor }}</q-td>
                 <q-td key="recordDate" :props="props">{{ props.row.recordDate }}</q-td>
-                <q-td key="expenseId" :props="props">{{ props.row.expenseId }}</q-td>
+                <q-td key="expenseId" :props="props" @click.native="loadExpenseId(props.row.expenseId)" >{{ props.row.expenseId }}</q-td>
                 <q-td key="user" :props="props">{{ props.row.user }}</q-td>
               </q-tr>
             </q-table>
@@ -415,6 +415,10 @@ export default {
   computed: {
   },
   methods: {
+    loadExpenseId (expId) {
+      console.log('push1', expId)
+      this.$router.push({path: `expense/${expId}`})
+    },
     customValueDialog (row) {
       // needs input for custom value, on enter-> custom Field is filled with data
       this.$q.dialog({

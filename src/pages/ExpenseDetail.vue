@@ -130,9 +130,9 @@
       -->
       </div>
     </div>
+    <q-btn round size="xl" color="secondary" @click="popup" icon="edit" />
     <br>
     <br>
-    <q-btn flat round size="xl" color="secondary" @click="popup" icon="edit" />
     <!-- //////// START OF MODAL' ////////-->
     <q-modal v-model="expenseModal" :maximized="boolScreen" :no-backdrop-dismiss="true" >
     <q-modal-layout> <!-- class="q-pa-sm" -->
