@@ -1,4 +1,4 @@
-<!-- ExpenseHome.vue -->
+<!-- balanceSheet.vue -->
 <template>
   <q-page class="layout-padding">
     <div class="row no-wrap">

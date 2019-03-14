@@ -14,9 +14,11 @@ const routes = [
       { path: '/pricelist', name: 'pricelist', component: () => import('pages/PriceList'), meta: { requiresAuth: true } },
       { path: '/transfers', name: 'transfers', component: () => import('pages/Transfers'), meta: { requiresAuth: true } },
       { path: '/expense', name: 'expenseHome', component: () => import('pages/ExpenseHome'), meta: { requiresAuth: true } },
-      { path: '/expense/:expId', name: 'expenseHome', component: () => import('pages/ExpenseDetail'), meta: { requiresAuth: true } },
+      { path: '/expense/:expId', name: 'expenseDetail', component: () => import('pages/ExpenseDetail'), meta: { requiresAuth: true } },
       { path: '/monthly', name: 'monthly', component: () => import('pages/Monthly'), meta: { requiresAuth: true } },
-      { path: '/test', name: 'test', component: () => import('pages/ExpenseHome2'), meta: { requiresAuth: true } }
+      { path: '/test', name: 'test', component: () => import('pages/ExpenseHome2'), meta: { requiresAuth: true } },
+      { path: '/payables', name: 'payables', component: () => import('pages/Payables'), meta: { requiresAuth: true } },
+      { path: '/checks', name: 'checks', component: () => import('pages/Checks'), meta: { requiresAuth: true } }
     ]
   }
 ]
