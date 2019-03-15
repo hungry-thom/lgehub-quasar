@@ -27,6 +27,32 @@
               :columns="columns"
             />
           </template>
+          <template slot="body" slot-scope="props">
+            <q-tr :props="props">
+              <q-td key="vendor" :props="props">
+                <q-checkbox color="primary" v-model="props.expand" unchecked-icon="add" checked-icon="remove" class="q-mr-md" />
+                {{ props.row.vendor }}
+              </q-td>
+              <q-td key="total" :props="props">
+                {{ props.row.total || '' }}
+              </q-td>
+            </q-tr>
+            <q-tr v-show="props.expand" :props="props">
+              <q-td colspan="100%">
+                <q-table
+                  :data="props.row.invoices"
+                  :columns="expandColumns"
+                  :visible-columns="visibleExpandColumns"
+                  row-key="props.row.invoice.expDate"
+                  hide-bottom >
+                </q-table>
+              </q-td>
+            </q-tr>
+          </template>
+          <q-tr slot="bottom-row" slot-scope="props" align="left">
+            <q-td class="bg-deep-purple-1">Grand Total:</q-td>
+            <q-td class="bg-deep-purple-1">{{ grandTotal || '-' }}</q-td>
+          </q-tr>
         </q-table>
         <br>
       </div>
@@ -147,6 +173,14 @@ export default {
     }
   },
   computed: {
+    grandTotal () {
+      let payables = this.$data.vendorList
+      let gTotal = 0
+      payables.forEach(vendor => {
+        gTotal += vendor.total
+      })
+      return gTotal
+    }
   },
   methods: {
     isSent (message) {
