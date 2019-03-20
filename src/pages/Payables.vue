@@ -8,7 +8,7 @@
           :columns="columns"
           :filter="filter"
           :visible-columns="visibleColumns"
-          row-key="date1"
+          row-key="vendor"
           :pagination.sync="pagination"
           hide-bottom >
           <template slot="top-left" slot-scope="props">
@@ -49,10 +49,12 @@
               </q-td>
             </q-tr>
           </template>
-          <q-tr slot="bottom-row" slot-scope="props" align="left">
+          <template slot="bottom-row" slot-scope="props" >
+          <q-tr align="left">
             <q-td class="bg-deep-purple-1">Grand Total:</q-td>
             <q-td class="bg-deep-purple-1">{{ grandTotal || '-' }}</q-td>
           </q-tr>
+          </template>
         </q-table>
         <br>
       </div>

@@ -18,7 +18,8 @@ const routes = [
       { path: '/monthly', name: 'monthly', component: () => import('pages/Monthly'), meta: { requiresAuth: true } },
       { path: '/test', name: 'test', component: () => import('pages/ExpenseHome2'), meta: { requiresAuth: true } },
       { path: '/payables', name: 'payables', component: () => import('pages/Payables'), meta: { requiresAuth: true } },
-      { path: '/checks', name: 'checks', component: () => import('pages/Checks'), meta: { requiresAuth: true } }
+      { path: '/checks', name: 'checks', component: () => import('pages/Checks'), meta: { requiresAuth: true } },
+      { path: '/cash', name: 'cash', component: () => import('pages/Cash'), meta: { requiresAuth: true } }
     ]
   }
 ]
