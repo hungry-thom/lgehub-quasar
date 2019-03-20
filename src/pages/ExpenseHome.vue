@@ -856,6 +856,15 @@ export default {
       }
     },
     submitExpense () {
+      if (this.$data.transaction.paymentAccount.includes('checkAtl#') && this.$data.transaction.paymentAccount.length < 13) {
+        console.log('bad check')
+        this.$q.notify({
+          message: 'please verify check number',
+          timeout: 3000,
+          position: 'center'
+        })
+        return false
+      }
       console.log('test', this.$data.newItem.qty && this.$data.newItem.item && this.$data.newItem.unit && this.$data.newItem.amount)
       console.log(this.$data.newItem.qty, this.$data.newItem.item, this.$data.newItem.unit, this.$data.newItem.amount)
       if (this.$data.newItem.qty && this.$data.newItem.item && this.$data.newItem.unit && this.$data.newItem.amount) {
