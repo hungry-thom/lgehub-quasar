@@ -634,7 +634,9 @@ export default {
               // comp is part of sortedVendors; vendor & p-var is vendor to be placed
               // need to get common base
               if (pBase === comp.compBase) {
-                vendor.compQty = pQty
+                if (!vendor.compQty) {
+                  vendor.compQty = pQty // creating vendor.compQty with parsed qty
+                }
                 vendor.compBase = pBase
               } else {
                 // base not same need to change
