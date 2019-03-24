@@ -210,14 +210,20 @@ export default {
       this.$data.month.push(week)
     },
     loadData () {
+      // would like to query for hasFields('paid').not() or similar, but nothing works
+      // have to query for blank field (after creating with blank field)
       api.service('payable').find({
       query: {
-        paid: null
+        paid: ''
       }
     })
       .then((response) => {
         // we want to combine all payables for each vendor
+        console.log(response.data.length)
         response.data.forEach(rec => {
+          if (rec.vendor === 'RCimports') {
+            console.log(rec.paid)
+          }
           let dex = _.findIndex(this.$data.vendorList, {vendor: rec.vendor})
           if (dex < 0) {
             // create a new vendor entry
