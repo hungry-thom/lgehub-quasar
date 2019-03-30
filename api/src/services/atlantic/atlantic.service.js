@@ -1,9 +1,11 @@
 // Initializes the `atlantic` service on path `/atlantic`
 const createService = require('feathers-rethinkdb');
+const createModel = require('../../models/inventory.model');
 const hooks = require('./atlantic.hooks');
 
 module.exports = function (app) {
-  const Model = app.get('rethinkdbClient');
+  // const Model = app.get('rethinkdbClient');
+  const Model = createModel(app);
   const paginate = app.get('paginate');
 
   const options = {
