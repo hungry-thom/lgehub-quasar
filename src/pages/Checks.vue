@@ -122,6 +122,27 @@ export default {
       }
       console.log(week)
       this.$data.month.push(week)
+    },
+    loadData () {
+      api.service('checks').find({
+        query: {
+          cashed: '',
+          $sort: checkDate
+        }
+      }).then((resp) => {
+        this.$data.checksOutstanding = resp.data
+        resp.data.forEach(chk => {
+          for (let f in chk) {
+              let tmpChk = {
+              name: chk[f],
+              required: false,
+              label: chk[f],
+              align: 'left',
+              field: chk[f]
+            }
+          }
+        })
+      })
     }
   },
   mounted () {

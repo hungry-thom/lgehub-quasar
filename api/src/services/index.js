@@ -8,6 +8,7 @@ const pricelist = require('./pricelist/pricelist.service.js');
 const checks = require('./checks/checks.service.js');
 const ccard = require('./ccard/ccard.service.js');
 const payable = require('./payable/payable.service.js');
+const atlantic = require('./atlantic/atlantic.service.js');
 // eslint-disable-next-line no-unused-vars
 module.exports = function (app) {
   app.configure(users);
@@ -20,4 +21,5 @@ module.exports = function (app) {
   app.configure(checks);
   app.configure(ccard);
   app.configure(payable);
+  app.configure(atlantic);
 };
