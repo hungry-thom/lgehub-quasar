@@ -883,6 +883,8 @@ export default {
         // dateinput records date as UTC, if entered after 18:00 the date is recorded for the next day (+6hrs)
         // if the hour is <6, date needs to go back one day
         let dInfo = this.$data.transaction.date1
+        dInfo = dInfo.toISOString()
+        console.log(dInfo)
         let hour = dInfo.substr(11,2)
         hour = Number(hour)
         if (hour < 6) {
