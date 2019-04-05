@@ -880,6 +880,22 @@ export default {
         this.$data.transaction.grandTotal = this.grandTotal
         // check if this is an exsisting transaction 
         let tmpId = this.$data.transaction.id
+        // dateinput records date as UTC, if entered after 18:00 the date is recorded for the next day (+6hrs)
+        // if the hour is <6, date needs to go back one day
+        let dInfo = this.$data.transaction.date1
+        let hour = dInfo.substr(11,2)
+        hour = Number(hour)
+        if (hour < 6) {
+          let d = dInfo.substr(0,10)
+          let day = d.substr(-2)
+          day = Number(day -1)
+          if (day < 10) {
+            day = `0${day}`
+          }
+          let t = dInfo.substr(13)
+          let d2 = `${d.substr(0,8)}${day}T10${t}`
+          this.$data.transaction.date1 = d2
+        }
         if (tmpId) {
           // if transaction is modified, changes need to be recorded
           // if account changed, original acct needs to be reversed
