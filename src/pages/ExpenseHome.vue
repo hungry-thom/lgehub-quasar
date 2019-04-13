@@ -109,7 +109,7 @@
     <div class="q-pa-sm">
     <div class="row no-wrap">
       <q-datetime class="col" minimal color="orange" v-model="transaction.date1" type="date" float-label="Date" @input="selectDate" :first-day-of-week="0" />&nbsp;&nbsp;
-      <q-input class="col" :autofocus="true" ref="inputVendor" v-model="transaction.vendor" float-label="Vendor"  @blur="validateVendor"> <q-autocomplete :static-data="{field: 'value', list: vendorsList}" /></q-input>&nbsp;&nbsp;
+      <q-input class="col" ref="inputVendor" v-model="transaction.vendor" float-label="Vendor"  @blur="validateVendor"> <q-autocomplete :static-data="{field: 'value', list: vendorsList}" /></q-input>&nbsp;&nbsp;
       <q-input class="col" ref="inputtransNum" v-model="transaction.transNum" float-label="Transaction Number"/>&nbsp;&nbsp;
       <q-input class="col" v-model="transaction.paymentAccount" float-label="Payment Account" > <q-autocomplete :static-data="{field: 'value', list: paymentTypes}" /></q-input>
     </div>
@@ -734,8 +734,7 @@ export default {
         transItems: [],
         add2Pricelist: carryOver
       }
-      // this.$refs.inputVendor.focus()
-      document.getElementsByClassName('col')[26].focus()
+      this.$refs.inputVendor.focus()
       // this.$nextTick(this.$refs.inputVendor.focus())
       this.overlay()
     },
