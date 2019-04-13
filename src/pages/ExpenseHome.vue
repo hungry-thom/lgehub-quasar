@@ -26,11 +26,11 @@
       </q-field>
     </div>
     <div class="row no-wrap">
-      <q-datetime class= "col" minimal color="orange" stack-label="Date" v-model="startDate" type="date" :first-day-of-week="0" v-if="dateOption !== 'noDate'" />&nbsp;&nbsp;
-      <q-datetime class= "col" minimal color="orange" stack-label="endDate" v-model="endDate" type="date" :first-day-of-week="0" v-if="dateOption.includes('range')" />&nbsp;&nbsp;
-      <q-input class= "col" split minimal color="orange" v-model="searchVendor" stack-label="Vendor" v-if="searchOption.includes('vendor')"> <q-autocomplete :static-data="{field: 'value', list: vendorsList}" /></q-input>&nbsp;&nbsp;
-      <q-input class= "col" minimal color="orange" stack-label="Item" v-model="searchItem" v-if="searchOption.includes('item')" />&nbsp;&nbsp;
-      <!-- <q-datetime class= "col" minimal color="orange" v-model="endDate" type="date" float-label="EndDate" :first-day-of-week="0" />&nbsp;&nbsp; -->
+      <q-datetime class="col" minimal color="orange" stack-label="Date" v-model="startDate" type="date" :first-day-of-week="0" v-if="dateOption !== 'noDate'" />&nbsp;&nbsp;
+      <q-datetime class="col" minimal color="orange" stack-label="endDate" v-model="endDate" type="date" :first-day-of-week="0" v-if="dateOption.includes('range')" />&nbsp;&nbsp;
+      <q-input class="col" split minimal color="orange" v-model="searchVendor" stack-label="Vendor" v-if="searchOption.includes('vendor')"> <q-autocomplete :static-data="{field: 'value', list: vendorsList}" /></q-input>&nbsp;&nbsp;
+      <q-input class="col" minimal color="orange" stack-label="Item" v-model="searchItem" v-if="searchOption.includes('item')" />&nbsp;&nbsp;
+      <!-- <q-datetime class="col" minimal color="orange" v-model="endDate" type="date" float-label="EndDate" :first-day-of-week="0" />&nbsp;&nbsp; -->
       <q-btn label="search" color="secondary" @click="loadExpenses(startDate, startDate)" />
     </div>
     <br>
@@ -108,10 +108,10 @@
       </div>
     <div class="q-pa-sm">
     <div class="row no-wrap">
-      <q-datetime class= "col" minimal color="orange" v-model="transaction.date1" type="date" float-label="Date" @input="selectDate" :first-day-of-week="0" />&nbsp;&nbsp;
-      <q-input class= "col" ref="inputVendor" v-model="transaction.vendor" float-label="Vendor"  @blur="validateVendor"> <q-autocomplete :static-data="{field: 'value', list: vendorsList}" /></q-input>&nbsp;&nbsp;
-      <q-input class= "col" ref="inputtransNum" v-model="transaction.transNum" float-label="Transaction Number"/>&nbsp;&nbsp;
-      <q-input class= "col" v-model="transaction.paymentAccount" float-label="Payment Account" > <q-autocomplete :static-data="{field: 'value', list: paymentTypes}" /></q-input>
+      <q-datetime class="col" minimal color="orange" v-model="transaction.date1" type="date" float-label="Date" @input="selectDate" :first-day-of-week="0" />&nbsp;&nbsp;
+      <q-input class="col" :autofocus="true" ref="inputVendor" v-model="transaction.vendor" float-label="Vendor"  @blur="validateVendor"> <q-autocomplete :static-data="{field: 'value', list: vendorsList}" /></q-input>&nbsp;&nbsp;
+      <q-input class="col" ref="inputtransNum" v-model="transaction.transNum" float-label="Transaction Number"/>&nbsp;&nbsp;
+      <q-input class="col" v-model="transaction.paymentAccount" float-label="Payment Account" > <q-autocomplete :static-data="{field: 'value', list: paymentTypes}" /></q-input>
     </div>
     <div>
       <br>
@@ -734,6 +734,9 @@ export default {
         transItems: [],
         add2Pricelist: carryOver
       }
+      // this.$refs.inputVendor.focus()
+      document.getElementsByClassName('col')[26].focus()
+      // this.$nextTick(this.$refs.inputVendor.focus())
       this.overlay()
     },
     overlay () {
@@ -882,7 +885,8 @@ export default {
         let tmpId = this.$data.transaction.id
         // dateinput records date as UTC, if entered after 18:00 the date is recorded for the next day (+6hrs)
         // if the hour is <6, date needs to go back one day
-        let dInfo = this.$data.transaction.date1
+        let dInfo = new Date(this.$data.transaction.date1)
+        console.log('dInfo', typeof dInfo, dInfo)
         dInfo = dInfo.toISOString()
         console.log(dInfo)
         let hour = dInfo.substr(11,2)
