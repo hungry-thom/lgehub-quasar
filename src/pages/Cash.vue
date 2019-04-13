@@ -3,12 +3,33 @@
   <q-page>
       <div>
         <br>
-        <template>
+          <!--
           <q-tree
             :nodes="bankData"
             node-key="label"
           />
-        </template>
+          -->
+          <q-list separator>
+            <q-collapsible indent icon="mail" label="creditPending  :    xxxx.xx"></q-collapsible>
+            <q-item>
+              <q-item-side icon="mail" />
+              <q-item-main :label="onRecordLabel" label-lines="1" />
+            </q-item>
+            <q-collapsible indent icon="receipt" :label="outstandingChecksLabel">
+              <div>
+                <q-table
+                  :data="outstandingChecks"
+                  :columns="outstandingChecksColumns"
+                  :visible-columns="visibleColumns"
+                  row-key="id"
+                  :pagination.sync="pagination"
+                  hide-bottom
+                  class="col" >
+                </q-table>
+              </div>
+              <!-- <q-collapsible label="Today"></q-collapsible> -->
+            </q-collapsible>
+          </q-list>
         <br>
       </div>
   </q-page>
@@ -28,7 +49,8 @@ import {
   QPopupEdit,
   QCheckbox,
   QTableColumns,
-  QTree
+  QTree,
+  QCollapsible
 } from 'quasar'
 
 export default {
@@ -42,11 +64,14 @@ export default {
     QPopupEdit,
     QCheckbox,
     QTableColumns,
-    QTree
+    QTree,
+    QCollapsible
   },
   props: ['user'],
   data () {
     return {
+      atlanticData: [],
+      outstandingChecks: [],
       bankData: [],
       message: '',
       messages: [],
@@ -59,19 +84,95 @@ export default {
         rowsPerPage: 0 // current rows per page being displayed,
       },
       month: [],
-      columns: [
+      outstandingChecksColumns: [
+        {
+          name: 'amount',
+          required: false,
+          label: 'amount',
+          align: 'left',
+          field: 'amount'
+        },
+        {
+          name: 'vendor',
+          required: false,
+          label: 'vendor',
+          align: 'left',
+          field: 'vendor'
+        },
+        {
+          name: 'checkNum',
+          required: false,
+          label: 'checkNum',
+          align: 'left',
+          field: 'checkNum'
+        },
+        {
+          name: 'cashed',
+          required: false,
+          label: 'cashed',
+          align: 'left',
+          field: 'cashed'
+        },
+        {
+          name: 'checkDate',
+          required: false,
+          label: 'checkDate',
+          align: 'left',
+          field: 'checkDate'
+        },
+        {
+          name: 'expenseId',
+          required: false,
+          label: 'expenseId',
+          align: 'left',
+          field: 'expenseID'
+        },
         {
           name: 'id',
           required: false,
-          label: 'Id',
+          label: 'id',
           align: 'left',
           field: 'id'
+        },
+        {
+          name: 'transNum',
+          required: false,
+          label: 'transNum',
+          align: 'left',
+          field: 'transNum'
         }
       ],
-      visibleColumns: []
+      visibleColumns: ['amount', 'vendor', 'checkNum','checkDate'],
+      pagination: {
+        sortBy: name, // String, column 'item' property value
+        descending: true,
+        page: 1,
+        rowsPerPage: 0 // current rows per page being displayed,
+      }
     }
   },
   computed: {
+    onRecordLabel () {
+      try {
+        let lastRec = this.$data.atlanticData.records.length - 1
+        let balance = this.$data.atlanticData.records[lastRec].Balance
+        let format = (balance).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')
+        let lbl = `onRecord: ${format}`
+        return lbl
+      }
+      catch (err) {
+        console.warn("error!", err)
+      }
+    },
+    outstandingChecksLabel () {
+      let checkTotal = 0
+      this.$data.outstandingChecks.forEach((check) => {
+        checkTotal += check.amount
+      })
+      let format = (checkTotal).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')
+      let lbl =  `outstandingChecks: ${format}`
+      return lbl
+    }
   },
   methods: {
     isSent (message) {
@@ -108,105 +209,14 @@ export default {
       console.log(week)
       this.$data.month.push(week)
     },
-    loadData () {
-      let tree = []
-      /* tree should look like this
-        { label: 'creditPending: xxxx.xx' },
-        { label: 'onRecord: xxxxx.xx' },
-        { 
-          label: 'OutstandingChecks: xxxxx.xx',
-          children: [
-            { label: 'total: xxxxx.xx; date: xx-xxx-xx; vendor: xxxxxxx; transNum: xxxxxxxx' },
-            { label: 'total: xxxxx.xx; date: xx-xxx-xx; vendor: xxxxxxx; transNum: xxxxxxxx' },
-            ...
-          ]
-        },
-        { label: subTotal: xxxxx.xx }
-        {
-          label: payables: xxxxx.xx
-          children: [
-            {
-              label: 'total: xxxxx.xx; vendor: xxxxxxx'
-              children: [
-                { label: 'total: xxxxx.xx; date: xx-xxx-xx; transNum: xxxxxxxx' },
-                { label: 'total: xxxxx.xx; date: xx-xxx-xx; transNum: xxxxxxxx' }
-              ]
-            },
-            {
-              label: 'total: xxxxx.xx; vendor: xxxxxxx'
-              children: [
-                { label: 'total: xxxxx.xx; date: xx-xxx-xx; transNum: xxxxxxxx' },
-                { label: 'total: xxxxx.xx; date: xx-xxx-xx; transNum: xxxxxxxx' }
-              ]
-            }
-            ...
-          ]
-        }
-      ]
-      */
-      // get creditPending
-      tree.push({ label: 'creditPending: xxxx.xx' })
-      // get bank info (onRecord amount & date)
-      tree.push({ label: 'onRecord: 20,000.00' })
-      // get outstandingChecks
-      api.service('checks').find({
-        query: {
-          cashed: ''
-        }
-      }).then((resp1) => {
-        if (resp1.data.length > 0) {
-          let tmpCkList = []
-          let ckTotal = 0
-          resp1.data.forEach((check) => {
-            ckTotal += check.amount
-            tmpCkList.push({
-              label: `amount: ${check.amount};  vendor: ${check.vendor};  check#: ${check.checkNum};  date: ${check.checkDate.toLocaleString('en-GB').slice(0,10)}`
-            })
-          })
-          tree.push({
-            label: `outstandingChecks: ${ckTotal}`,
-            children: tmpCkList
-          })
-          tree.push({ label: `subTotal: ${200000-ckTotal}`})
-        }
-        api.service('payable').find({
-          query: {
-            paid: ''
-          }
-        }).then((resp2) => {
-          if (resp2.data.length > 0) {
-            let gTotal = 0
-            let vendors = []
-            resp2.data.forEach((invoice) => {
-              gTotal += invoice.amount
-              let dex = _.findIndex(vendors, {vendor: invoice.vendor})
-              if (dex < 0) {
-                vendors.push({
-                  vendor: invoice.vendor,
-                  total: invoice.amount,
-                  list: [{ label: `amount: ${invoice.amount}; date: ${invoice.expDate.toLocaleString('en-GB').slice(0,10)}`}]
-                })
-              } else {
-                vendors[dex].total += invoice.amount
-                vendors[dex].list.push({ label: `amount: ${invoice.amount}; date: ${invoice.expDate.toLocaleString('en-GB').slice(0,10)}`})
-              }
-            })
-            // tree.push({label: `payables: ${gTotal}`})
-            let tmpPayList = []
-            vendors.forEach((ven) => {
-              tmpPayList.push({
-                label: `total: ${ven.total};  vendor: ${ven.vendor}`,
-                children: ven.list
-              })
-            })
-            tree.push({
-              label: `payables: ${gTotal}`,
-              children: tmpPayList
-            })
-            this.$data.bankData = tree
-          }//
-        })
-      })
+    async loadData () {
+      /************ GET OUTSTANDING CHECK DATA ***************/
+      let checksResp = await api.service('checks').find({query: {cashed: '', $sort: { checkDate: 1 }}}).catch((err) => {console.log('Error!', err)})
+      console.log(checksResp.data)
+      this.$data.outstandingChecks = checksResp.data
+      /************* Get atlantic month data ***************/
+      let atlanticResp = await api.service('atlantic').find({query: {month: 'Apr19'}}).catch((err) => {console.log(err)})
+      this.$data.atlanticData = atlanticResp.data[0] // only one result
     } // end of loadData method
   },
   mounted () {
