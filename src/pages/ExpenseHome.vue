@@ -1018,7 +1018,8 @@ export default {
         vendor: trans.vendor,
         amount: trans.grandTotal,
         transNum: trans.transNum,
-        expenseId: trans.expenseId
+        expenseId: trans.expenseId,
+        paid: ''
       }
       api.service('payable').create(payableInfo).then((response) => {
         // response
@@ -1409,7 +1410,8 @@ export default {
   mounted () {
     const inventory = api.service('inventory')
     // load expenses
-    this.$data.startDate = new Date()
+    this.$data.startDate = new Date().toISOString()
+    console.log('MOUNTED', this.$data.startDate)
     this.$data.endDate = this.$data.startDate // new Date()
     this.loadExpenses(this.$data.startDate, this.$data.startDate)
     this.loadData()
