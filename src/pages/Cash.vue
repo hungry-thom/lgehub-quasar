@@ -29,6 +29,63 @@
               </div>
               <!-- <q-collapsible label="Today"></q-collapsible> -->
             </q-collapsible>
+            <q-collapsible indent icon="receipt" :label="payablesLabel">
+              <div>
+                <q-table
+                  :data="vendorList"
+                  :columns="columns"
+                  :filter="filter"
+                  :visible-columns="visibleColumns"
+                  row-key="vendor"
+                  :pagination.sync="pagination"
+                  hide-bottom >
+                  <template slot="top-left" slot-scope="props">
+                    <q-search
+                      hide-underline
+                      color="secondary"
+                      v-model="filter"
+                      class="col-6"
+                    />
+                  </template>
+                  <template slot="top-right" slot-scope="props">
+                    <q-table-columns
+                      color="secondary"
+                      class="q-mr-sm"
+                      v-model="visibleColumns"
+                      :columns="columns"
+                    />
+                  </template>
+                  <template slot="body" slot-scope="props">
+                    <q-tr :props="props">
+                      <q-td key="vendor" :props="props">
+                        <q-checkbox color="primary" v-model="props.expand" unchecked-icon="add" checked-icon="remove" class="q-mr-md" />
+                        {{ props.row.vendor }}
+                      </q-td>
+                      <q-td key="total" :props="props">
+                        {{ props.row.total || '' }}
+                      </q-td>
+                    </q-tr>
+                    <q-tr v-show="props.expand" :props="props">
+                      <q-td colspan="100%">
+                        <q-table
+                          :data="props.row.invoices"
+                          :columns="expandColumns"
+                          :visible-columns="visibleExpandColumns"
+                          row-key="props.row.invoice.expDate"
+                          hide-bottom >
+                        </q-table>
+                      </q-td>
+                    </q-tr>
+                  </template>
+                  <template slot="bottom-row" slot-scope="props" >
+                  <q-tr align="left">
+                    <q-td class="bg-deep-purple-1">Grand Total:</q-td>
+                    <q-td class="bg-deep-purple-1">{{ grandTotal || '-' }}</q-td>
+                  </q-tr>
+                  </template>
+                </q-table>
+              </div>
+            </q-collapsible>
           </q-list>
         <br>
       </div>
@@ -208,6 +265,40 @@ export default {
       }
       console.log(week)
       this.$data.month.push(week)
+    },
+    async loadPayables () {
+      // would like to query for hasFields('paid').not() or similar, but nothing works
+      // have to query for blank field (after creating with blank field)
+      api.service('payable').find({
+        query: {
+          paid: ''
+        }
+      })
+        .then((response) => {
+          // we want to combine all payables for each vendor
+          console.log(response.data.length)
+          response.data.forEach(rec => {
+            let dex = _.findIndex(this.$data.vendorList, {vendor: rec.vendor})
+            if (dex < 0) {
+              // create a new vendor entry
+              console.log('check1')
+              this.$data.vendorList.push({
+                vendor: rec.vendor,
+                total: rec.amount,
+                invoices: [rec]
+              })
+            }
+            else {
+              // add data to vendor info
+              console.log('check2')
+              let v = this.$data.vendorList[dex]
+              v.invoices.push(rec)
+              v.total += rec.amount
+            }
+          })
+          this.$data.payables = response.data.reverse()
+        })
+      }
     },
     async loadData () {
       /************ GET OUTSTANDING CHECK DATA ***************/
