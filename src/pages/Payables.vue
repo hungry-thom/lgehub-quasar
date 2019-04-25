@@ -221,8 +221,8 @@ export default {
         // we want to combine all payables for each vendor
         console.log(response.data.length)
         response.data.forEach(rec => {
-          if (rec.vendor === 'RCimports') {
-            console.log(rec.paid)
+          if (rec.vendor === 'Midway') {
+            console.log("MIDWAY", rec)
           }
           let dex = _.findIndex(this.$data.vendorList, {vendor: rec.vendor})
           if (dex < 0) {
