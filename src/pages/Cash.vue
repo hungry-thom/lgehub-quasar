@@ -12,6 +12,8 @@
           <q-list separator>
             <q-collapsible indent icon="mail" label="creditPending  :    xxxx.xx"></q-collapsible>
             <q-item>
+            </q-item>
+            <q-item>
               <q-item-side icon="mail" />
               <q-item-main :label="onRecordLabel" label-lines="1" />
             </q-item>
@@ -29,6 +31,12 @@
               </div>
               <!-- <q-collapsible label="Today"></q-collapsible> -->
             </q-collapsible>
+            <q-item>
+              <q-item-side icon="mail" />
+              <q-item-main :label="subTotal" label-lines="1" />
+            </q-item>
+            <q-item>
+            </q-item>
             <q-collapsible indent icon="receipt" :label="payablesLabel">
               <div>
                 <q-table
@@ -39,14 +47,6 @@
                   row-key="vendor"
                   :pagination.sync="pagination"
                   hide-bottom >
-                  <template slot="top-left" slot-scope="props">
-                    <q-search
-                      hide-underline
-                      color="secondary"
-                      v-model="filter"
-                      class="col-6"
-                    />
-                  </template>
                   <template slot="body" slot-scope="props">
                     <q-tr :props="props">
                       <q-td key="vendor" :props="props">
@@ -114,6 +114,8 @@ export default {
   props: ['user'],
   data () {
     return {
+      balance: 0,
+      checkTotal: 0,
       vendorList: [],
       atlanticData: [],
       outstandingChecks: [],
@@ -270,8 +272,20 @@ export default {
       try {
         let lastRec = this.$data.atlanticData.records.length - 1
         let balance = this.$data.atlanticData.records[lastRec].Balance
+        this.$data.balance = balance
         let format = (balance).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')
         let lbl = `onRecord: ${format}`
+        return lbl
+      }
+      catch (err) {
+        console.warn("error!", err)
+      }
+    },
+    subTotal () {
+      try {
+        let sub = this.$data.balance - this.$data.checkTotal
+        let format = (sub).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')
+        let lbl = `Subtotal: ${format}`
         return lbl
       }
       catch (err) {
@@ -283,6 +297,7 @@ export default {
       this.$data.outstandingChecks.forEach((check) => {
         checkTotal += check.amount
       })
+      this.$data.checkTotal = checkTotal
       let format = (checkTotal).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')
       let lbl =  `outstandingChecks: ${format}`
       return lbl
@@ -365,6 +380,7 @@ export default {
         })
         this.$data.payables = response.data.reverse()
       })
+      console.log('grand list', this.$data.vendorList)
     },
     async loadData () {
       /************ GET OUTSTANDING CHECK DATA ***************/
