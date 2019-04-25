@@ -44,6 +44,7 @@
                   :columns="expandColumns"
                   :visible-columns="visibleExpandColumns"
                   row-key="props.row.invoice.expDate"
+                  :pagination.sync="pagination"
                   hide-bottom >
                 </q-table>
               </q-td>
@@ -181,7 +182,7 @@ export default {
       payables.forEach(vendor => {
         gTotal += vendor.total
       })
-      return gTotal
+      return _.round(gTotal, 2)
     }
   },
   methods: {
@@ -221,9 +222,6 @@ export default {
         // we want to combine all payables for each vendor
         console.log(response.data.length)
         response.data.forEach(rec => {
-          if (rec.vendor === 'Midway') {
-            console.log("MIDWAY", rec)
-          }
           let dex = _.findIndex(this.$data.vendorList, {vendor: rec.vendor})
           if (dex < 0) {
             // create a new vendor entry
@@ -240,6 +238,10 @@ export default {
             let v = this.$data.vendorList[dex]
             v.invoices.push(rec)
             v.total += rec.amount
+            v.total = _.round(v.total, 2)
+            if (rec.vendor === 'Midway') {
+              console.log("MIDWAY", this.$data.vendorList[dex])
+            }
           }
         })
         this.$data.payables = response.data.reverse()
