@@ -33,9 +33,9 @@
               <div>
                 <q-table
                   :data="vendorList"
-                  :columns="columns"
+                  :columns="payableCols"
                   :filter="filter"
-                  :visible-columns="visibleColumns"
+                  :visible-columns="visiblePayableCols"
                   row-key="vendor"
                   :pagination.sync="pagination"
                   hide-bottom >
@@ -45,14 +45,6 @@
                       color="secondary"
                       v-model="filter"
                       class="col-6"
-                    />
-                  </template>
-                  <template slot="top-right" slot-scope="props">
-                    <q-table-columns
-                      color="secondary"
-                      class="q-mr-sm"
-                      v-model="visibleColumns"
-                      :columns="columns"
                     />
                   </template>
                   <template slot="body" slot-scope="props">
@@ -72,16 +64,11 @@
                           :columns="expandColumns"
                           :visible-columns="visibleExpandColumns"
                           row-key="props.row.invoice.expDate"
+                          :pagination.sync="pagination"
                           hide-bottom >
                         </q-table>
                       </q-td>
                     </q-tr>
-                  </template>
-                  <template slot="bottom-row" slot-scope="props" >
-                  <q-tr align="left">
-                    <q-td class="bg-deep-purple-1">Grand Total:</q-td>
-                    <q-td class="bg-deep-purple-1">{{ grandTotal || '-' }}</q-td>
-                  </q-tr>
                   </template>
                 </q-table>
               </div>
@@ -127,6 +114,7 @@ export default {
   props: ['user'],
   data () {
     return {
+      vendorList: [],
       atlanticData: [],
       outstandingChecks: [],
       bankData: [],
@@ -200,6 +188,75 @@ export default {
         }
       ],
       visibleColumns: ['amount', 'vendor', 'checkNum','checkDate'],
+      payableCols: [
+        {
+          name: 'id',
+          required: false,
+          label: 'Id',
+          align: 'left',
+          field: 'id'
+        },
+        {
+          name: 'vendor',
+          required: false,
+          label: 'vendor',
+          align: 'left',
+          field: 'vendor'
+        },
+        {
+          name: 'total',
+          required: false,
+          label: 'total',
+          align: 'left',
+          field: 'total'
+        }
+      ],
+      visiblePayableCols: ['vendor', 'total'],
+      expandColumns: [
+        {
+          name: 'id',
+          required: false,
+          label: 'Id',
+          align: 'left',
+          field: 'id'
+        },
+        {
+          name: 'vendor',
+          required: false,
+          label: 'vendor',
+          align: 'left',
+          field: 'vendor'
+        },
+        {
+          name: 'amount',
+          required: false,
+          label: 'amount',
+          align: 'left',
+          field: 'amount'
+        },
+        {
+          name: 'expDate',
+          required: false,
+          label: 'expDate',
+          align: 'left',
+          field: 'expDate'
+        },
+        {
+          name: 'transNum',
+          required: false,
+          label: 'transNum',
+          align: 'left',
+          field: 'transNum'
+        },
+        {
+          name: 'expenseId',
+          required: false,
+          label: 'expenseId',
+          align: 'left',
+          field: 'expenseId'
+        }
+      ],
+      visibleExpandColumns: ['vendor', 'amount', 'expDate', 'transNum', 'expenseId'],
       pagination: {
         sortBy: name, // String, column 'item' property value
         descending: true,
@@ -228,6 +285,17 @@ export default {
       })
       let format = (checkTotal).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')
       let lbl =  `outstandingChecks: ${format}`
+      return lbl
+    },
+    payablesLabel () {
+      let payablesTotal = 0
+      let payables = this.$data.vendorList
+      let gTotal = 0
+      payables.forEach(vendor => {
+        gTotal += vendor.total
+      })
+      let format = (gTotal).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')
+      let lbl =  `payables: ${format}`
       return lbl
     }
   },
@@ -273,32 +341,30 @@ export default {
         query: {
           paid: ''
         }
-      })
-        .then((response) => {
-          // we want to combine all payables for each vendor
-          console.log(response.data.length)
-          response.data.forEach(rec => {
-            let dex = _.findIndex(this.$data.vendorList, {vendor: rec.vendor})
-            if (dex < 0) {
-              // create a new vendor entry
-              console.log('check1')
-              this.$data.vendorList.push({
-                vendor: rec.vendor,
-                total: rec.amount,
-                invoices: [rec]
-              })
-            }
-            else {
-              // add data to vendor info
-              console.log('check2')
-              let v = this.$data.vendorList[dex]
-              v.invoices.push(rec)
-              v.total += rec.amount
-            }
-          })
-          this.$data.payables = response.data.reverse()
+      }).then((response) => {
+        // we want to combine all payables for each vendor
+        console.log(response.data.length)
+        response.data.forEach(rec => {
+          let dex = _.findIndex(this.$data.vendorList, {vendor: rec.vendor})
+          if (dex < 0) {
+            // create a new vendor entry
+            console.log('check1')
+            this.$data.vendorList.push({
+              vendor: rec.vendor,
+              total: rec.amount,
+              invoices: [rec]
+            })
+          }
+          else {
+            // add data to vendor info
+            console.log('check2')
+            let v = this.$data.vendorList[dex]
+            v.invoices.push(rec)
+            v.total += rec.amount
+          }
         })
-      }
+        this.$data.payables = response.data.reverse()
+      })
     },
     async loadData () {
       /************ GET OUTSTANDING CHECK DATA ***************/
@@ -308,6 +374,8 @@ export default {
       /************* Get atlantic month data ***************/
       let atlanticResp = await api.service('atlantic').find({query: {month: 'Apr19'}}).catch((err) => {console.log(err)})
       this.$data.atlanticData = atlanticResp.data[0] // only one result
+      /************** Load poayables data */
+      this.loadPayables()
     } // end of loadData method
   },
   mounted () {
