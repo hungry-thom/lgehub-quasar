@@ -37,7 +37,7 @@
             </q-item>
             <q-item>
             </q-item>
-            <q-collapsible indent icon="receipt" :label="payablesLabel">
+            <q-collapsible icon="receipt" :label="payablesLabel" opened>
               <div>
                 <q-table
                   :data="vendorList"
@@ -54,7 +54,7 @@
                         {{ props.row.vendor }}
                       </q-td>
                       <q-td key="total" :props="props">
-                        {{ props.row.total || '' }}
+                        {{ props.row.total.toLocaleString('en-US', {minimumFractionDigits: 2}) || '' }}
                       </q-td>
                     </q-tr>
                     <q-tr v-show="props.expand" :props="props">
@@ -234,14 +234,16 @@ export default {
           required: false,
           label: 'amount',
           align: 'left',
-          field: 'amount'
+          field: 'amount',
+          format: val => `${val.toLocaleString('en-US', {minimumFractionDigits: 2})}`
         },
         {
           name: 'expDate',
           required: false,
           label: 'expDate',
           align: 'left',
-          field: 'expDate'
+          field: 'expDate',
+          sortable: true
         },
         {
           name: 'transNum',
@@ -258,7 +260,7 @@ export default {
           field: 'expenseId'
         }
       ],
-      visibleExpandColumns: ['vendor', 'amount', 'expDate', 'transNum', 'expenseId'],
+      visibleExpandColumns: ['amount', 'expDate', 'transNum', 'expenseId'],
       pagination: {
         sortBy: name, // String, column 'item' property value
         descending: true,
@@ -354,7 +356,8 @@ export default {
       // have to query for blank field (after creating with blank field)
       api.service('payable').find({
         query: {
-          paid: ''
+          paid: '',
+          $sort: {expDate: 1}
         }
       }).then((response) => {
         // we want to combine all payables for each vendor
@@ -376,9 +379,10 @@ export default {
             let v = this.$data.vendorList[dex]
             v.invoices.push(rec)
             v.total += rec.amount
+            v.total = _.round(v.total, 2)
           }
         })
-        this.$data.payables = response.data.reverse()
+        this.$data.payables = response.data
       })
       console.log('grand list', this.$data.vendorList)
     },

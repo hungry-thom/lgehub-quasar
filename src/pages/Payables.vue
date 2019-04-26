@@ -154,7 +154,8 @@ export default {
           required: false,
           label: 'expDate',
           align: 'left',
-          field: 'expDate'
+          field: 'expDate',
+          sortable: true
         },
         {
           name: 'transNum',
