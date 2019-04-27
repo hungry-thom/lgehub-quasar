@@ -1,22 +1,33 @@
 
 <template>
   <q-page>
-      <!-- <div> -->
       <div class="row no-wrap">
-        <br>
-          <q-select 
-            class="col"
-            v-model="year"
-            :options="selectOptions"
-            :display-value="yearDisp"
-          />
-          <div class="col-1" >
-          <!-- <div class="row no-wrap"> -->
-            <q-select v-model="yearPeriod" :options="selectOptions" />
-            <br>
-            <q-btn minimal icon="expand_more" />
-          </div>
-        <br>
+        <q-btn color="primary" :label="year" >
+          <q-popover>
+            <q-list link>
+              <q-item v-for="n in years" :key="n" v-close-overlay @click.native="selectYear(n)">
+                <q-item-main>
+                  <q-item-tile label>{{ n }}</q-item-tile>
+                </q-item-main>
+              </q-item>
+            </q-list>
+          </q-popover>
+        </q-btn>
+        <div>
+          <q-btn size="sm" icon="remove" >
+            <q-popover>
+              <q-list link>
+                <q-item v-for="n in years" :key="n" v-close-overlay @click.native="selectYearSpan(n)">
+                  <q-item-main>
+                    <q-item-tile label>{{ n }}</q-item-tile>
+                  </q-item-main>
+                </q-item>
+              </q-list>
+            </q-popover>
+          </q-btn>
+          <br>
+          <q-btn size="sm" icon="expand_more" />
+        </div>
       </div>
   </q-page>
 </template>
@@ -34,7 +45,9 @@ import {
   QPopupEdit,
   QCheckbox,
   QTableColumns,
-  QSelect
+  QSelect,
+  QBtnDropdown,
+  QPopover
 } from 'quasar'
 
 export default {
@@ -48,26 +61,15 @@ export default {
     QPopupEdit,
     QCheckbox,
     QTableColumns,
-    QSelect
+    QSelect,
+    QBtnDropdown,
+    QPopover
   },
   props: ['user'],
   data () {
     return {
       year: '2016',
-      yearPeriod: '-',
-      selectOptions: [
-        {
-          label: '2017',
-          value: '2017'
-        },
-        {
-          label: '2018',
-          value: '2018'
-        }
-      ],
-      message: '',
-      messages: [],
-      users: [],
+      years: ['2017', '2018', '2019'],
       filter: '',
       pagination: {
         sortBy: name, // String, column 'item' property value
@@ -75,40 +77,42 @@ export default {
         page: 1,
         rowsPerPage: 0 // current rows per page being displayed,
       },
-      month: [],
-      columns: [
-        {
-          name: 'id',
-          required: false,
-          label: 'Id',
-          align: 'left',
-          field: 'id'
-        }
-      ],
-      visibleColumns: []
+      month: []
     }
   },
   computed: {
-    yearDisp () {
-      return this.$data.year
-    }
   },
   methods: {
-    isSent (message) {
-      return (message.userId === this.user._id)
-    },
-    messageDate (message) {
-      return moment(message.createdAt).format('MMM Do, hh:mm:ss')
-    },
-    send () {
-      if (this.$data.message) {
-        api.service('messages').create({ text: this.$data.message }).then(() => {
-          this.$data.message = ''
-        })
+    selectYear (n) {
+      // check if year has span
+      let yr = this.$data.year
+      this.$data.year = n
+      const spanDex = yr.indexOf('-')
+      if (spanDex > -1) {
+        // parse span year
+        let span = yr.substr(spanDex + 1)
+        const isYearLessThanSpan = Number(n.substr(-2)) < Number(span)
+        if (isYearLessThanSpan) {
+          this.$data.year += `-${span}`
+        }
       }
+      
     },
-    addStockUnit (itemId) {
-      console.log(itemId)
+    selectYearSpan (n) {
+      const span = n.substr(-2)
+      let yr = this.$data.year
+      // parse starting year
+      const dex = yr.indexOf('-')
+      if (dex > -1) {
+        yr = yr.substr(0, dex)
+      }
+      this.$data.year = yr
+      // make sure span is greater than starting year
+      const isYearLessThanSpan = Number(yr.substr(-2)) < Number(span)
+      if (isYearLessThanSpan) {
+        this.$data.year += `-${span}`
+      }
+      // this.$data.year = `${yr}-${n.substr(2)}` 
     },
     generateWeek () {
       let ima = moment()
@@ -130,35 +134,7 @@ export default {
     }
   },
   mounted () {
-    const messages = api.service('messages')
-    const users = api.service('users')
-    const priceList = api.service('pricelist')
-    // Get all users and messages
-    messages.find({
-      query: {
-        $sort: { createdAt: -1 },
-        $limit: 25
-      }
-    })
-      .then((response) => {
-        // We want the latest messages but in the reversed order
-        this.$data.messages = response.data.reverse()
-      })
-    users.find()
-      .then((response) => {
-        this.$data.users = response.data
-      })
-   this.generateWeek()
-    // Add new messages to the message list
-    messages.on('created', message => {
-      console.log('message received')
-      this.$data.messages.unshift(message)
-    })
-    // Add new users to the user list
-    users.on('created', user => {
-      console.log('user received')
-      this.$data.users = this.$data.users.concat(user)
-    })
+    this.generateWeek()
   },
   beforeDestroy () {
   }
