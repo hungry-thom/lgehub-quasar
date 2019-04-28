@@ -1,93 +1,196 @@
 
 <template>
   <q-page>
+    <div class="row no-wrap" >
       <div>
-        <br>
-        <q-table
-          :data="month"
-          :columns="columns"
-          :filter="filter"
-          :visible-columns="visibleColumns"
-          row-key="date1"
-          :pagination.sync="pagination"
-          hide-bottom >
-          <template slot="top-left" slot-scope="props">
-            <q-datetime class= "col" minimal color="orange" v-model="selectWeek" float-label="Week" :first-day-of-week="0" />&nbsp;&nbsp;
-            <q-search
-              hide-underline
-              color="secondary"
-              v-model="filter"
-              class="col-6"
-            />
-          </template>
-          <template slot="top-right" slot-scope="props">
-            <q-table-columns
-              color="secondary"
-              class="q-mr-sm"
-              v-model="visibleColumns"
-              :columns="columns"
-            />
-          </template>
-            <q-tr slot="body" slot-scope="props" :props="props">
-              <q-td key="Sun" :props="props" >
-                <q-btn size="md" :class="props.row.Sun.color" :label="props.row.Sun.date1" @click="toggleColor(props.row.Sun)"/>
-              </q-td>
-              <q-td key="Mon" :props="props">
-                <q-btn size="md" :class="props.row.Mon.color" :label="props.row.Mon.date1" @click="toggleColor(props.row.Mon)"/>
-              </q-td>
-              <q-td key="Tue" :props="props" >
-                <q-btn size="md" :class="props.row.Tue.color" :label="props.row.Tue.date1" @click="toggleColor(props.row.Tue)"/>
-              </q-td>
-              <q-td key="Wed" :props="props" >
-                <q-btn size="md" :class="props.row.Wed.color" :label="props.row.Wed.date1" @click="toggleColor(props.row.Wed)"/>
-              </q-td>
-              <q-td key="Thu" :props="props" >
-                <q-btn size="md" :class="props.row.Thu.color" :label="props.row.Thu.date1" @click="toggleColor(props.row.Thu)"/>
-              </q-td>
-              <q-td key="Fri" :props="props" >
-                <q-btn size="md" :class="props.row.Fri.color" :label="props.row.Fri.date1" @click="toggleColor(props.row.Fri)"/>
-              </q-td>
-              <q-td key="Sat" :props="props" >
-                <q-btn size="md" :class="props.row.Sat.color" :label="props.row.Sat.date1" @click="toggleColor(props.row.Sat)"/>
-              </q-td>
-            </q-tr>
-        </q-table>
-        <br>        
+        <div>
+          <q-btn color="primary" :label="yearBase" > <!-- base year select -->
+            <q-popover>
+              <q-list link>
+                <q-item v-for="yr in years" :key="yr" v-close-overlay @click.native="selectYearBase(yr)">
+                  <q-item-main>
+                    <q-item-tile label>{{ yr }}</q-item-tile>
+                  </q-item-main>
+                </q-item>
+              </q-list>
+            </q-popover>
+          </q-btn>
+          <q-btn size="sm" icon="arrow_forward" @click="expandMonthRow" >
+          </q-btn>
+        </div>
+        <div>
+          <q-btn size="sm" :icon="spanIcon" @click="expandSpan" />
+          <br>
+          <q-btn v-if="showSpan" :label="yearSpan" > <!-- span year select -->
+            <q-popover>
+              <q-list link>
+                <q-item v-for="yr in years" :key="yr" v-close-overlay @click.native="selectYearSpan(yr)">
+                  <q-item-main>
+                    <q-item-tile label>{{ yr }}</q-item-tile>
+                  </q-item-main>
+                </q-item>
+              </q-list>
+            </q-popover>
+          </q-btn>
+          <br>
+        </div>
       </div>
+    <!-- MONTH ROW -->
+    <div v-if="showMonth" >
       <div>
-      <br>
-        <!-- ////////// start of journal datatable //////////// -->  
-        <q-table
-          :data="journal"
-          :columns="journalColumns"
-          :filter="filter"
-          :visible-columns="visibleJournalColumns"
-          row-key="date1"
-          :pagination.sync="pagination" >
-           <template slot="top-left" slot-scope="props">
-            <q-search
-              hide-underline
-              color="secondary"
-              v-model="filter"
-              class="col-6"
-            />
-          </template>
-          <template slot="top-right" slot-scope="props">
-            <q-table-columns
-              color="secondary"
-              class="q-mr-sm"
-              v-model="visibleJournalColumns"
-              :columns="journalColumns"
-            />
-          </template>
+      <q-btn color="primary" :label="monthBase" > <!-- select base month ----->
+          <q-popover>
+            <q-list link>
+              <q-item v-for="month in months" :key="month" v-close-overlay @click.native="selectMonthBase(month)">
+                <q-item-main>
+                  <q-item-tile label>{{ month }}</q-item-tile>
+                </q-item-main>
+              </q-item>
+            </q-list>
+          </q-popover>
+        </q-btn>
+        
+    </div>
+    <div>
+          <q-btn size="sm" icon="remove" >
+            <q-popover>
+              <q-list link>
+                <q-item v-for="month in months" :key="month" v-close-overlay @click.native="selectMonthSpan(month)">
+                  <q-item-main>
+                    <q-item-tile label>{{ month }}</q-item-tile>
+                  </q-item-main>
+                </q-item>
+              </q-list>
+            </q-popover>
+          </q-btn>
+          <br>
+          <q-btn size="sm" icon="expand_more" >
+            <q-popover>
+              <q-list link>
+                <q-item v-for="month in months" :key="month" v-close-overlay @click.native="selectMonthBase(month)">
+                  <q-item-main>
+                    <q-item-tile label>{{ month }}</q-item-tile>
+                  </q-item-main>
+                </q-item>
+              </q-list>
+            </q-popover>
+          </q-btn>
+      </div>
+    </div>
+    </div><!---****************** END OF DATE NAVIGATION *****************----------->
+    <div class="row no-wrap">
+      <q-table
+        :data="month"
+        :columns="columns"
+        :filter="filter"
+        :visible-columns="visibleColumns"
+        row-key="date1"
+        :pagination.sync="pagination"
+        hide-bottom
+        dense >
+        <!--- block of column select ---
+        <template slot="top-right" slot-scope="props">
+          <q-table-columns
+            color="secondary"
+            class="q-mr-sm"
+            v-model="visibleColumns"
+            :columns="columns"
+          />
+        </template>
+        <----------------- end of column select -->
           <q-tr slot="body" slot-scope="props" :props="props">
-              <q-td key="cash:" :props="props" >
-                {{ props.row }}
-              </q-td>
+            <q-td key="Sun" :props="props" >
+              <q-btn size="md" :class="props.row.Sun.color" :label="props.row.Sun.date1" @click="toggleColor(props.row.Sun)"/>
+            </q-td>
+            <q-td key="Mon" :props="props">
+              <q-btn size="md" :class="props.row.Mon.color" :label="props.row.Mon.date1" @click="toggleColor(props.row.Mon)"/>
+            </q-td>
+            <q-td key="Tue" :props="props" >
+              <q-btn size="md" :class="props.row.Tue.color" :label="props.row.Tue.date1" @click="toggleColor(props.row.Tue)"/>
+            </q-td>
+            <q-td key="Wed" :props="props" >
+              <q-btn size="md" :class="props.row.Wed.color" :label="props.row.Wed.date1" @click="toggleColor(props.row.Wed)"/>
+            </q-td>
+            <q-td key="Thu" :props="props" >
+              <q-btn size="md" :class="props.row.Thu.color" :label="props.row.Thu.date1" @click="toggleColor(props.row.Thu)"/>
+            </q-td>
+            <q-td key="Fri" :props="props" >
+              <q-btn size="md" :class="props.row.Fri.color" :label="props.row.Fri.date1" @click="toggleColor(props.row.Fri)"/>
+            </q-td>
+            <q-td key="Sat" :props="props" >
+              <q-btn size="md" :class="props.row.Sat.color" :label="props.row.Sat.date1" @click="toggleColor(props.row.Sat)"/>
+            </q-td>
           </q-tr>
-        </q-table>
-      </div>
-      <br>
+      </q-table>
+      <q-table
+        :data="month"
+        :columns="columns"
+        :filter="filter"
+        :visible-columns="visibleColumns"
+        row-key="date1"
+        :pagination.sync="pagination"
+        hide-bottom
+        dense >
+          <q-tr slot="body" slot-scope="props" :props="props">
+            <q-td key="Sun" :props="props" >
+              <q-btn size="md" :class="props.row.Sun.color" :label="props.row.Sun.date1" @click="toggleColor(props.row.Sun)"/>
+            </q-td>
+            <q-td key="Mon" :props="props">
+              <q-btn size="md" :class="props.row.Mon.color" :label="props.row.Mon.date1" @click="toggleColor(props.row.Mon)"/>
+            </q-td>
+            <q-td key="Tue" :props="props" >
+              <q-btn size="md" :class="props.row.Tue.color" :label="props.row.Tue.date1" @click="toggleColor(props.row.Tue)"/>
+            </q-td>
+            <q-td key="Wed" :props="props" >
+              <q-btn size="md" :class="props.row.Wed.color" :label="props.row.Wed.date1" @click="toggleColor(props.row.Wed)"/>
+            </q-td>
+            <q-td key="Thu" :props="props" >
+              <q-btn size="md" :class="props.row.Thu.color" :label="props.row.Thu.date1" @click="toggleColor(props.row.Thu)"/>
+            </q-td>
+            <q-td key="Fri" :props="props" >
+              <q-btn size="md" :class="props.row.Fri.color" :label="props.row.Fri.date1" @click="toggleColor(props.row.Fri)"/>
+            </q-td>
+            <q-td key="Sat" :props="props" >
+              <q-btn size="md" :class="props.row.Sat.color" :label="props.row.Sat.date1" @click="toggleColor(props.row.Sat)"/>
+            </q-td>
+          </q-tr>
+      </q-table>
+      <br>        
+    </div>
+    <div>
+    <br>
+      <!-- ////////// start of journal datatable //////////// -->  
+      <q-table
+        :data="journal"
+        :columns="journalColumns"
+        :filter="filter"
+        :visible-columns="visibleJournalColumns"
+        row-key="date1"
+        :pagination.sync="pagination" >
+          <template slot="top-left" slot-scope="props">
+          <q-search
+            hide-underline
+            color="secondary"
+            v-model="filter"
+            class="col-6"
+          />
+        </template>
+        <template slot="top-right" slot-scope="props">
+          <q-table-columns
+            color="secondary"
+            class="q-mr-sm"
+            v-model="visibleJournalColumns"
+            :columns="journalColumns"
+          />
+        </template>
+        <q-tr slot="body" slot-scope="props" :props="props">
+            <q-td key="cash:" :props="props" >
+              {{ props.row }}
+            </q-td>
+        </q-tr>
+      </q-table>
+    </div>
+    <br>
   </q-page>
 </template>
 
@@ -110,7 +213,8 @@ import {
   QCardMedia,
   QCardSeparator,
   QCardActions,
-  QDatetime
+  QDatetime,
+  QPopover
 } from 'quasar'
 
 export default {
@@ -130,15 +234,21 @@ export default {
     QCardMedia,
     QCardSeparator,
     QCardActions,
-    QDatetime
+    QDatetime,
+    QPopover
   },
   props: ['user'],
   data () {
     return {
+      spanIcon: 'expand_more',
+      showMonth: false,
+      showSpan: false,
+      yearBase: 2016,
+      yearSpan: '--',
+      monthBase: '',
+      months: [],
+      years: [2017, 2018, 2019],
       selectWeek: '',
-      message: '',
-      messages: [],
-      users: [],
       filter: '',
       pagination: {
         sortBy: name, // String, column 'item' property value
@@ -206,18 +316,84 @@ export default {
   computed: {
   },
   methods: {
-    isSent (message) {
-      return (message.userId === this.user._id)
-    },
-    messageDate (message) {
-      return moment(message.createdAt).format('MMM Do, hh:mm:ss')
-    },
-    send () {
-      if (this.$data.message) {
-        api.service('messages').create({ text: this.$data.message }).then(() => {
-          this.$data.message = ''
-        })
+    expandSpan () {
+      this.$data.showSpan = !this.$data.showSpan
+      if(this.$data.showSpan) {
+        this.$data.spanIcon = 'remove'
+      } else {
+        this.$data.spanIcon = 'expand_more'
       }
+    },
+    selectMonthSpan (span) {
+      // parse month
+      let m = this.$data.monthBase
+      const spanDex = m.indexOf('-')
+      if (spanDex > -1) {
+        m = m.substr(0, spanDex)
+      }
+      this.$data.monthBase = m
+      // check that span month is not less than base month
+      const isMonthLessThanSpan = moment().month(m).get('month') < moment().month(span).get('month')
+      if (isMonthLessThanSpan) {
+        this.$data.monthBase += `-${span}`
+      }
+    },
+    selectMonthBase (month) {
+      // check to see if showMonthSpan true
+      this.$data.monthBase = month
+    },
+    expandMonthRow (month) {
+      this.$data.showMonth = !this.$data.showMonth
+      this.$data.monthBase = moment().format('MMM')
+    },
+    selectYearBase (base) {
+      // check if year has span
+      let yr = this.$data.yearBase
+      if (this.$data.showSpan) {
+        const isBaseLessThanSpan = base < this.$data.yearSpan
+        if (isBaseLessThanSpan) {
+          this.$data.yearBase = base
+        }
+      } else {
+        this.$data.yearBase = base
+      }
+      /*
+      const spanDex = yr.indexOf('-')
+      if (spanDex > -1) {
+        // parse span year
+        let span = yr.substr(spanDex + 1)
+        //const isYearLessThanSpan = Number(n.substr(-2)) < Number(span)
+        if (isYearLessThanSpan) {
+          this.$data.yearBase += `-${span}`
+        }
+      }
+      */
+    },
+    selectYearSpan (n) {
+      /*
+      const span = n.substr(-2)
+      let yr = this.$data.yearBase
+      // parse starting year
+      const dex = yr.indexOf('-')
+      if (dex > -1) {
+        yr = yr.substr(0, dex)
+      }
+      this.$data.yearBase = yr
+      */
+      // make sure span is greater than starting year
+      const isYearLessThanSpan = this.$data.yearBase < n
+      console.log(isYearLessThanSpan)
+      if (isYearLessThanSpan) {
+        this.$data.yearSpan = n
+      }
+      // this.$data.yearBase = `${yr}-${n.substr(2)}` 
+    },
+    loadMonths() {
+      let m = []
+      for(let n = 0; n < 12; n++) {
+        m.push(moment().month(n).format('MMM'))
+      }
+      this.$data.months = m
     },
     clickCard () {
       console.log('card')
@@ -293,36 +469,9 @@ export default {
     }
   },
   mounted () {
-    const messages = api.service('messages')
-    const users = api.service('users')
-    const priceList = api.service('pricelist')
-    // Get all users and messages
-    messages.find({
-      query: {
-        $sort: { createdAt: -1 },
-        $limit: 25
-      }
-    })
-      .then((response) => {
-        // We want the latest messages but in the reversed order
-        this.$data.messages = response.data.reverse()
-      })
-    users.find()
-      .then((response) => {
-        this.$data.users = response.data
-      })
-   this.generateWeek()
-   this.generateJournalCols()
-    // Add new messages to the message list
-    messages.on('created', message => {
-      console.log('message received')
-      this.$data.messages.unshift(message)
-    })
-    // Add new users to the user list
-    users.on('created', user => {
-      console.log('user received')
-      this.$data.users = this.$data.users.concat(user)
-    })
+    this.generateWeek()
+    this.generateJournalCols()
+    this.loadMonths()
   },
   beforeDestroy () {
   }
