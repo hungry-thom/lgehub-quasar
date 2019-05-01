@@ -77,9 +77,7 @@
           </q-btn>
       </div>
     </div>
-    </div><!---****************** END OF DATE NAVIGATION *****************----------->
-    <div class="row no-wrap">
-      <q-table
+    <q-table
         :data="month"
         :columns="columns"
         :filter="filter"
@@ -122,6 +120,8 @@
             </q-td>
           </q-tr>
       </q-table>
+    </div><!---****************** END OF DATE NAVIGATION *****************----------->
+    <div class="row no-wrap">
       <q-table
         :data="month"
         :columns="columns"
@@ -420,7 +420,7 @@ export default {
           c = 'bg-deep-purple-1'
         }
         // create object key=dayofweek, day: date, color
-        week[ima.day(n).format('ddd')] = {date1: ima.format('DD-MMM'), color: c} // ima.format('DD-MMM') // would ima.day(n).format() be better?
+        week[ima.day(n).format('ddd')] = {date1: ima.format('DD'), color: c} // ima.format('DD-MMM') // would ima.day(n).format() be better?
         this.$data.columns.push({
           name: ima.format('ddd'),
           required: false,

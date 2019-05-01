@@ -1,0 +1,30 @@
+exp-noGst-cash : {
+  _entry#: auto,
+  _entryDate: auto,
+
+},
+exp-noGst-cash-w/inventory
+exp-noGST-check
+exp-noGST-creditcard
+exp-noGst-payable
+
+exp-Gst-cash
+exp-GST-check
+exp-GST-creditcard
+exp-Gst-payable
+
+sale-noGst-cash
+sale-noGST-check
+sale-noGST-creditcard
+sale-noGst-receivable
+
+sale-Gst-cash
+sale-GST-check
+sale-GST-creditcard
+sale-Gst-receivable
+
+MS to HR
+Employee purchase
+payable - paid
+receivable - received
+
