@@ -280,7 +280,7 @@ export default {
         return lbl
       }
       catch (err) {
-        console.warn("error!", err)
+        console.warn("onRecordLabelError!", err)
       }
     },
     subTotal () {
@@ -392,7 +392,16 @@ export default {
       console.log(checksResp.data)
       this.$data.outstandingChecks = checksResp.data
       /************* Get atlantic month data ***************/
-      let atlanticResp = await api.service('atlantic').find({query: {month: 'Apr19'}}).catch((err) => {console.log(err)})
+      // try for current month, if not found, try for previous month (could be recursive?)
+      let resultCheck = null
+      let atlanticResp
+      let tempResult
+      for (let i = 0; resultCheck == null; i++) {
+        let queryMonth = moment().subtract(i, 'months').format('MMMYY')
+        atlanticResp = await api.service('atlantic').find({query: {month: queryMonth}}).catch((err) => {console.log('atlantic data error', err)})
+        console.log('resp length', atlanticResp.data[0] == null)
+        resultCheck = atlanticResp.data[0]
+      }
       this.$data.atlanticData = atlanticResp.data[0] // only one result
       /************** Load poayables data */
       this.loadPayables()
