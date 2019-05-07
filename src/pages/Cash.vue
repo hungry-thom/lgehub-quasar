@@ -2,13 +2,8 @@
 <template>
   <q-page>
       <div>
+        Last Atlantic Record: {{ lastRecDateLabel }}
         <br>
-          <!--
-          <q-tree
-            :nodes="bankData"
-            node-key="label"
-          />
-          -->
           <q-list separator>
             <q-collapsible indent icon="mail" label="creditPending  :    xxxx.xx"></q-collapsible>
             <q-item>
@@ -29,7 +24,6 @@
                   class="col" >
                 </q-table>
               </div>
-              <!-- <q-collapsible label="Today"></q-collapsible> -->
             </q-collapsible>
             <q-item>
               <q-item-side icon="mail" />
@@ -38,7 +32,7 @@
             <q-item>
             </q-item>
             <q-collapsible icon="receipt" :label="payablesLabel" opened>
-              <div>
+              <div> <!------ table for payables ------>
                 <q-table
                   :data="vendorList"
                   :columns="payableCols"
@@ -71,7 +65,7 @@
                     </q-tr>
                   </template>
                 </q-table>
-              </div>
+              </div> <!----------- table for payables ------------>
             </q-collapsible>
           </q-list>
         <br>
@@ -114,12 +108,12 @@ export default {
   props: ['user'],
   data () {
     return {
+      lastRecDateLabel: '',
       balance: 0,
       checkTotal: 0,
       vendorList: [],
       atlanticData: [],
       outstandingChecks: [],
-      bankData: [],
       message: '',
       messages: [],
       users: [],
@@ -276,11 +270,16 @@ export default {
         let balance = this.$data.atlanticData.records[lastRec].Balance
         this.$data.balance = balance
         let format = (balance).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')
-        let lbl = `onRecord: ${format}`
-        return lbl
+        let recDate = moment(this.$data.atlanticData.records[lastRec].Date)
+        this.$data.lastRecDateLabel = recDate.format('DD-MMM')
+        return `onRecord: ${format}`
       }
       catch (err) {
         console.warn("onRecordLabelError!", err)
+        let defaultobj = {
+          balance: 0,
+          date: 'default'
+        }
       }
     },
     subTotal () {
