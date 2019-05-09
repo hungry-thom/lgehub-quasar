@@ -21,6 +21,7 @@
     "file-saver": "^2.0.0",
     "fuzzysearch": "^1.0.3",
     "js": "^0.1.0",
+    "jspdf": "^1.5.3",
     "moment": "^2.22.2",
     "rethinkdbdash": "^2.3.31",
     "socket.io-client": "^2.1.1"
