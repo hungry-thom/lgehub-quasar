@@ -99,6 +99,7 @@
           Enter/Edit Expense
         </q-toolbar-title>
         &nbsp;&nbsp;<q-btn size="md" color="negative" label="Delete Expense" @click="deleteExpense()" v-if="transaction.id" />
+        <q-btn label="Print" @click="printRec()" />
       </q-toolbar>
       <div slot="footer">
         <div class="q-pa-xs float-right">
@@ -267,6 +268,7 @@ import moment from 'moment'
 import api from 'src/api'
 import _ from 'lodash'
 import fuzzysearch from 'fuzzysearch'
+import jsPDF from 'jspdf'
 import {
   QChatMessage,
   QTable,
@@ -657,6 +659,13 @@ export default {
     }
   },
   methods: {
+    printRec () {
+      let doc = new jsPDF()
+      doc.text('Ko-Ox Han-Nah', 4, 10)
+      // window.open(doc.output('datauristring'))
+      let win = window.open();
+      win.document.write('<iframe src="' + doc.output('datauristring')  + '" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>');
+    },
     editCost (row) {
       if (row.taxable === 'yes') {
         row.gst = _.round((row.cost * 0.125), 2)
