@@ -32,7 +32,7 @@
           </template>
           <template slot="body" slot-scope="props">
             <q-tr :props="props" @dblclick.native="overlay(props.row)">
-              <q-tooltip :delay="1000">Double Click to add to {{ props.row.item }} </q-tooltip>
+              <!-- <q-tooltip :delay="1000">Double Click to add to {{ props.row.item }} </q-tooltip> -->
               <q-td key="item" :props="props">
                 <q-checkbox color="primary" v-model="props.expand" unchecked-icon="add" checked-icon="remove" class="q-mr-md" />
                 {{ props.row.item }}
@@ -42,10 +42,10 @@
               </q-td>
               <q-td key="customLabel" :props="props">
                 {{ props.row.customLabel || '' }}
+                <q-btn size="sm" round dense color="secondary" icon="playlist_add" @click="customValueDialog(props.row)" class="q-mr-xs" />
               </q-td>
               <q-td key="track" :props="props">
-                <q-btn size="sm" round color="secondary" icon="info" @click="priceOverlay(props.row)" class="q-mr-xs" />
-                <q-btn size="sm" round dense color="secondary" icon="edit" @click="customValueDialog(props.row)" class="q-mr-xs" />
+                <q-btn size="sm" round color="secondary" icon="history" @click="priceOverlay(props.row)" class="q-mr-xs" />
                 <q-btn size="sm" round color="secondary" icon="add" @click="overlay(props.row)" class="q-mr-xs" />
               </q-td>
               <!--<q-tooltip>I'd like to eat "{{ props.row.name }}"</q-tooltip>-->
@@ -66,7 +66,7 @@
                     <q-th key="compBase" :props="props">compBase</q-th>
                     <q-th key="custom" :props="props">custom</q-th>
                     <q-th key="buttons" :props="props" width='25px'>
-                      <q-btn size="sm" round dense color="secondary" icon="info" @click="overlay(props.row)" class="q-mr-xs" />
+                      <!-- <q-btn size="sm" round dense color="secondary" icon="info" @click="overlay(props.row)" class="q-mr-xs" /> -->
                     </q-th>
                   </q-tr>
                   <q-tr slot="body" slot-scope="props" :props="props">
@@ -76,6 +76,9 @@
                     <q-td key="compValue" :props="props">{{ props.row.compValue }}</q-td>
                     <q-td key="compBase" :props="props">{{ props.row.compBase }}</q-td>
                     <q-td key="custom" :props="props">{{ props.row.custom }}</q-td>
+                    <q-td key="buttons" :props="props">
+                      <q-btn size="sm" color="secondary" round dense icon="edit" @click="overlay(props.row)"/>
+                    </q-td>
                   </q-tr>
                 </q-table>
               </q-td>
@@ -430,7 +433,8 @@ export default {
         },
         cancel: true,
         color: 'secondary'
-      }).then(data => {
+      })
+      .then(data => {
         this.$q.notify(`You typed: "${data}"`)
         console.log(row)
         // custom label
@@ -645,18 +649,27 @@ export default {
                 console.log('converting', item.item, pBase, comp.compBase, index, sortedVendors[index])
                 // check to see if compBase &&& pBase in convert units.
                 if (comp.compBase) {
-                  let possibleList = convert().from(comp.compBase).possibilities() // convert().possibilities() 
-                  if (possibleList.includes(pBase)) { // && possibleList.includes(comp.compBase)) {
-                    vendor.compQty = convert(pQty).from(pBase).to(comp.compBase)
-                    vendor.compBase = comp.compBase
-                  } else { // need to handle incompaible/nonvalid base
-                    console.log('ERROR: Incompatible bases for ', item.item)
+                  const isPossibleUnit = convert().possibilities().includes(comp.compBase)
+                  if (isPossibleUnit) {
+                    let possibleList = convert().from(comp.compBase).possibilities() // convert().possibilities() 
+                    if (possibleList.includes(pBase)) { // && possibleList.includes(comp.compBase)) {
+                      vendor.compQty = convert(pQty).from(pBase).to(comp.compBase)
+                      vendor.compBase = comp.compBase
+                    } else { // need to handle incompaible/nonvalid base
+                      console.log('ERROR: Incompatible bases for ', item.item)
+                      this.$q.notify({
+                        message: `Incompatible bases for ${item.item}`,
+                        timeout: 3000,
+                        position: 'center'
+                      })
+                    }
+                  } else {
                     this.$q.notify({
-                      message: `Incompatible bases for ${item.item}`,
-                      timeout: 3000,
-                      position: 'center'
-                    })
-                  } 
+                        message: `Unsupported base for ${item.item}: ${comp.compBase}`,
+                        timeout: 3000,
+                        position: 'center'
+                      })
+                  }
                 }
               }
               //////// Maybe can break out vvvvvvvv
