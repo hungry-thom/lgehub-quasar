@@ -215,10 +215,10 @@ export default {
       // would like to query for hasFields('paid').not() or similar, but nothing works
       // have to query for blank field (after creating with blank field)
       api.service('payable').find({
-      query: {
-        paid: ''
-      }
-    })
+        query: {
+          paid: ''
+        }
+      })
       .then((response) => {
         // we want to combine all payables for each vendor
         console.log(response.data.length)
