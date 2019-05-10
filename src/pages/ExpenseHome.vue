@@ -82,7 +82,7 @@
     </div>
     <br>
     <!-- //////// START OF MODAL' ////////-->
-    <q-modal v-model="expenseModal" :maximized="boolScreen" :no-backdrop-dismiss="true" class="scroll overflow-hidden" ref="expModal" >
+    <q-modal v-model="expenseModal" :maximized="boolScreen" :no-backdrop-dismiss="true" >
     <q-modal-layout > <!-- class="q-pa-sm" -->
       <q-toolbar slot="header">
         <q-btn
@@ -108,7 +108,7 @@
         </div>
       </div>
     <div class="q-pa-sm">
-    <div class="row no-wrap">
+    <div class="row no-wrap" >
       <q-datetime class="col" minimal color="orange" v-model="transaction.date1" type="date" float-label="Date" @input="selectDate" :first-day-of-week="0" />&nbsp;&nbsp;
       <q-input class="col" ref="inputVendor" v-model="transaction.vendor" float-label="Vendor"  @blur="validateVendor"> <q-autocomplete :static-data="{field: 'value', list: vendorsList}" /></q-input>&nbsp;&nbsp;
       <q-input class="col" ref="inputtransNum" v-model="transaction.transNum" float-label="Transaction Number"/>&nbsp;&nbsp;
@@ -122,7 +122,8 @@
         :visible-columns="visibleModalColumns"
         row-key="item"
         :pagination.sync="pagination"
-        hide-bottom >
+        hide-bottom 
+        ref="scrollElement" >
         <tr slot="header" slot-scope="props">
           <q-th key="qty" :props="props" class="bg-deep-purple-1">Qty</q-th>
           <q-th key="item" :props="props" class="bg-deep-purple-1">Item</q-th>
@@ -285,8 +286,15 @@ import {
   QModal,
   QModalLayout,
   QOptionGroup,
-  QField
+  QField,
+  scroll
 } from 'quasar'
+const { 
+  getScrollTarget, 
+  setScrollPosition, 
+  getScrollPosition,
+  getScrollHeight 
+} = scroll
 
 export default {
   name: 'chat',
@@ -306,7 +314,8 @@ export default {
     QModal,
     QModalLayout,
     QOptionGroup,
-    QField
+    QField,
+    scroll
   },
   props: ['user'],
   data () {
@@ -763,7 +772,14 @@ export default {
       this.$data.expenseModal = !this.$data.expenseModal
       this.$refs.inputVendor.focus()
       console.log('scrolltop')
-      this.$refs.expModal.scrollTop = this.$refs.expModal.scrollHeight
+    },
+    modalScroll () {
+      let scrollTarget = getScrollTarget(this.$refs.scrollElement.$el)
+      let scrollHeight = getScrollHeight(scrollTarget)
+      console.log('pos', getScrollPosition(scrollTarget))
+      // scrollHeight += 47 // new height is only rendered after this method, so cannot set new position
+      setScrollPosition(scrollTarget, scrollHeight)
+      console.log('pos', getScrollPosition(scrollTarget))
     },
     deleteExpense() {
       console.log('delete expense')
@@ -867,6 +883,7 @@ export default {
         this.$refs.newEntry.focus()
         console.log('end',this.$data.newItem.taxable)
       }
+      this.modalScroll()
     },
     submitExpense () {
       if (this.$data.transaction.paymentAccount.includes('checkAtl#') && this.$data.transaction.paymentAccount.length < 13) {
