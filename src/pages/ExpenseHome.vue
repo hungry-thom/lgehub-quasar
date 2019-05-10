@@ -82,8 +82,8 @@
     </div>
     <br>
     <!-- //////// START OF MODAL' ////////-->
-    <q-modal v-model="expenseModal" :maximized="boolScreen" :no-backdrop-dismiss="true" >
-    <q-modal-layout> <!-- class="q-pa-sm" -->
+    <q-modal v-model="expenseModal" :maximized="boolScreen" :no-backdrop-dismiss="true" class="scroll overflow-hidden" ref="expModal" >
+    <q-modal-layout > <!-- class="q-pa-sm" -->
       <q-toolbar slot="header">
         <q-btn
           flat
@@ -762,6 +762,8 @@ export default {
       }
       this.$data.expenseModal = !this.$data.expenseModal
       this.$refs.inputVendor.focus()
+      console.log('scrolltop')
+      this.$refs.expModal.scrollTop = this.$refs.expModal.scrollHeight
     },
     deleteExpense() {
       console.log('delete expense')

@@ -765,6 +765,7 @@ export default {
     //this.$data.startingDate = this.currentMonday()
     this.initializeData()
     this.loadCategories()
+    this.$q.loading.hide()
     // this.loadTransferData()
     /*
     inventory.on('created', inv => {

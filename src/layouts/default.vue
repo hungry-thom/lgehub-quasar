@@ -49,6 +49,7 @@
         no-border
         link
         inset-delimiter
+        @click.native="loadRoute()"
       >
 
         <q-item to="/home">
@@ -82,7 +83,7 @@
           <q-item-main label="Monthly" />
         </q-item>
 
-        <q-item to="/transfers">
+        <q-item to="/transfers" >
           <q-item-side icon="swap_horiz" />
           <q-item-main label="Transfers" />
         </q-item>
@@ -142,6 +143,10 @@ export default {
     }
   },
   methods: {
+    loadRoute () {
+      console.log('loadRouteClickd')
+      this.$q.loading.show({})
+    },
     goTo (route) {
       this.$router.push({ name: route })
     },
