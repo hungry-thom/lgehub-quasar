@@ -472,6 +472,7 @@ export default {
     this.generateWeek()
     this.generateJournalCols()
     this.loadMonths()
+    this.$q.loading.hide()
   },
   beforeDestroy () {
   }

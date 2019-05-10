@@ -6,7 +6,11 @@
 
 <script>
 export default {
-  // name: 'PageName',
+  methods: {
+    mounted () {
+      this.$q.loading.hide()
+    }
+  }
 }
 </script>
 

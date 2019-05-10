@@ -471,6 +471,7 @@ export default {
       })
     this.loadInventoryData()
     this.loadCategories()
+    this.$q.loading.hide()
     /*
     inventory.find({
       query: {

@@ -100,6 +100,7 @@ export default {
       console.log('user received')
       this.$data.users = this.$data.users.concat(user)
     })
+    this.$q.loading.hide()
   },
   beforeDestroy () {
   }

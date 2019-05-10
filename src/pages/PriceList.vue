@@ -744,6 +744,7 @@ export default {
       })
     this.loadPricelistData()
     this.loadCategories(0)
+    this.$q.loading.hide()
     /*
     pricelist.find({
       query: {

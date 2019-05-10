@@ -1443,6 +1443,7 @@ export default {
     this.$data.endDate = this.$data.startDate // new Date()
     this.loadExpenses(this.$data.startDate, this.$data.startDate)
     this.loadData()
+    this.$q.loading.hide()
     /* //// 'created' service executed multiple time for one submission
     api.service('expenses').on('created', expense => {
       console.log('expense added', expense)
