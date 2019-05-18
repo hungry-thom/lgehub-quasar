@@ -82,7 +82,8 @@ export default {
             // this.goHome()
           })
           .catch(_ => {
-            this.$q.notify({type: 'positive', message: 'Cannot sign in, please check your e-mail or password'})
+            this.$q.notify({type: 'negative', message: 'Cannot sign in, please check your e-mail or password'})
+            this.$q.loading.hide()
             this.goHome()
           })
       }
