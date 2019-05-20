@@ -183,11 +183,7 @@
             :columns="journalColumns"
           />
         </template>
-        <q-tr slot="body" slot-scope="props" :props="props">
-            <q-td key="cash:" :props="props" >
-              {{ props.row }}
-            </q-td>
-        </q-tr>
+        
       </q-table>
     </div>
     <br>
@@ -272,40 +268,56 @@ export default {
         credit: '',
         debit: ''
       },
-      journal1: [
+      journal: [],
+      transactions: [
         {
-          date1: '2018-11-19T03:30:54.661Z',
-          credit: [
+          "credit": [
             {
-              account: 'cashMS',
-              amount: '360'
+              "account": "payable",
+              "amount": 779.79
             }
           ],
-          debit: [
+          "debit": [
             {
-              account: 'cogsMeatshop',
-              amount: '360'
-            }
-          ]
-        }
-      ],
-      journal: [
-        {
-          date1: '2018-11-19T03:30:54.661Z',
-          cash: [
+              "account": "expense/cogs/cheese/mozzarela",
+              "amount": 288.21
+            },
             {
-              account: 'cashMS',
-              amount: '360',
-              type: 'credit'
+              "account": "expense/cogs/cheese/feta",
+              "amount": 248
+            },
+            {
+              "account": "expense/cogs/cheese/yellowCheddar",
+              "amount": 83.27
+            },
+            {
+              "account": "expense/cogs/cheese/yellowCheddar",
+              "amount": 73.67
+            },
+            {
+              "account": "prepaid/gst",
+              "amount": 86.64
             }
           ],
-          expenses: [
+          "signed": "Thomas",
+          "timestamp": 1551025593135,
+          "chainlinks": [
             {
-              account: 'cogsMeatshop',
-              amount: '360',
-              type: 'debit'
+              "chain": "pricelist",
+              "link": "?hash/?id"
+            },
+            {
+              "chain": "inventroy",
+              "link": "?hash/?id"
+            },
+            {
+              "chain": "payable",
+              "link": "?hash/?id"
             }
-          ]
+          ],
+          "account?": "rcImports",
+          "TransactionDate": 1551025593135,
+          "TransactionID": "261932"
         }
       ],
       journalColumns: [],
@@ -316,6 +328,46 @@ export default {
   computed: {
   },
   methods: {
+    parseTransactions (transactions) {
+      // cycle through each transaction
+      transactions.forEach(trans => {
+        //create object for datatable row
+        const tableRow = {}
+        // cycle through debits
+        console.log(trans)
+        trans.debit.forEach(d => {
+          // split account details eg 'expense/cogs/cheese/feta'
+          console.log('check', d.account)
+          let accountArray = d.account.split('/')
+          const acct = accountArray[0]
+          if (!tableRow.hasOwnProperty(acct)) {
+            tableRow[acct] = 0
+          }
+          if (['equipment', 'receivable', 'prepaid', 'inventory', 'cash'].includes(acct)) {
+            // debit increases account
+            tableRow[acct] += d.amount
+          } else if (['payable', 'sales', 'capital', 'expense'].includes(acct)) {
+            tableRow[acct] -= d.amount
+          }
+        })
+        // cycle through credits
+        trans.credit.forEach(c => {
+          const accountArray = c.account.split('/')
+          const acct = accountArray[0]
+          if (!tableRow.hasOwnProperty(acct)) {
+            tableRow[acct] = 0
+          }
+          if (['equipment', 'receivable', 'prepaid', 'inventory', 'cash'].includes(acct)) {
+            // debit increases account
+            tableRow[acct] -= c.amount
+          } else if (['payable', 'sales', 'capital', 'expense'].includes(acct)) {
+            tableRow[acct] += c.amount
+          }
+        })
+        this.$data.journal.push(tableRow)
+        console.log('journal', this.$data.journal)
+      })
+    },
     expandSpan () {
       this.$data.showSpan = !this.$data.showSpan
       if(this.$data.showSpan) {
@@ -439,7 +491,7 @@ export default {
     generateJournalCols () {
       console.log('journal', this.$data.journal)
       let acctEqu = ['assets', 'liabilities', 'equity']
-      let equity = ['expenses', 'sales']
+      let equity = ['expense', 'sales']
       let liabilities = ['payable']
       let assets = ['receivable', 'prepaid', 'inventory', 'cash', 'equipment']
       let equation = assets.concat('=', liabilities, equity)
@@ -473,6 +525,7 @@ export default {
     this.generateJournalCols()
     this.loadMonths()
     this.$q.loading.hide()
+    this.parseTransactions(this.$data.transactions)
   },
   beforeDestroy () {
   }
