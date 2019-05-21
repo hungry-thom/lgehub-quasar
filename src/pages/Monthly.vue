@@ -307,11 +307,11 @@ export default {
               "link": "?hash/?id"
             },
             {
-              "chain": "inventroy",
+              "chain": "inventroy", // inventory chain may not be needed. included on main 
               "link": "?hash/?id"
             },
             {
-              "chain": "payable",
+              "chain": "payable", // payable chain may not be needed. 
               "link": "?hash/?id"
             }
           ],
