@@ -183,7 +183,20 @@
             :columns="journalColumns"
           />
         </template>
-        
+        <q-tr slot="top-row" slot-scope="props" align="center">
+            <q-td class="bg-green-1">{{ total.receivable || '-' }}</q-td>
+            <q-td class="bg-green-1">{{ total.prepaid || '-' }}</q-td>
+            <q-td class="bg-green-1">{{ total.inventory || '-' }}</q-td>
+            <q-td class="bg-green-1">{{ total.cash || '-' }}</q-td>
+            <q-td class="bg-green-1">{{ total.equipment || '-' }}</q-td>
+            <q-td class="bg-green-1">{{ total.assets || '-' }}</q-td>
+            <q-td class="bg-deep-purple-1">{{ total.liabilities || '-' }}</q-td>
+            <q-td class="bg-purple-1">{{ total.payable || '-' }}</q-td>
+            <q-td class="bg-purple-1">{{ total.expense || '-' }}</q-td>
+            <q-td class="bg-deep-purple-1">{{ total.sales || '-' }}</q-td>
+            <q-td class="bg-deep-purple-1">{{ total.capital || '-' }}</q-td>
+            <q-td class="bg-deep-purple-1">{{ total.netEquity || '-' }}</q-td>
+        </q-tr>
       </q-table>
     </div>
     <q-btn label="newExpense" @click="overlay" />
@@ -668,6 +681,7 @@ export default {
           label: 'payableAcct'
         }
       ],
+      total: {}
     }
   },
   computed: {
@@ -955,9 +969,13 @@ export default {
         newTransaction['credit'] = credit
         newTransaction['debit'] = debit
 
-        //this.$axios.post('localhost:3001/')
-        this.$data.transactions.push(newTransaction)
-        this.parseTransactions (this.$data.transactions)
+        this.$axios.post('http://localhost:3001/transaction/broadcast', newTransaction)
+        .then(resp => {
+          console.log('posted transaction', resp)
+          this.getBlockchain()
+        })
+        // this.$data.transactions.push(newTransaction)
+        // this.parseTransactions (this.$data.transactions)
 
       } // end of else (data in add item fields check)
       // moved updatePrices and Inventory to 'newTransaction' to use transaction.id
@@ -970,7 +988,7 @@ export default {
       // this.loadExpenses()
     },
     parseTransactions (transactions) {
-      this.$data.journal = []
+      // this.$data.journal = [] // clear journal moved to getblockchain method
       // cycle through each transaction
       transactions.forEach(trans => {
         //create object for datatable row
@@ -979,7 +997,7 @@ export default {
         console.log(trans)
         trans.debit.forEach(d => {
           // split account details eg 'expense/cogs/cheese/feta'
-          console.log('check', d.account)
+          console.log('debit', d.account)
           let accountArray = d.account.split('/')
           const acct = accountArray[0]
           if (!tableRow.hasOwnProperty(acct)) {
@@ -994,6 +1012,7 @@ export default {
         })
         // cycle through credits
         trans.credit.forEach(c => {
+          console.log('credit', c.account)
           const accountArray = c.account.split('/')
           const acct = accountArray[0]
           if (!tableRow.hasOwnProperty(acct)) {
@@ -1007,8 +1026,34 @@ export default {
           }
         })
         this.$data.journal.push(tableRow)
-        console.log('journal', this.$data.journal)
       })
+      this.$data.total = { assets: 0, liabilities: 0 }
+      console.log('journal', this.$data.journal)
+      this.$data.journal.forEach(entry => {
+        console.log('entry', entry)
+        for (let property in entry) {
+          console.log('property', property)
+          if (entry.hasOwnProperty(property)) {
+            if (this.$data.total.hasOwnProperty(property)) {
+              console.log('true', entry.property)
+              this.$data.total[property] += entry[property]
+            } else {
+              console.log('false', entry, property, entry.property)
+              this.$data.total[property] = entry[property]
+            }
+            if(['receivable', 'prepaid', 'inventory', 'cash', 'equipment'].includes(property)) {
+                console.log('includes', property, this.$data.total.assets)
+                this.$data.total.assets += entry[property]
+                this.$data.total.assets = _.round(this.$data.total.assets, 2)
+              } else {
+                console.log('Notincludes', property, this.$data.total.liabilities)
+                this.$data.total.liabilities += entry[property]
+                this.$data.total.liabilities = _.round(this.$data.total.liabilities, 2)
+              }
+          }
+        }
+      })
+      console.log('total', this.$data.total)
     },
     expandSpan () {
       this.$data.showSpan = !this.$data.showSpan
@@ -1126,17 +1171,17 @@ export default {
         this.visibleColumns.push(ima.format('ddd'))
       }
       console.log('month1', this.$data.month)
-      console.log('journal', this.$data.journal)
+      // console.log('journal', this.$data.journal)
       console.log('week', week)
       this.$data.month.push(week)
     },
     generateJournalCols () {
       console.log('journal', this.$data.journal)
       let acctEqu = ['assets', 'liabilities', 'equity']
-      let equity = ['expense', 'sales']
+      let equity = ['expense', 'sales', 'capital']
       let liabilities = ['payable']
       let assets = ['receivable', 'prepaid', 'inventory', 'cash', 'equipment']
-      let equation = assets.concat('=', liabilities, equity)
+      let equation = assets.concat('=>', '<=', liabilities, equity, 'netEquity')
       this.$data.journalColumnList = equation
       let color = ''
       for (let n = 0; n < equation.length; n++) {
@@ -1146,6 +1191,9 @@ export default {
         }
         if (equity.includes(col)) {
           color = 'bg-deep-purple-2'
+        }
+        if (['payable', 'expense'].includes(col)) {
+          color = 'bg-purple-2'
         }
         if (col.includes('=')) {
           color = ''
@@ -1160,6 +1208,14 @@ export default {
         })
         this.visibleJournalColumns.push(col)
       }
+    },
+    async getBlockchain () {
+      let blockchain = await this.$axios.get('http://localhost:3001/blockchain')
+      console.log('blockchain', blockchain.data)
+      this.$data.journal = []
+      blockchain.data.chain.forEach(block => {
+        this.parseTransactions(block.transactions)
+      })
     }
   },
   mounted () {
@@ -1167,7 +1223,8 @@ export default {
     this.generateJournalCols()
     this.loadMonths()
     this.$q.loading.hide()
-    this.parseTransactions(this.$data.transactions)
+    this.getBlockchain()
+    // this.parseTransactions(this.$data.transactions)
   },
   beforeDestroy () {
   }
