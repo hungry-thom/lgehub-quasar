@@ -186,7 +186,186 @@
         
       </q-table>
     </div>
+    <q-btn label="newExpense" @click="overlay" />
     <br>
+    <!-- //////// START OF MODAL' ////////-->
+    <q-modal v-model="expenseModal" :maximized="boolScreen" :no-backdrop-dismiss="true" >
+    <q-modal-layout > <!-- class="q-pa-sm" -->
+      <q-toolbar slot="header">
+        <q-btn
+          flat
+          icon="keyboard_backspace"
+          @click="overlay"
+        />
+        <q-btn
+          flat
+          icon="fullscreen"
+          @click="toggleFullscreen"
+        />
+        <q-toolbar-title>
+          Enter/Edit Expense
+        </q-toolbar-title>
+      </q-toolbar>
+      <div slot="footer">
+        <div class="q-pa-xs float-right">
+          &nbsp;&nbsp;<q-btn size="md" color="primary" label="Cancel" @click="overlay"/>
+          &nbsp;&nbsp;<q-btn size="md" color="primary" label="Submit" @click="submitExpense"/> <!-- :disable not reading var -->
+        </div>
+      </div>
+    <div class="q-pa-sm">
+    <div class="row no-wrap" >
+      <q-datetime class="col" minimal color="orange" v-model="transaction.date1" type="date" float-label="Date" :first-day-of-week="0" />&nbsp;&nbsp;
+      <q-input class="col" ref="inputVendor" v-model="transaction.vendor" float-label="Vendor" ></q-input>&nbsp;&nbsp;
+      <q-input class="col" ref="inputtransNum" v-model="transaction.transNum" float-label="Transaction Number"/>&nbsp;&nbsp;
+      <q-input class="col" v-model="transaction.paymentAccount" float-label="Payment Account" ></q-input>
+    </div>
+    <div>
+      <br>
+      <q-table
+        :data="transaction.transItems"
+        :columns="modalColumns"
+        :visible-columns="visibleModalColumns"
+        row-key="item"
+        :pagination.sync="pagination"
+        hide-bottom 
+        ref="scrollElement" >
+        <tr slot="header" slot-scope="props">
+          <q-th key="qty" :props="props" class="bg-deep-purple-1">Qty</q-th>
+          <q-th key="item" :props="props" class="bg-deep-purple-1">Item</q-th>
+          <q-th key="unit" :props="props" class="bg-deep-purple-1">Unit</q-th>
+          <q-th key="price" :props="props" class="bg-deep-purple-1">Price</q-th>
+          <q-th key="cost" :props="props" class="bg-deep-purple-1">Cost</q-th>
+          <q-th key="gst" :props="props" class="bg-deep-purple-1">GST</q-th>
+          <q-th key="total" :props="props" class="bg-deep-purple-2">Total</q-th>
+          <q-th key="expAccount" :props="props">expAccount</q-th>
+          <q-th key="category" :props="props">Category</q-th>
+          <q-th key="taxable" :props="props" >Taxable</q-th> <!-- width='25px'><q-btn size="sm" round dense color="secondary" icon="code" class="q-mr-xs" @click="expandCols" /></q-th> -->
+           <q-th key="expand" :props="props">Pricelist/Inv</q-th>
+        </tr>
+        <q-tr slot="body" slot-scope="props" :props="props">
+          <q-td key="qty" :props="props" class="bg-deep-purple-1">
+            {{ props.row.qty || '-' }}
+            <q-popup-edit v-model="props.row.qty" title="update" @save="editItemValues(props.row)" :persistent="true" buttons>
+              <q-input v-model="props.row.qty" type="number" />
+            </q-popup-edit>
+          </q-td>
+          <q-td key="item" :props="props" class="bg-deep-purple-1">
+            {{ props.row.item || '-' }}
+            <q-popup-edit v-model="props.row.item" title="Update" :persistent="true" buttons>
+              <q-input v-model="props.row.item" > </q-input>
+            </q-popup-edit>
+          </q-td>
+          <q-td key="unit" :props="props" class="bg-deep-purple-1" >
+            {{ props.row.unit || '-' }}
+            <q-popup-edit v-model="props.row.unit" title="Update" :persistent="true" buttons>
+              <q-input v-model="props.row.unit" />
+            </q-popup-edit>
+          </q-td>
+          <q-td key="price" :props="props" class="bg-deep-purple-1" >{{ props.row.price || '-' }}</q-td>
+          <q-td key="cost" :props="props" class="bg-deep-purple-1" >
+            {{ props.row.cost || '-' }}
+            <q-popup-edit v-model="props.row.cost"  title="Update" @save="editCost(props.row)" :persistent="true" buttons>
+              <q-input v-model="props.row.cost" type="number" />
+            </q-popup-edit>
+          </q-td>
+          <q-td key="gst" :props="props" class="bg-deep-purple-1" >{{ props.row.gst || '-' }}</q-td>
+          <q-td key="total" :props="props" class="bg-deep-purple-2" >
+            {{ props.row.total || '-' }}
+            <q-popup-edit v-model="props.row.total" title="update" @save="editItemValues(props.row)" :persistent="true" buttons>
+              <q-input v-model="props.row.total" type="number" />
+            </q-popup-edit>
+          </q-td>
+          <q-td key="expAccount" :props="props">
+            {{ props.row.expAccount || '-' }}
+            <q-popup-edit v-model="props.row.expAccount" title="Update" :persistent="true" buttons>
+              <q-input v-model="props.row.expAccount" > </q-input>
+            </q-popup-edit>
+          </q-td>
+          <q-td key="category" :props="props">
+            {{ props.row.category || '-' }}
+            <q-popup-edit v-model="props.row.category" title="Update" :persistent="true" buttons>
+              <q-input v-model="props.row.category" > </q-input>
+            </q-popup-edit>
+          </q-td>
+          <q-td key="taxable" :props="props">
+            {{ props.row.taxable || '-' }}
+            <q-popup-edit v-model="props.row.taxable" title="Update" @save="editItemValues(props.row)" buttons>
+              <q-checkbox v-model="props.row.taxable" label="Taxable" true-value="yes" false-value="no" />
+            </q-popup-edit>
+          </q-td>
+          <q-td key="expand" :props="props">
+            <div class="row items-center justify-between no-wrap">
+              <q-checkbox v-model="props.row.add2Pricelist" checked-icon="attach_money" unchecked-icon="money_off" />
+              <q-checkbox v-model="props.row.add2Inventory" checked-icon="assignment" unchecked-icon="no_sim" class="q-mr-sm" />
+              <q-btn size="sm" round dense color="secondary" icon="delete" @click="deleteItemRow(props.row)" class="q-mx-xs" />
+            </div>
+          </q-td>
+        </q-tr>
+        <!--
+          <q-td key="stock" :props="props">
+            <div class="row items-center justify-between no-wrap">
+              <div v-for="unit in props.row.stock" :key="unit.unit">{{ unit.unit }}:<br>&nbsp;&nbsp;<strong><font size="4">{{ unit.qty }}</font></strong>
+                <q-popup-edit v-model="unit.qty" title="Update count" @save="updateCount(props.row)" buttons>
+                  <q-input type="number" v-model="unit.qty" />
+                </q-popup-edit>
+              </div>
+              <div>
+                <q-checkbox v-model="confirmations[props.row.__index].confirmed" checked-icon="check_circle" unchecked-icon="remove_circle_outline" class="q-mr-md" />
+                <q-btn size="sm" round dense color="secondary" icon="playlist_add" class="q-mr-xs" @click="addStockUnit(props.row)" />
+                <q-btn size="sm" round dense color="secondary" icon="shopping_cart" class="q-mr-xs" />
+              </div>
+            </div>
+          </q-td>
+        </q-tr>
+        -->
+        <q-tr slot="bottom-row" slot-scope="props" align="left">
+            <q-td></q-td>
+            <q-td></q-td>
+            <q-td></q-td>
+            <q-td></q-td>
+            <q-td class="bg-deep-purple-2">{{ subTotal || '-' }}</q-td>
+            <q-td class="bg-deep-purple-2">{{ gstTotal || '-' }}</q-td>
+            <q-td class="bg-deep-purple-3">{{ grandTotal || '-' }}</q-td>
+            <q-td></q-td>
+            <q-td></q-td>
+        </q-tr>
+      </q-table>
+      <br>
+    </div>
+    <br>
+    <div class="row no-wrap">
+      <q-input class="col" ref="newEntry" float-label="Qty" type="number" v-model="newItem.qty" />&nbsp;&nbsp;
+      <q-input class="col" float-label="Item" v-model="newItem.item"> </q-input>&nbsp;&nbsp;
+      <q-input class="col" float-label="Unit" v-model="newItem.unit" > </q-input>&nbsp;&nbsp;
+      <q-input class="col" float-label="Cost" type="number" v-model="newItem.amount" @keyup.enter="addItem" />
+      <div class="q-pt-md">
+        <q-checkbox v-model="newItem.taxable" label="Taxable" true-value="yes" false-value="no" />
+        <br>
+        <q-checkbox v-model="gstIncluded" label="GST Included" true-value="yes" false-value="no" :disable="gstIncludedVisibility" />
+      </div>
+    </div>
+    <div class="row no-wrap">
+      <q-input class="col" float-label="exp Account" v-model="newItem.expAccount" @keyup.enter="addItem" > </q-input>&nbsp;&nbsp;
+      <q-input class="col" float-label="Category" v-model="newItem.category" @keyup.enter="addItem"> </q-input>&nbsp;&nbsp;
+      <div class="q-pt-md">
+        <q-checkbox v-model="newItem.add2Inventory" label="add2Inventory" tabindex=-1 /><br>
+        <q-checkbox v-model="newItem.add2Pricelist" label="add2Pricelist" tabindex=-1 /><br>
+      </div>
+    </div>
+    <br>
+    <div class="row no-wrap">
+      <div class="q-pl-md">
+        &nbsp;&nbsp;<q-btn size="md" color="primary" label="add Item" @click="addItem" />
+      </div>
+      <div class="q-pl-md">
+        <q-checkbox v-model="lockAccount" label="Lock Account" /><br>
+        <q-checkbox v-model="lockCategory" label="Lock Category" /><br>
+      </div>
+    </div>
+    </div>
+  </q-modal-layout>
+  </q-modal>
+  <!-- //////  END OF MODAL  //////// -->
   </q-page>
 </template>
 
@@ -199,6 +378,7 @@ import {
   QTable,
   QTr,
   QTd,
+  QTh,
   QSearch,
   QPopupEdit,
   QCheckbox,
@@ -210,7 +390,12 @@ import {
   QCardSeparator,
   QCardActions,
   QDatetime,
-  QPopover
+  QPopover,
+  QModal,
+    QModalLayout,
+    QOptionGroup,
+    QField,
+    scroll
 } from 'quasar'
 
 export default {
@@ -220,6 +405,7 @@ export default {
     QTable,
     QTr,
     QTd,
+    QTh,
     QSearch,
     QPopupEdit,
     QCheckbox,
@@ -231,11 +417,20 @@ export default {
     QCardSeparator,
     QCardActions,
     QDatetime,
-    QPopover
+    QPopover,
+    QModal,
+    QModalLayout,
+    QOptionGroup,
+    QField,
+    scroll
   },
   props: ['user'],
   data () {
     return {
+      expenseModal: false,
+      lockAccount: true,
+      lockCategory: true,
+      boolScreen: false,
       spanIcon: 'expand_more',
       showMonth: false,
       showSpan: false,
@@ -269,6 +464,116 @@ export default {
         debit: ''
       },
       journal: [],
+      transaction:
+      {
+        date1: '',
+        vendor: '',
+        transNum: '',
+        paymentAccount: '',
+        transItems: []
+      },
+      modalColumns: [
+        {
+          name: 'id',
+          required: false,
+          label: 'Id',
+          align: 'left',
+          field: 'id'
+        },
+        {
+          name: 'qty',
+          required: true,
+          label: 'Qty',
+          align: 'left',
+          field: 'qty',
+          classes: 'bg-deep-purple-1'
+        },
+        {
+          name: 'item',
+          required: true,
+          label: 'Item',
+          align: 'left',
+          field: 'item',
+          sortable: true,
+          classes: 'bg-deep-purple-1'
+        },
+        {
+          name: 'unit',
+          required: true,
+          label: 'Unit',
+          align: 'left',
+          field: 'unit',
+          classes: 'bg-deep-purple-1'
+        },
+        {
+          name: 'price',
+          required: false,
+          label: 'Price',
+          align: 'left',
+          field: 'price',
+          classes: 'bg-deep-purple-1'
+        },
+        {
+          name: 'cost',
+          required: false,
+          label: 'Cost',
+          align: 'left',
+          field: 'cost',
+          classes: 'bg-deep-purple-1'
+        },
+        {
+          name: 'gst',
+          required: false,
+          label: 'GST',
+          align: 'left',
+          field: 'gst',
+          classes: 'bg-deep-purple-1'
+        },
+        {
+          name: 'total',
+          required: false,
+          label: 'Total',
+          align: 'left',
+          field: 'total',
+          classes: 'bg-deep-purple-2'
+        },
+        {
+          name: 'expAccount',
+          required: false,
+          label: 'expAccount',
+          align: 'center',
+          field: 'expAccount'
+        },
+        {
+          name: 'category',
+          required: false,
+          label: 'Category',
+          align: 'center',
+          field: 'category'
+        },
+        {
+          name: 'taxable',
+          required: false,
+          label: 'Taxable',
+          align: 'center',
+          field: 'taxable'
+        },
+        {
+          name: 'expand',
+          required: false,
+          label: 'Expand',
+          align: 'center',
+          field: 'expand',
+          style: 'width: 500px'
+        }
+      ],
+      visibleModalColumns: ['qty', 'item', 'unit', 'price', 'cost', 'gst', 'total', 'expAccount', 'category', 'taxable', 'expand'],
+      pagination: {
+        sortBy: name, // String, column 'item' property value
+        descending: true,
+        page: 1,
+        rowsPerPage: 0 // current rows per page being displayed,
+      },
       transactions: [
         {
           "credit": [
@@ -321,14 +626,351 @@ export default {
         }
       ],
       journalColumns: [],
+      gstIncluded: 'yes',
       visibleJournalColumns: [],
-      journalColumnList: []
+      journalColumnList: [],
+      newItem: {
+        qty: '',
+        item: '',
+        unit: '',
+        amount: '',
+        expAccount: '',
+        category: '',
+        taxable: 'yes',
+        add2Inventory: false,
+        add2Pricelist: true
+      },
+      vendorsList: [
+      ],
+      paymentTypes: [
+        {
+          value: 'cashMS',
+          label: 'cashMS'
+        },
+        {
+          value: 'cashHR',
+          label: 'cashHR'
+        },
+        {
+          value: 'ccardScotia',
+          label: 'ccardScotia'
+        },
+        {
+          value: 'checkAtl#',
+          label: 'checkAtl#'
+        },
+        {
+          value: 'cashAtl',
+          label: 'cashAtl'
+        },
+        {
+          value: 'payableAcct',
+          label: 'payableAcct'
+        }
+      ],
     }
   },
   computed: {
+    computedUnitsList () {
+      if (this.$data.unitsList[this.$data.newItem.item]) {
+        return this.$data.unitsList[this.$data.newItem.item]
+      } else {
+        return []
+      }
+  },
+    subTotal () {
+      let t = 0
+      this.$data.transaction.transItems.forEach(item => {
+        console.log('t', t, item.cost)
+        t += item.cost
+      })
+      return _.round(t,2)
+    },
+    gstTotal () {
+      let g = 0
+      this.$data.transaction.transItems.forEach(item => {
+        console.log('g', g, item.gst)
+        g += item.gst
+      })
+      return _.round(g,2)
+    },
+    grandTotal () {
+      let gt = 0
+      this.$data.transaction.transItems.forEach(item => {
+        gt += item.total
+      })
+      return _.round(gt,2)
+    },
+    expSubTotal () {
+      let t = 0
+      this.$data.expenses.forEach(exp => {
+        console.log('t', t, exp.subTotal)
+        t += exp.subTotal
+      })
+      return _.round(t,2)
+    },
+    expGstTotal () {
+      let g = 0
+      this.$data.expenses.forEach(exp => {
+        console.log('g', g, exp.gstTotal)
+        g += exp.gstTotal
+      })
+      return _.round(g,2)
+    },
+    expGrandTotal () {
+      let gt = 0
+      this.$data.expenses.forEach(exp => {
+        gt += exp.grandTotal
+      })
+      return _.round(gt,2)
+    },
+    gstIncludedVisibility () {
+      if (this.$data.newItem.taxable === 'yes') {
+        return false
+      } else {
+        this.$data.gstIncluded = 'no'
+        return true
+      }
+    }
   },
   methods: {
+    addItem () {
+      console.log('start',this.$data.newItem.taxable)
+      let line = JSON.parse(JSON.stringify(this.$data.newItem))
+      // check if unit is correct format
+      if (!line.unit.includes('-')) {
+        this.$q.notify({
+          message: 'Unit missing dash -',
+          timeout: 3000,
+          position: 'center'
+        })
+      } else {
+        // make sure account is entered
+        if (line.expAccount !== '') {
+          if (this.$data.newItem.taxable === 'yes') {
+            if (this.$data.gstIncluded === 'yes') {
+              line.gst = _.round((line.amount / 9), 2)
+              line.cost = _.round((line.amount / 1.125), 2)
+            } else {
+              line.gst = _.round((line.amount * 0.125), 2)
+              line.cost = line.amount
+            }
+          } else {
+            line.gst = 0
+            line.cost = line.amount
+          }
+          line.price = _.round((line.cost / line.qty), 2)
+          line.total = _.round((line.gst + line.cost), 2)
+          delete line['amount']
+          this.$data.transaction.transItems.push(line)
+          console.log('line Item', line)
+          // clear fields for new item
+          let tempItem = {
+            qty: '',
+            item: '',
+            unit: '',
+            amount: '',
+            taxable: this.$data.newItem.taxable,
+            add2Inventory: this.$data.newItem.add2Inventory,
+            add2Pricelist: this.$data.newItem.add2Pricelist
+          }
+          if (this.$data.lockAccount) {
+            tempItem.expAccount = this.$data.newItem.expAccount
+          } else {
+            tempItem.expAccount = ''
+          }
+          if (this.$data.lockCategory) {
+            tempItem.category = this.$data.newItem.category
+          } else {
+            tempItem.category = ''
+          }
+          this.$data.newItem = tempItem
+        } else {
+          console.log('expAccount needs value')
+          this.$q.notify({
+            message: 'expAccount needs value',
+            timeout: 3000,
+            position: 'center'
+          })
+        }
+        this.$refs.newEntry.focus()
+        console.log('end',this.$data.newItem.taxable)
+      }
+      // this.modalScroll()
+    },
+    overlay () {
+      console.log('overlaycalled',this.$data.newItem.add2Inventory, this.$data.transaction.add2Pricelist)
+      this.$data.newItem = {
+        qty: '',
+        item: '',
+        unit: '',
+        amount: '',
+        expAccount: '',
+        category: '',
+        taxable: 'yes',
+        add2Inventory: false,
+        add2Pricelist: true
+      }
+      this.$data.expenseModal = !this.$data.expenseModal
+      this.$refs.inputVendor.focus()
+      console.log('scrolltop')
+    },
+    toggleFullscreen () {
+      this.$data.boolScreen = !this.$data.boolScreen
+      console.log('fullscreen', this.$data.boolScreen)
+    },
+    submitExpense () {
+      // check for valid check # (by length)
+      if (this.$data.transaction.paymentAccount.includes('checkAtl#') && this.$data.transaction.paymentAccount.length < 13) {
+        console.log('bad check')
+        this.$q.notify({
+          message: 'please verify check number',
+          timeout: 3000,
+          position: 'center'
+        })
+        return false
+      }
+      // check that line may not have been added
+      console.log('test', this.$data.newItem.qty && this.$data.newItem.item && this.$data.newItem.unit && this.$data.newItem.amount)
+      console.log(this.$data.newItem.qty, this.$data.newItem.item, this.$data.newItem.unit, this.$data.newItem.amount)
+      if (this.$data.newItem.qty && this.$data.newItem.item && this.$data.newItem.unit && this.$data.newItem.amount) {
+        this.$q.notify({
+          message: 'new Item data not added to list',
+          timeout: 3000,
+          position: 'center'
+        })
+      } else {
+        // save computed values to transaction.object
+        /*****************
+        this.$data.transaction.subTotal = this.subTotal
+        this.$data.transaction.gstTotal = this.gstTotal
+        this.$data.transaction.grandTotal = this.grandTotal
+        
+        // check if this is an exsisting transaction 
+        let tmpId = this.$data.transaction.id
+        ****************/
+
+        // dateinput records date as UTC, if entered after 18:00 the date is recorded for the next day (+6hrs)
+        // if the hour is <6, date needs to go back one day
+        let dInfo = new Date(this.$data.transaction.date1)
+        console.log('dInfo', typeof dInfo, dInfo)
+        dInfo = dInfo.toISOString()
+        console.log(dInfo)
+        let hour = dInfo.substr(11,2)
+        hour = Number(hour)
+        if (hour < 6) {
+          let d = dInfo.substr(0,10)
+          let day = d.substr(-2)
+          day = Number(day -1)
+          if (day < 10) {
+            day = `0${day}`
+          }
+          let t = dInfo.substr(13)
+          let d2 = `${d.substr(0,8)}${day}T10${t}`
+          this.$data.transaction.date1 = d2
+        }
+        /*****************
+        if (tmpId) {
+          // if transaction is modified, changes need to be recorded
+          // if account changed, original acct needs to be reversed
+          console.log('existing transaction', tmpId)
+          // sdelete this.$data.transaction['id']
+          api.service('expenses').update(tmpId, this.$data.transaction).then((response) => {
+            console.log('sumbitted expense', response.id)
+            delete response['id']
+            api.service('audit').create(response) // no indication that this was an update?
+            // what payable account asset - liability
+            // whether it is asset or liability, will still be a creditEntry
+            journalObject.credit.push({
+              account: this.$data.transaction.paymentAccount,
+              amount: this.$data.transaction.grandTotal
+            })
+            let gstMonth = moment(this.$data.transaction.date1).format('MMM')  
+            if (this.$data.transaction.gstTotal) {
+              journalObject.debit.push({
+                account: 'preGst'+ gstMonth,
+                amount: this.$data.transaction.gstTotal
+              })
+            }
+            this.$data.transaction.transItems.forEach((item) => {
+              journal.Object.debit.push({
+                account: item.expAccount,
+                amount: item.trans
+              })
+            })
+          })
+          // need to handle any edits to inv changes
+          // probably need og copy to track changes
+          // lookup inv record based on an id?
+        } else {
+          *****************/
+        console.log('new transaction')
+
+        // convert to new credit/debit form
+        let transData = this.$data.transaction
+        let newTransaction = {
+          timestamp: Date.now(), // new
+          transactionDate: transData.date1,
+          transactionNum: transData.transNum,
+          name: transData.vendor, // key change
+          details: transData.transItems //key change
+        }
+        let credit = []
+        let debit = []
+        let chainLinks = []
+        let prepaidGst = 0
+        transData.transItems.forEach(item => {
+          debit.push({ 
+            account: `expense/${item.expAccount}/${item.category}/${item.item}`,
+            amount: item.cost
+          })
+          prepaidGst =+ item.gst
+        })
+        debit.push({
+          account: `prepaid/gst`,
+          amount: prepaidGst
+        })
+        // determine whether to credit/debit payment account ['payable', 'ccardScotia', checkAtl#', 'cashAtl', 'cashMS', 'cashHR']
+        if (['payable', 'ccardScotia'].includes(transData.paymentAccount)) {
+
+        }
+        // need to handle different payment account types
+        let creditAccount = ''
+        if (transData.paymentAccount.includes('cash')) {
+          creditAccount = 'cash/' + transData.paymentAccount.substr(4)
+        }
+        if (transData.paymentAccount.includes('check')) {
+          creditAccount = 'checks/' + transData.paymentAccount.substr(5)
+        }
+        if (transData.paymentAccount.includes('ccard')) {
+          creditAccount = 'ccard/' + transData.paymentAccount.substr(5)
+        }
+        if (transData.paymentAccount.includes('payable')) {
+          creditAccount = 'payable/' + transData.vendor
+        }
+        credit.push({
+          account: creditAccount,
+          amount: this.grandTotal
+        })
+        newTransaction['credit'] = credit
+        newTransaction['debit'] = debit
+
+        //this.$axios.post('localhost:3001/')
+        this.$data.transactions.push(newTransaction)
+        this.parseTransactions (this.$data.transactions)
+
+      } // end of else (data in add item fields check)
+      // moved updatePrices and Inventory to 'newTransaction' to use transaction.id
+      // |-> no longer executed if loading existing transaction
+      // close overlay
+      this.overlay()
+      // reload expenses list from rethinkdb
+      // this.loadExpenses(this.$data.startDate, this.$data.endDate)
+      this.$data.startDate = this.$data.transaction.date1
+      // this.loadExpenses()
+    },
     parseTransactions (transactions) {
+      this.$data.journal = []
       // cycle through each transaction
       transactions.forEach(trans => {
         //create object for datatable row
