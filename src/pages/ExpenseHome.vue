@@ -703,7 +703,11 @@ export default {
     },
     myFilter(terms, { field, list }) {
       const token = terms.toLowerCase();
-      return list.filter(item => fuzzysearch(token, item[field].toLowerCase()));
+      let filterList = list.filter(item => fuzzysearch(token, item[field].toLowerCase()));
+      // console.log('filter', filterList.length, filterList)
+      filterList.sort(function(a, b) {return a.label.length-b.label.length})
+      // console.log('filter2', filterList.length, filterList)
+      return filterList
     },
     popup(row) {
       // _.findIndex(this.$data.expenses, {})
