@@ -166,7 +166,8 @@
         :filter="filter"
         :visible-columns="visibleJournalColumns"
         row-key="date1"
-        :pagination.sync="pagination" >
+        :pagination.sync="pagination"
+        dense >
           <template slot="top-left" slot-scope="props">
           <q-search
             hide-underline
@@ -189,13 +190,13 @@
             <q-td class="bg-green-1">{{ total.inventory || '-' }}</q-td>
             <q-td class="bg-green-1">{{ total.cash || '-' }}</q-td>
             <q-td class="bg-green-1">{{ total.equipment || '-' }}</q-td>
-            <q-td class="bg-green-1">{{ total.assets || '-' }}</q-td>
-            <q-td class="bg-deep-purple-1">{{ total.liabilities || '-' }}</q-td>
+            <q-td class="bg-green-1">{{ total.assets }}</q-td>
+            <q-td class="bg-deep-purple-1">{{ total.liabilities }}</q-td>
             <q-td class="bg-purple-1">{{ total.payable || '-' }}</q-td>
             <q-td class="bg-purple-1">{{ total.expense || '-' }}</q-td>
             <q-td class="bg-deep-purple-1">{{ total.sales || '-' }}</q-td>
             <q-td class="bg-deep-purple-1">{{ total.capital || '-' }}</q-td>
-            <q-td class="bg-deep-purple-1">{{ total.netEquity || '-' }}</q-td>
+            <q-td class="bg-deep-purple-3">{{ total.netEquity || '-' }}</q-td>
         </q-tr>
       </q-table>
     </div>
@@ -386,6 +387,7 @@
 import moment from 'moment'
 import api from 'src/api'
 import _ from 'lodash'
+const shajs = require('sha.js')
 import {
   QChatMessage,
   QTable,
@@ -927,23 +929,47 @@ export default {
           transactionDate: transData.date1,
           transactionNum: transData.transNum,
           name: transData.vendor, // key change
-          details: transData.transItems //key change
+          details: transData.transItems, //key change
+          chainlinks: []
         }
         let credit = []
         let debit = []
         let chainLinks = []
         let prepaidGst = 0
+        let flagInventory = false
         transData.transItems.forEach(item => {
           debit.push({ 
             account: `expense/${item.expAccount}/${item.category}/${item.item}`,
             amount: item.cost
           })
           prepaidGst =+ item.gst
+          // check for inventory
+          console.log('inventory', item)
+          if (item.add2Inventory) {
+            flagInventory = true
+            debit.push({
+              account: `inventory/${item.category}/${item.item}`,
+              amount: item.cost
+            })
+            credit.push({
+              account: `capital/${item.category}/${item.item}`,
+              amount: item.cost
+            })
+          }
         })
-        debit.push({
-          account: `prepaid/gst`,
-          amount: prepaidGst
-        })
+        if (prepaidGst > 0) {
+          // append month to gst for categorizing
+          debit.push({
+            account: `prepaid/gst`,
+            amount: prepaidGst
+          })
+        }
+        if (flagInventory) {
+          const dataAsString = JSON.stringify(newTransaction.details)
+          const hash = shajs('sha256').update(dataAsString).digest('hex')
+          newTransaction.chainlinks.push({ chain: 'inventory', link: hash })
+        }
+        
         // determine whether to credit/debit payment account ['payable', 'ccardScotia', checkAtl#', 'cashAtl', 'cashMS', 'cashHR']
         if (['payable', 'ccardScotia'].includes(transData.paymentAccount)) {
 
@@ -966,6 +992,8 @@ export default {
           account: creditAccount,
           amount: this.grandTotal
         })
+        // check for pricelist?
+        // check for payable
         newTransaction['credit'] = credit
         newTransaction['debit'] = debit
 
@@ -1042,17 +1070,18 @@ export default {
               this.$data.total[property] = entry[property]
             }
             if(['receivable', 'prepaid', 'inventory', 'cash', 'equipment'].includes(property)) {
-                console.log('includes', property, this.$data.total.assets)
-                this.$data.total.assets += entry[property]
-                this.$data.total.assets = _.round(this.$data.total.assets, 2)
-              } else {
-                console.log('Notincludes', property, this.$data.total.liabilities)
-                this.$data.total.liabilities += entry[property]
-                this.$data.total.liabilities = _.round(this.$data.total.liabilities, 2)
-              }
+              console.log('includes', property, this.$data.total.assets)
+              this.$data.total.assets += entry[property]
+              this.$data.total.assets = _.round(this.$data.total.assets, 2)
+            } else {
+              console.log('Notincludes', property, this.$data.total.liabilities)
+              this.$data.total.liabilities += entry[property]
+              this.$data.total.liabilities = _.round(this.$data.total.liabilities, 2)
+            }
           }
         }
       })
+      this.$data.total['netEquity'] = this.$data.total.liabilities - (this.$data.total.payable || 0)
       console.log('total', this.$data.total)
     },
     expandSpan () {

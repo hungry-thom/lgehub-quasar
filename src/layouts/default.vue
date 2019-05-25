@@ -144,7 +144,7 @@ export default {
   },
   methods: {
     loadRoute () {
-      console.log('loadRouteClickd')
+      console.log('loadRouteClickd', this.$router)
       this.$q.loading.show({})
     },
     goTo (route) {
