@@ -131,7 +131,8 @@ export default {
   data () {
     return {
       leftDrawerOpen: this.$q.platform.is.desktop,
-      user: null
+      user: null,
+      prevRoute: []
     }
   },
   computed: {
@@ -145,7 +146,12 @@ export default {
   methods: {
     loadRoute () {
       console.log('loadRouteClickd', this.$router)
-      this.$q.loading.show({})
+      this.$data.prevRoute.push(this.$router.history.current.name)
+      let len = this.$data.prevRoute.length
+      console.log(this.$data.prevRoute)
+      if (this.$data.prevRoute[len-2] !== this.$router.history.current.name) {
+        this.$q.loading.show({})
+      }
     },
     goTo (route) {
       this.$router.push({ name: route })
@@ -184,6 +190,9 @@ export default {
       this.setUser(null)
       this.$router.push({ name: 'home' })
     })
+  },
+  beforeRouteLeave (to, from, next) {
+    console.log('after', to, from)
   },
   beforeDestroy () {
   }
