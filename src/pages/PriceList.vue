@@ -47,6 +47,7 @@
               <q-td key="track" :props="props">
                 <q-btn size="sm" round color="secondary" icon="history" @click="priceOverlay(props.row)" class="q-mr-xs" />
                 <q-btn size="sm" round color="secondary" icon="add" @click="overlay(props.row)" class="q-mr-xs" />
+                <q-btn size="sm" round color="secondary" icon="edit" class="q-mr-xs" @click="editItemOverlay(props.row)" />
               </q-td>
               <!--<q-tooltip>I'd like to eat "{{ props.row.name }}"</q-tooltip>-->
             </q-tr>
@@ -87,6 +88,33 @@
         </q-table>
         <br>
       </div>
+      <!-- //////// START OF edit item MODAL  //////// -->
+      <q-modal v-model="overlayEditItem">
+        <q-modal-layout>
+          <q-toolbar slot="header">
+            <q-btn
+              flat
+              icon="keyboard_backspace"
+              v-close-overlay
+            />
+            <q-toolbar-title>
+              Edit Item
+            </q-toolbar-title>
+          </q-toolbar>
+          <div  class="q-pa-sm" >
+          <q-field
+            icon="edit"
+            :label="modalMeta.label"
+            orientation="vertical" >
+            <q-input class= "col" minimal color="orange" float-label="Item" v-model="modalEditItem.item" />
+            <q-input class= "col" minimal color="orange" float-label="Category" v-model="modalEditItem.category" />
+          <br>
+          <q-btn v-close-overlay label="save changes" color="secondary" />&nbsp;&nbsp;
+          <q-checkbox v-model="modalEditItem.taxable" true-value="yes" false-value="no" label="gst included" />
+          </q-field>
+          </div>
+        </q-modal-layout>
+      </q-modal>
       <!-- //////// START OF add stock MODAL  ////////-->
       <q-modal v-model="addItemModal">
         <q-modal-layout>
@@ -412,12 +440,27 @@ export default {
           field: 'user'
         }
       ],
-      ptVisibleColumns: ['price', 'unit', 'vendor', 'recordDate', 'expenseId', 'user']
+      ptVisibleColumns: ['price', 'unit', 'vendor', 'recordDate', 'expenseId', 'user'],
+      modalEditItem: {
+        item: '',
+        category: '',
+        taxable: ''
+      },
+      overlayEditItem: false
     }
   },
   computed: {
   },
   methods: {
+    editItemOverlay(row) {
+      console.log(row)
+      this.$data.overlayEditItem = !this.$data.overlayEditItem
+      this.$data.modalEditItem = {
+        item: row.item,
+        category: row.category,
+        taxable: row.taxable
+      }
+    },
     loadExpenseId (expId) {
       console.log('push1', expId)
       this.$router.push({path: `expense/${expId}`})
@@ -448,7 +491,7 @@ export default {
           customUnit = data.substr(i + 1)
           caseQty = data.substr(0,i)
         } else {
-          console.log('data', data)
+          // console.log('data', data)
           customUnit = data
         }
         // parse qty and base
@@ -572,7 +615,6 @@ export default {
           category: this.$data.categoryValue
         }
       }).then((response) => {
-        let tempList = []
         // load pricelist data to datatable
         this.$data.pricelist = response.data
         // run price sort on all items
@@ -582,13 +624,13 @@ export default {
     itemPriceSort(items) {
       // for each item need to sort vendors list
       items.forEach((item,z) => {
-        console.log('index', z, item)
+        // console.log('index', z, item)
         // start compareFunction()
         let tempItem = item
         let sortedVendors = []
         item.vendors.forEach(vendor => {
           // vendor: vendor, unit, price, updated
-          console.log( item.item, vendor.vendor, vendor. unit)
+          // console.log( item.item, vendor.vendor, vendor. unit)
           // will need to breakout single values
           let pUnit = ''
           let caseQty = null
@@ -646,7 +688,7 @@ export default {
               } else {
                 // base not same need to change
                 // console.log(comp)
-                console.log('converting', item.item, pBase, comp.compBase, index, sortedVendors[index])
+                // console.log('converting', item.item, pBase, comp.compBase, index, sortedVendors[index])
                 // check to see if compBase &&& pBase in convert units.
                 if (comp.compBase) {
                   const isPossibleUnit = convert().possibilities().includes(comp.compBase)
@@ -696,7 +738,7 @@ export default {
         }) // end of all vendors, on to next item
         // find item in pricelist and update vendors to sortedVendors
         let plIndex = _.findIndex(this.$data.pricelist, {item: item.item})
-        console.log(item, plIndex, this.$data.pricelist)
+        // console.log(item, plIndex, this.$data.pricelist)
         this.$data.pricelist[plIndex].vendors = sortedVendors
       }) // end of all items
       this.$data.loading = false
