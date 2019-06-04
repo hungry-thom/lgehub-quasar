@@ -109,7 +109,7 @@
             <q-input class= "col" minimal color="orange" float-label="Item" v-model="modalEditItem.item" />
             <q-input class= "col" minimal color="orange" float-label="Category" v-model="modalEditItem.category" />
           <br>
-          <q-btn v-close-overlay label="save changes" color="secondary" />&nbsp;&nbsp;
+          <q-btn v-close-overlay label="save changes" color="secondary" @click="onEditItem" />&nbsp;&nbsp;
           <q-checkbox v-model="modalEditItem.taxable" true-value="yes" false-value="no" label="gst included" />
           </q-field>
           </div>
@@ -452,13 +452,26 @@ export default {
   computed: {
   },
   methods: {
+    onEditItem () {
+      const itemInfo = this.$data.modalEditItem
+      api.service('pricelist').update(itemInfo.id, itemInfo)
+      .then(response => {
+        console.log('successfully updated item', response)
+        // need to update current displayed list
+      })
+      .catch(err => {
+        console.log('error updating item', err)
+      })
+    },
     editItemOverlay(row) {
       console.log(row)
       this.$data.overlayEditItem = !this.$data.overlayEditItem
       this.$data.modalEditItem = {
         item: row.item,
         category: row.category,
-        taxable: row.taxable
+        taxable: row.taxable,
+        id: row.id,
+        vendors: row.vendors
       }
     },
     loadExpenseId (expId) {
