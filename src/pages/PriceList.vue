@@ -458,6 +458,7 @@ export default {
       .then(response => {
         console.log('successfully updated item', response)
         // need to update current displayed list
+        this.loadPricelistData()
       })
       .catch(err => {
         console.log('error updating item', err)
