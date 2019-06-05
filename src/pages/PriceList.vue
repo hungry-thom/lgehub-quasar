@@ -34,7 +34,7 @@
             <q-tr :props="props" @dblclick.native="overlay(props.row)">
               <!-- <q-tooltip :delay="1000">Double Click to add to {{ props.row.item }} </q-tooltip> -->
               <q-td key="item" :props="props">
-                <q-checkbox color="primary" v-model="props.expand" unchecked-icon="add" checked-icon="remove" class="q-mr-md" />
+                <q-checkbox color="primary" v-model="props.expand" unchecked-icon="add" checked-icon="remove" class="q-mr-md" @input="onExpand(props.row)"/>
                 {{ props.row.item }}
               </q-td>
               <q-td key="taxable" :props="props">
@@ -138,7 +138,7 @@
             <q-input minimal color="orange" float-label="Price" type="number" v-model="modalValues.price" />
           <br>
           <q-btn v-close-overlay label="addNew" color="secondary" @click="addStockUnit" />&nbsp;&nbsp;
-          <q-checkbox v-model="modalMeta.wGST" label="gst included" />
+          <q-checkbox v-model="modalMeta.wGST" true-value="yes" false-value="no" label="gst included" />
           </q-field>
           </div>
         </q-modal-layout>
@@ -556,19 +556,36 @@ export default {
         this.$data.priceTrackModal = true
       })
     },
+    onExpand (row) {
+      this.$data.modalMeta.label = row.item
+      this.$data.modalMeta.wGST = row.taxable
+      console.log("expand") 
+    },
     overlay (row) {
       this.$data.addItemModal = true
       console.log('overlay', row)
-      this.$data.modalMeta.label = row.item
+      if (row.item) {
+        this.$data.modalMeta.label = row.item
+      }
+      /* unecessary once checkbox is updated to use custom val
       if (row.taxable === 'yes') {
         this.$data.modalMeta.wGST = true
       } else {
         this.$data.modalMeta.wGST = false
       }
-      this.$data.modalValues = {
-        price: '',
-        unit: '',
-        vendor: ''
+      */
+      if (row.vendor) {
+        this.$data.modalValues = {
+          price: row.price,
+          unit: row.unit,
+          vendor: row.vendor
+        }
+      } else {
+        this.$data.modalValues = {
+          price: '',
+          unit: '',
+          vendor: ''
+        }
       }
     },
     showNotification (val) {
@@ -594,7 +611,7 @@ export default {
       // get item info based on modalMeta.label
       let dex = _.findIndex(this.$data.pricelist, {item: this.$data.modalMeta.label})
       let row = this.$data.pricelist[dex]
-      console.log('row1', row) // somehow 'c' vendor data is already loaded to row???
+      console.log('row1', row) // somehow 'c' vendor data is already loaded to row??? // there must be dynamic linking
       let c = this.$data.modalValues // entered price, unit, vendor
       console.log('c', c)
       c.updated = new Date()
