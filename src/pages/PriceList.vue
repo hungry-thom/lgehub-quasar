@@ -611,16 +611,24 @@ export default {
       // get item info based on modalMeta.label
       let dex = _.findIndex(this.$data.pricelist, {item: this.$data.modalMeta.label})
       let row = this.$data.pricelist[dex]
-      console.log('row1', row) // somehow 'c' vendor data is already loaded to row??? // there must be dynamic linking
+      console.log('row1', row) // somehow 'c' vendor data is already loaded to row??? // there must be dynamic (reative) linking
       let c = this.$data.modalValues // entered price, unit, vendor
       console.log('c', c)
       c.updated = new Date()
       // check inherited item info; 'wGST' selected on modal; 'label' loaded on dblclick
-      if (this.$data.modalMeta.wGST) { 
-        c.price = _.round((c.price / 1.125), 2)
+      // check if adding new stock or editing
+      const dex2 =  _.findIndex(row.vendors, {vendor: this.$data.modalValues.vendor, unit: this.$data.modalValues.unit})
+      console.log("checks", dex2, row.vendors, this.$data.modalValues.vendor, this.$data.modalValues.unit)
+      if (dex2 > -1) {
+        row.vendors[dex2] = c
+      } else {
+        // if no index, we are adding a new stock unit
+        if (this.$data.modalMeta.wGST) { 
+          c.price = _.round((c.price / 1.125), 2)
+        }
+        // push new stock unit/vendor to item
+        row.vendors.push(c) // not sure how this executes before row1 console.log
       }
-      // push new stock unit/vendor to item
-      row.vendors.push(c) // not sure how this executes before row1 console.log
       console.log('row2', row)
       // update entire item, can't just update stock; row has added comp fields from initial itemPriceSort
       let tmpRow = row
