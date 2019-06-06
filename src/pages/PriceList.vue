@@ -127,6 +127,13 @@
             <q-toolbar-title>
               Add Item
             </q-toolbar-title>
+            <q-btn
+              flat
+              icon="delete"
+              v-close-overlay
+              v-if="overlayDelete"
+              @click="addStockUnit('delete')"
+            />
           </q-toolbar>
           <div  class="q-pa-sm" >
           <q-field
@@ -239,6 +246,7 @@ export default {
   props: ['user'],
   data () {
     return {
+      overlayDelete: false,
       loading: true,
       ptFilter: '',
       priceTrackModal: false,
@@ -561,6 +569,10 @@ export default {
       this.$data.modalMeta.wGST = row.taxable
       console.log("expand") 
     },
+    deleteStock () {
+      // determine item
+      // 
+    },
     overlay (row) {
       this.$data.addItemModal = true
       console.log('overlay', row)
@@ -575,17 +587,23 @@ export default {
       }
       */
       if (row.vendor) {
+        // user clicked on edit vendor stock unit, load values
         this.$data.modalValues = {
           price: row.price,
           unit: row.unit,
           vendor: row.vendor
         }
+        // make vendor stock unit deleteable
+        console.log('stock- vendor')
+        this.$data.overlayDelete = true
       } else {
         this.$data.modalValues = {
           price: '',
           unit: '',
           vendor: ''
         }
+        console.log('item- no vendor')
+        this.$data.overlayDelete = false
       }
     },
     showNotification (val) {
@@ -606,7 +624,7 @@ export default {
         })
       }
     },
-    addStockUnit () {
+    addStockUnit (del) {
       // exectued on add item modal save
       // get item info based on modalMeta.label
       let dex = _.findIndex(this.$data.pricelist, {item: this.$data.modalMeta.label})
@@ -620,7 +638,12 @@ export default {
       const dex2 =  _.findIndex(row.vendors, {vendor: this.$data.modalValues.vendor, unit: this.$data.modalValues.unit})
       console.log("checks", dex2, row.vendors, this.$data.modalValues.vendor, this.$data.modalValues.unit)
       if (dex2 > -1) {
-        row.vendors[dex2] = c
+        if (del === 'delete') {
+          console.log('splice')
+          row.vendors.splice(dex2,1)
+        } else {
+          row.vendors[dex2] = c
+        }
       } else {
         // if no index, we are adding a new stock unit
         if (this.$data.modalMeta.wGST) { 
