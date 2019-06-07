@@ -32,6 +32,7 @@
                 </q-item>
               </q-list>
             </q-btn-dropdown>
+            &nbsp;<q-btn label="add" @click="addItemModal = !addItemModal"/>
           </template>
           <q-tr slot="body" slot-scope="props" :props="props">
             <q-td key="item" :props="props">{{ props.row.item }}</q-td>
@@ -96,7 +97,7 @@
         </q-modal-layout>
       </q-modal>
       <!-- ///////END OF AUDIT MODAL ///////// -->
-      <!-- //////START OF ADD ITEM MODAL //////
+      <!-- //////START OF ADD ITEM MODAL ////// -->
       <q-modal v-model="addItemModal">
         <q-modal-layout>
           <q-toolbar slot="header">
@@ -109,9 +110,19 @@
               Add Item
             </q-toolbar-title>
           </q-toolbar>
-          <q-input float-label="Item name" v-model="newItem.item" />
+          <div  class="q-pa-sm" >
+            <q-field
+              icon="add_circle"
+              orientation="vertical" >
+              <q-input class= "col" minimal color="orange" float-label="Item" v-model="modalValues.item" @blur="onItemBlur(modalValues.item)"/><!-- add autocomplete -->
+              <q-input class= "col" minimal color="orange" float-label="Category" v-model="modalValues.category" />
+              <q-input minimal color="orange" float-label="Stock" v-model="modalValues.stock" />
+              <br>
+              <q-btn v-close-overlay label="addNew" color="secondary" />&nbsp;&nbsp;
+            </q-field>
+          </div>
         </q-modal-layout>
-      </q-modal> -->
+      </q-modal>
   </q-page>
 </template>
 
@@ -130,8 +141,10 @@ import {
   QBtn,
   QModal,
   QModalLayout,
-  QBtnDropdown
+  QBtnDropdown,
+  QField
 } from 'quasar'
+import { stringify } from 'querystring';
 
 export default {
   name: 'chat',
@@ -146,11 +159,17 @@ export default {
     QBtn,
     QModal,
     QModalLayout,
-    QBtnDropdown
+    QBtnDropdown,
+    QField
   },
   props: ['user'],
   data () {
     return {
+      modalValues: {
+        item: '',
+        category: '',
+        stock: ''
+      },
       loading: true,
       categoryArray: [],
       categoryValue: 'DryFood',
@@ -279,12 +298,57 @@ export default {
         }
       }).then(response=> {
         response.data.forEach(category => {
-          console.log('ccc',category)
+          // console.log('ccc',category)
           if (!this.$data.categoryArray.includes(category.category)) {
             this.$data.categoryArray.push(category.category)
           }
         })
       })
+    },
+    onItemBlur (evt) {
+      console.log('blur', evt)
+      // want to add item using pricelist data
+      let q = '(?i)' + evt
+      api.service('pricelist').find({
+        query: {
+          item: {
+            $search: q
+          }
+        }
+      }).then(result => {
+        console.log(q, result)
+        let radioItems = []
+        result.data.forEach(item => {
+          radioItems.push({
+            label: item.item,
+            value: item.item,
+          })
+        })
+        let msg = "Select an item to autoload"
+        if (radioItems.length == 0) {
+          msg = "Item not found in pricelist"
+        }
+        this.$q.dialog({
+          title: 'Autoload',
+          message: msg,
+          options: {
+            type: 'radio',
+            model: '',
+            // inline: true
+            items: radioItems
+          },
+          cancel: true,
+          persistent: true
+        }).then(data => {
+          console.log('>>>> OK, received', data)
+          if (data) {
+            console.log('no data')
+          }
+        }).catch(() => {
+          console.log('>>>> Cancel')
+        })
+      })
+      // there may be some items not based on pricelist though, quesadilla cheese, etc
     },
     addItemOverlay () {
       this.$data.addItemModal = !this.$data.addItemModal
@@ -417,8 +481,8 @@ export default {
           // We want the latest inventory but in the reversed order
           this.$data.inventory = response.data.reverse()
           this.$data.inventory.forEach(item => {
-            console.log(item)
-            console.log('----------')
+            // console.log(item)
+            // console.log('----------')
             let timeDiff = 0
             if (moment(item.lastConf).year() == 2018) {
               timeDiff = moment().dayOfYear() - (moment(item.lastConf).dayOfYear() * -1)
@@ -445,7 +509,7 @@ export default {
             let og = JSON.parse(JSON.stringify(item.stock))
             this.$data.confirmations.push( {item: item.item, confirmed: item.confirmed, warning: item.warning, originalStock: og} )
           }, this) // this necessary?
-          console.log(this.$data.confirmations)
+          // console.log(this.$data.confirmations)
           this.$data.loading = false
         })
     }
