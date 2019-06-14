@@ -3,8 +3,9 @@ import socketio from '@feathersjs/socketio-client'
 import auth from '@feathersjs/authentication-client'
 import io from 'socket.io-client'
 
-const socket = io('192.168.100.10:3030', {transports: ['websocket']})
-// const socket = io('https://f75b7782.ngrok.io', {transports: ['websocket']})
+// const socket = io('192.168.100.10:3030', {transports: ['websocket']})
+const socket = io('https://d1a75aee.ngrok.io', {transports: ['websocket']})
+// const socket = io('localhost:3030', {transports: ['websocket']})
 
 const api = feathers()
   .configure(socketio(socket))

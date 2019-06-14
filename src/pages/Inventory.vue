@@ -342,7 +342,19 @@ export default {
         }).then(data => {
           console.log('>>>> OK, received', data)
           if (data) {
-            console.log('no data')
+            const dex = _.findIndex(result.data, {item: data})
+            this.$data.modalValues = {
+              item:  result.data[dex].item,
+              category: result.data[dex].category
+            }
+            let stock = []
+            result.data[dex].vendors.forEach(vendor => {
+              if(_.findIndex(stock, {unit: vendor.unit}) < 0) {
+                stock.push({unit: vendor.unit, qty: 0})
+              }
+            })
+            this.$data.modalValues['stock'] = stock
+            console.log(this.$data.modalValues)
           }
         }).catch(() => {
           console.log('>>>> Cancel')
