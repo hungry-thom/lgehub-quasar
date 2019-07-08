@@ -545,6 +545,7 @@ export default {
           console.log(row)
           console.log('custom', customValue, customBase, customQty)
         })
+        this.itemPriceSort([row])
       }).catch((err) => {
         this.$q.notify(err)
       })
@@ -591,7 +592,8 @@ export default {
         this.$data.modalValues = {
           price: row.price,
           unit: row.unit,
-          vendor: row.vendor
+          vendor: row.vendor,
+          __index: row.__index
         }
         // make vendor stock unit deleteable
         console.log('stock- vendor')
@@ -600,9 +602,10 @@ export default {
         this.$data.modalValues = {
           price: '',
           unit: '',
-          vendor: ''
+          vendor: '',
+          __index: -1
         }
-        console.log('item- no vendor')
+        console.log('item- no vendor', this.$data.modalValues)
         this.$data.overlayDelete = false
       }
     },
@@ -626,23 +629,21 @@ export default {
     },
     addStockUnit (del) {
       // exectued on add item modal save
-      // get item info based on modalMeta.label
+      // find item in pricelist based on modalMeta.label
       let dex = _.findIndex(this.$data.pricelist, {item: this.$data.modalMeta.label})
       let row = this.$data.pricelist[dex]
       console.log('row1', row) // somehow 'c' vendor data is already loaded to row??? // there must be dynamic (reative) linking
-      let c = this.$data.modalValues // entered price, unit, vendor
+      let c = this.$data.modalValues // entered price, unit, vendor 
       console.log('c', c)
       c.updated = new Date()
       // check inherited item info; 'wGST' selected on modal; 'label' loaded on dblclick
       // check if adding new stock or editing
-      const dex2 =  _.findIndex(row.vendors, {vendor: this.$data.modalValues.vendor, unit: this.$data.modalValues.unit})
-      console.log("checks", dex2, row.vendors, this.$data.modalValues.vendor, this.$data.modalValues.unit)
-      if (dex2 > -1) {
+      if (c.__index > -1) {
         if (del === 'delete') {
           console.log('splice')
-          row.vendors.splice(dex2,1)
+          row.vendors.splice(c.__index,1)
         } else {
-          row.vendors[dex2] = c
+          row.vendors[c.__index] = c
         }
       } else {
         // if no index, we are adding a new stock unit
@@ -650,6 +651,7 @@ export default {
           c.price = _.round((c.price / 1.125), 2)
         }
         // push new stock unit/vendor to item
+        delete c['__index']
         row.vendors.push(c) // not sure how this executes before row1 console.log
       }
       console.log('row2', row)

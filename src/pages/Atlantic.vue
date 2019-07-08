@@ -143,19 +143,17 @@ export default {
           this.loadColumns(resp.data)
         })
     },
-    loadChecks () {
+    loadMonth (monthName) {
       // load table 
-      // this.$data.month = monthName
-      api.service('checks').find({
+      this.$data.month = monthName
+      api.service('atlantic').find({
         query: {
-          $sort: {
-            checkDate: -1
-          }
+          month: monthName
         }
       })
       .then((resp) => {
         console.log(resp)
-        this.$data.tableData = resp.data
+        this.$data.tableData = resp.data[0].records
         console.log(this.$data.tableData)
         this.loadColumns(this.$data.tableData)
       })
@@ -178,7 +176,7 @@ export default {
     }
   },
   mounted () {
-    this.loadChecks()
+    this.loadMonth('Jun19')
     const messages = api.service('messages')
     const users = api.service('users')
     const priceList = api.service('pricelist')
