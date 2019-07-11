@@ -1249,6 +1249,7 @@ export default {
     async getTransactionsByDate (startDate, endDate) {
       /**********vvvvvvvv Create Method for the creation of query string vvvvvvvvvv********/
       startDate = moment() // first run- using moment obj
+      startDate.subtract(1, 'Days')
       let queryStr = '{'
       const dateSelection = ''
       const searchOption = ''
