@@ -1262,6 +1262,7 @@ export default {
       this.$data.loading = true
       // create query based on search options
       // date
+      /**********vvvvvvvv Create Method for the creation of query string vvvvvvvvvv********/
       let queryStr = '{'
       if (this.$data.dateOption !== 'noDate') {
         let sDate = moment(new Date(this.$data.startDate))
@@ -1286,6 +1287,7 @@ export default {
       queryStr = `${queryStr} "$sort": { "date1": -1}, "$limit": 200 }`
       console.log(queryStr)
       let queryObj = JSON.parse(queryStr)
+      /********************^^^^^  Create Method for the creation of query string ^^^^^^^^*****/
       if (this.$data.dateOption === 'noDate' && this.$data.searchVendor[0] === '') {
         console.log(this.$data.searchOption)
         this.$q.notify({

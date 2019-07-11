@@ -1245,6 +1245,44 @@ export default {
       blockchain.data.chain.forEach(block => {
         this.parseTransactions(block.transactions)
       })
+    },
+    async getTransactionsByDate (startDate, endDate) {
+      /**********vvvvvvvv Create Method for the creation of query string vvvvvvvvvv********/
+      startDate = moment() // first run- using moment obj
+      let queryStr = '{'
+      const dateSelection = ''
+      const searchOption = ''
+      const dateOption = ''
+      if (dateSelection !== 'noDate') {
+        // let sDate = moment(new Date(this.$data.startDate))
+        const sDate = startDate
+        sDate.startOf('day')
+        queryStr = `${queryStr} "date1": { "$gte": "${sDate.format()}"`
+      }
+      if (dateOption === 'range') { // old-> if (this.$data.dateOption === 'range') {
+        let eDate = moment(new Date(this.$data.endDate))
+        eDate.endOf('day')
+        queryStr = `${queryStr}, "$lte": "${eDate.format()}" }`
+      } else if (dateOption !== 'noDate') { // old -> } else if (this.$data.dateOption !== 'noDate') {
+        let eDate = moment(new Date(startDate)) // old -> let eDate = moment(new Date(this.$data.startDate))
+        eDate.endOf('day')
+        queryStr = `${queryStr}, "$lte": "${eDate.format()}" }`
+      }
+      if (this.$data.dateOption !== 'noDate' && searchOption.length !== 0){ //old -> if (this.$data.dateOption !== 'noDate' && this.$data.searchOption.length !== 0){
+        queryStr = `${queryStr},`
+      }
+      queryStr = `${queryStr}, "$sort": { "date1": -1}, "$limit": 200 }`
+      console.log(queryStr)
+      console.log('qStr', queryStr.substr(80,6), queryStr.length)
+      let queryObj = JSON.parse(queryStr)
+      console.log('queryobjTest', queryObj)
+      /********************^^^^^  Create Method for the creation of query string ^^^^^^^^*****/
+      let Transactions = await api.service('expenses').find({
+        paginate: false,
+        query: queryObj
+      }).then((response) => {
+        console.log('resp', response)
+      })
     }
   },
   mounted () {
@@ -1252,7 +1290,8 @@ export default {
     this.generateJournalCols()
     this.loadMonths()
     this.$q.loading.hide()
-    this.getBlockchain()
+    this.getTransactionsByDate()
+    // this.getBlockchain()
     // this.parseTransactions(this.$data.transactions)
   },
   beforeDestroy () {
