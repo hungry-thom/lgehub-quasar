@@ -1274,7 +1274,7 @@ export default {
       }
       queryStr = `${queryStr}, "$sort": { "date1": -1}, "$limit": 200 }`
       console.log(queryStr)
-      console.log('qStr', queryStr.substr(80,6), queryStr.length)
+      // console.log('qStr', queryStr.substr(80,6), queryStr.length)
       let queryObj = JSON.parse(queryStr)
       console.log('queryobjTest', queryObj)
       /********************^^^^^  Create Method for the creation of query string ^^^^^^^^*****/
@@ -1283,6 +1283,22 @@ export default {
         query: queryObj
       }).then((response) => {
         console.log('resp', response)
+        this.newParseTransactions(response.data)
+      })
+    },
+    newParseTransactions (transactions) {
+      const tableRow = {}
+      transactions.forEach(transaction => {
+        // check paymentAcct
+        let paymentCol = 'cash'
+        if (['ccardScotia', 'payableAcct'].includes(transaction.paymentAcct)) {
+          paymentCol = 'payable'
+        }
+        tableRow['paymentCol'] = 0
+        transaction.forEach(transList => {
+          tableRow['paymentCol'] -= transList.cost
+          
+        })
       })
     }
   },
