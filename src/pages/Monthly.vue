@@ -1248,8 +1248,8 @@ export default {
     },
     async getTransactionsByDate (startDate, endDate) {
       /**********vvvvvvvv Create Method for the creation of query string vvvvvvvvvv********/
-      startDate = moment() // first run- using moment obj
-      startDate.subtract(1, 'Days')
+      startDate = moment('09/July/19') // first run- using moment obj
+      // startDate.subtract(1, 'Days')
       let queryStr = '{'
       const dateSelection = ''
       const searchOption = ''
@@ -1287,19 +1287,52 @@ export default {
       })
     },
     newParseTransactions (transactions) {
-      const tableRow = {}
       transactions.forEach(transaction => {
+        const tableRow = {}
         // check paymentAcct
         let paymentCol = 'cash'
-        if (['ccardScotia', 'payableAcct'].includes(transaction.paymentAcct)) {
+        // console.log('check1', transaction.paymentAccount)
+        if (['ccardScotia', 'payableAcct'].includes(transaction.paymentAccount)) {
           paymentCol = 'payable'
         }
-        tableRow['paymentCol'] = 0
-        transaction.forEach(transList => {
-          tableRow['paymentCol'] -= transList.cost
-          
+        tableRow[paymentCol] = 0
+        tableRow['expense'] = 0
+        tableRow['prepaid'] = 0
+        tableRow['capital'] = 0
+        tableRow['inventory'] = 0
+        // console.log(transaction)
+        transaction.transItems.forEach(transList => {
+          if (paymentCol === 'payable') {
+            tableRow[paymentCol] += transList.cost
+          } else {
+            tableRow[paymentCol] -= transList.cost
+          }
+          /********** expense ***********/
+          tableRow['expense'] -= transList.cost
+          /********** PREPAID GST *******/
+          if (transList.taxable === 'yes') {
+            tableRow['prepaid'] += transList.gst
+            if (paymentCol === 'payable') {
+              tableRow[paymentCol] += transList.gst
+            } else {
+              tableRow[paymentCol] -= transList.gst
+            }
+          }
+          /********** Inventory ********/
+          if (transList.add2Inventory) {
+            tableRow['inventory'] += transList.cost
+            tableRow['capital'] += transList.cost
+          }
+          // should move _.round to table formatting and also use '-' in place of 0
+          tableRow[paymentCol] = _.round(tableRow[paymentCol], 2)
+          tableRow['expense'] = _.round(tableRow['expense'], 2)
+          tableRow['prepaid'] = _.round(tableRow['prepaid'],2 )
+          tableRow['inventory'] = _.round(tableRow['inventory'],2 )
+          tableRow['capital'] = _.round(tableRow['capital'],2 )
         })
+        this.$data.journal.push(tableRow)
       })
+      console.log('journal', this.$data.journal)
     }
   },
   mounted () {
