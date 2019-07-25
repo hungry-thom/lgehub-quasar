@@ -6,7 +6,7 @@
         <q-btn :label="table" >
           <q-popover>
             <q-list link>
-              <q-item v-for="t in tableNameList" :key="t" v-close-overlay @click.native="loadTable(t)">
+              <q-item v-for="t in tableNameList" :key="t" v-close-overlay @click.native="loadMonth(t)">
                 <q-item-main>
                   <q-item-tile label>{{ t }}</q-item-tile>
                 </q-item-main>
@@ -99,7 +99,7 @@ export default {
           field: 'id'
         }
       ],
-      visibleColumns: []
+      visibleColumns: ['No.', 'Date', 'Type', 'Description', 'Reference', 'Debits', 'Credits', 'Balance', 'Vendor']
     }
   },
   computed: {
@@ -110,7 +110,7 @@ export default {
       // console.log(tableData)
       // if we cycle through the first 25 documents, we should get a good sample of all fields
       this.$data.columns = []
-      this.$data.visibleColumns = []
+      // this.$data.visibleColumns = []
       for (let x = 0; x < 26; x++){
         console.log(tableData[x])
         for (let property in tableData[x]) {
@@ -125,9 +125,9 @@ export default {
               field: property,
               sortable: true
             }
-            if (!this.$data.visibleColumns.includes(property)) {
-              this.$data.columns.push(col)
-              this.$data.visibleColumns.push(property)
+            if ((_.findIndex(this.$data.columns, {name: property})) < 0) {
+              this.$data.columns[this.$data.visibleColumns.indexOf(property)] =  col
+              // this.$data.visibleColumns.push(property)
             }
           }
         }
@@ -137,14 +137,11 @@ export default {
     loadTable (tableName) {
       // load table 
       this.$data.table = tableName
-      api.service(tableName).find()
-        .then((resp) => {
-          this.$data.tableData = resp.data
-          this.loadColumns(resp.data)
-        })
+      this.loadMonth(tableName)
     },
     loadMonth (monthName) {
       // load table 
+      this.$data.table = monthName
       this.$data.month = monthName
       api.service('atlantic').find({
         query: {
@@ -178,7 +175,7 @@ export default {
       const currentMonth = moment().format('MMMYY')
       api.service('atlantic').find()
       .then((resp) => {
-        console.log('lookup',resp.data)
+        // console.log('lookup',resp.data)
         const numberOfMonths = resp.data.length
         const sortedMonthArray = []
         let highMonth = 0
@@ -187,7 +184,7 @@ export default {
         let pYear = ''
         let recordsToSort = resp.data
         for (let n = 0; n < numberOfMonths; n++) {
-          console.log('array', recordsToSort)
+          // console.log('array', recordsToSort)
           recordsToSort.forEach(rec => {
             // parse 'MMMYY' format
             pMonth = rec.month.substr(0,3)
@@ -201,13 +198,13 @@ export default {
               highMonth = moment().month(pMonth).month()
               highYear = moment().year(pYear).year()
             }
-            console.log('year, month, pyear, pmonth', highYear, highMonth, pYear, pMonth)
+            // console.log('year, month, pyear, pmonth', highYear, highMonth, pYear, pMonth)
           })
           let highestValueToPush = `${moment().month(highMonth).year(highYear).format('MMMYY')}`
           sortedMonthArray.push(highestValueToPush)
-          console.log('sorted', sortedMonthArray)
+          // console.log('sorted', sortedMonthArray)
           let pushedValueIndex = _.findIndex(recordsToSort, {month: highestValueToPush})
-          console.log('dex', pushedValueIndex)
+          // console.log('dex', pushedValueIndex)
           recordsToSort.splice(pushedValueIndex, 1)
           highMonth = 0
           highYear = 0
@@ -217,7 +214,7 @@ export default {
     }
   },
   mounted () {
-    this.loadMonth('Jul19')
+    this.loadMonth(moment().format('MMMYY'))
     this.loadMonthList()
     const messages = api.service('messages')
     const users = api.service('users')
