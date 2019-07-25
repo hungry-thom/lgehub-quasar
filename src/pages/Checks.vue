@@ -99,7 +99,7 @@ export default {
           field: 'id'
         }
       ],
-      visibleColumns: []
+      visibleColumns: ['checkDate', 'checkNum', 'vendor', 'amount', 'cashed', 'transNum', 'expenseId', 'id']
     }
   },
   computed: {
@@ -110,7 +110,7 @@ export default {
       // console.log(tableData)
       // if we cycle through the first 25 documents, we should get a good sample of all fields
       this.$data.columns = []
-      this.$data.visibleColumns = []
+      // this.$data.visibleColumns = []
       for (let x = 0; x < 26; x++){
         console.log(tableData[x])
         for(let property in tableData[x]) {
@@ -125,9 +125,9 @@ export default {
               field: property,
               sortable: true
             }
-            if (!this.$data.visibleColumns.includes(property)) {
-              this.$data.columns.push(col)
-              this.$data.visibleColumns.push(property)
+            if ((_.findIndex(this.$data.columns, {name: property})) < 0) {
+              this.$data.columns[this.$data.visibleColumns.indexOf(property)] =  col
+              // this.$data.visibleColumns.push(property)
             }
           }
         }
@@ -156,8 +156,14 @@ export default {
       .then((resp) => {
         console.log(resp)
         this.$data.tableData = resp.data
-        console.log(this.$data.tableData)
+        // this.markUnverifiedRecords()
+        // console.log(this.$data.tableData)
         this.loadColumns(this.$data.tableData)
+      })
+    },
+    markUnverifiedRecords () {
+      this.$data.tableData.forEach(row => {
+        // code
       })
     },
     isSent (message) {

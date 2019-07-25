@@ -1012,16 +1012,30 @@ export default {
         transNum: trans.transNum,
         expenseId: trans.expenseId
       }
-      api.service('checks').create(checkInfo).then((response) => {
-        // response
-      }).catch((err) => {
-        // error
-        console.log(`Error: ${err}`)
-        this.$q.notify({
-          message: `Checks Error: ${err}`,
-          timeout: 3000,
-          position: 'center'
-        })
+      api.service('checks').find({
+        query: {
+          checkNum: checkInfo.checkNum,
+          vendor: checkInfo.vendor
+        }
+      })
+      .then(queryCheck => {
+        if (queryCheck.data.length > 0) {
+          const existingCheck = queryCheck.data[0]
+          checkInfo.amount += existingCheck.amount
+          api.service('checks').update(existingCheck.id, checkInfo) // api.update replaces entire object
+        } else {
+          api.service('checks').create(checkInfo).then((response) => {
+            // response
+          }).catch((err) => {
+            // error
+            console.log(`Error: ${err}`)
+            this.$q.notify({
+              message: `Checks Error: ${err}`,
+              timeout: 3000,
+              position: 'center'
+            })
+          })
+        }
       })
     },
     updateCreditCard (trans) {
