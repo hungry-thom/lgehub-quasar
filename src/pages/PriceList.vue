@@ -647,7 +647,7 @@ export default {
         }
       } else {
         // if no index, we are adding a new stock unit
-        if (this.$data.modalMeta.wGST) { 
+        if (this.$data.modalMeta.wGST == 'yes') { 
           c.price = _.round((c.price / 1.125), 2)
         }
         // push new stock unit/vendor to item

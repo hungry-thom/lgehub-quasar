@@ -113,7 +113,7 @@ export default {
       this.$data.visibleColumns = []
       for (let x = 0; x < 26; x++){
         console.log(tableData[x])
-        for(let property in tableData[x]) {
+        for (let property in tableData[x]) {
           if (tableData[x].hasOwnProperty(property)) {
             //console.log(property)
             //console.log(tableData[property])
@@ -173,10 +173,52 @@ export default {
     },
     addStockUnit (itemId) {
       console.log(itemId)
+    },
+    loadMonthList () {
+      const currentMonth = moment().format('MMMYY')
+      api.service('atlantic').find()
+      .then((resp) => {
+        console.log('lookup',resp.data)
+        const numberOfMonths = resp.data.length
+        const sortedMonthArray = []
+        let highMonth = 0
+        let highYear = 0
+        let pMonth = ''
+        let pYear = ''
+        let recordsToSort = resp.data
+        for (let n = 0; n < numberOfMonths; n++) {
+          console.log('array', recordsToSort)
+          recordsToSort.forEach(rec => {
+            // parse 'MMMYY' format
+            pMonth = rec.month.substr(0,3)
+            pYear = rec.month.substr(3)
+            if (moment().year(pYear).year() == highYear) {
+              if (moment().month(pMonth).month() > highMonth) {
+                highMonth = moment().month(pMonth).month()
+                highYear = moment().year(pYear).year()
+              }
+            } else if (moment().year(pYear).year() > highYear) {
+              highMonth = moment().month(pMonth).month()
+              highYear = moment().year(pYear).year()
+            }
+            console.log('year, month, pyear, pmonth', highYear, highMonth, pYear, pMonth)
+          })
+          let highestValueToPush = `${moment().month(highMonth).year(highYear).format('MMMYY')}`
+          sortedMonthArray.push(highestValueToPush)
+          console.log('sorted', sortedMonthArray)
+          let pushedValueIndex = _.findIndex(recordsToSort, {month: highestValueToPush})
+          console.log('dex', pushedValueIndex)
+          recordsToSort.splice(pushedValueIndex, 1)
+          highMonth = 0
+          highYear = 0
+        }
+        this.$data.tableNameList = sortedMonthArray       
+      })
     }
   },
   mounted () {
-    this.loadMonth('Jun19')
+    this.loadMonth('Jul19')
+    this.loadMonthList()
     const messages = api.service('messages')
     const users = api.service('users')
     const priceList = api.service('pricelist')

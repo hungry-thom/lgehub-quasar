@@ -1287,6 +1287,7 @@ export default {
       })
     },
     newParseTransactions (transactions) {
+      console.log('cols', this.$data.journalColumns)
       transactions.forEach(transaction => {
         const tableRow = {}
         // check paymentAcct
@@ -1300,20 +1301,24 @@ export default {
         tableRow['prepaid'] = 0
         tableRow['capital'] = 0
         tableRow['inventory'] = 0
+        tableRow['<='] = 0
         // console.log(transaction)
         transaction.transItems.forEach(transList => {
           if (paymentCol === 'payable') {
             tableRow[paymentCol] += transList.cost
+            tableRow['<='] += transList.cost
           } else {
             tableRow[paymentCol] -= transList.cost
           }
           /********** expense ***********/
           tableRow['expense'] -= transList.cost
+          tableRow['<='] -= transList.cost
           /********** PREPAID GST *******/
           if (transList.taxable === 'yes') {
             tableRow['prepaid'] += transList.gst
             if (paymentCol === 'payable') {
               tableRow[paymentCol] += transList.gst
+              tableRow['<='] += transList.gst
             } else {
               tableRow[paymentCol] -= transList.gst
             }
@@ -1322,6 +1327,13 @@ export default {
           if (transList.add2Inventory) {
             tableRow['inventory'] += transList.cost
             tableRow['capital'] += transList.cost
+            tableRow['<='] += transList.cost
+          }
+          /********NET EQUITY  ******/
+          if (tableRow['payable']) {
+            tableRow['netEquity'] = tableRow['<='] - tableRow['payable']
+          } else {
+            tableRow['netEquity'] = tableRow['<=']
           }
           // should move _.round to table formatting and also use '-' in place of 0
           tableRow[paymentCol] = _.round(tableRow[paymentCol], 2)
@@ -1329,6 +1341,8 @@ export default {
           tableRow['prepaid'] = _.round(tableRow['prepaid'],2 )
           tableRow['inventory'] = _.round(tableRow['inventory'],2 )
           tableRow['capital'] = _.round(tableRow['capital'],2 )
+          tableRow['<='] = _.round(tableRow['<='],2 )
+          tableRow['netEquity'] = _.round(tableRow['netEquity'], 2)
         })
         this.$data.journal.push(tableRow)
       })
