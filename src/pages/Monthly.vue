@@ -38,7 +38,7 @@
     <!-- MONTH ROW -->
     <div v-if="showMonth" >
       <div>
-      <q-btn color="primary" :label="monthBase" > <!-- select base month ----->
+      <q-btn color="primary" :label="monthBase" > <!-- select base month -->
           <q-popover>
             <q-list link>
               <q-item v-for="month in months" :key="month" v-close-overlay @click.native="selectMonthBase(month)">
@@ -86,7 +86,7 @@
         :pagination.sync="pagination"
         hide-bottom
         dense >
-        <!--- block of column select ---
+        <!--- block of column select 
         <template slot="top-right" slot-scope="props">
           <q-table-columns
             color="secondary"
@@ -95,32 +95,32 @@
             :columns="columns"
           />
         </template>
-        <----------------- end of column select -->
+        end of column select -->
           <q-tr slot="body" slot-scope="props" :props="props">
             <q-td key="Sun" :props="props" >
-              <q-btn size="md" :class="props.row.Sun.color" :label="props.row.Sun.date1" @click="toggleColor(props.row.Sun)"/>
+              <q-btn size="md" :class="props.row.Sun.color" :label="`${props.row.Sun.date1.format('DD')}`" @click="toggleColor(props.row.Sun)"/>
             </q-td>
             <q-td key="Mon" :props="props">
-              <q-btn size="md" :class="props.row.Mon.color" :label="props.row.Mon.date1" @click="toggleColor(props.row.Mon)"/>
+              <q-btn size="md" :class="props.row.Mon.color" :label="`${props.row.Mon.date1.format('DD')}`" @click="toggleColor(props.row.Mon)"/>
             </q-td>
             <q-td key="Tue" :props="props" >
-              <q-btn size="md" :class="props.row.Tue.color" :label="props.row.Tue.date1" @click="toggleColor(props.row.Tue)"/>
+              <q-btn size="md" :class="props.row.Tue.color" :label="`${props.row.Tue.date1.format('DD')}`" @click="toggleColor(props.row.Tue)"/>
             </q-td>
             <q-td key="Wed" :props="props" >
-              <q-btn size="md" :class="props.row.Wed.color" :label="props.row.Wed.date1" @click="toggleColor(props.row.Wed)"/>
+              <q-btn size="md" :class="props.row.Wed.color" :label="`${props.row.Wed.date1.format('DD')}`" @click="toggleColor(props.row.Wed)"/>
             </q-td>
             <q-td key="Thu" :props="props" >
-              <q-btn size="md" :class="props.row.Thu.color" :label="props.row.Thu.date1" @click="toggleColor(props.row.Thu)"/>
+              <q-btn size="md" :class="props.row.Thu.color" :label="`${props.row.Thu.date1.format('DD')}`" @click="toggleColor(props.row.Thu)"/>
             </q-td>
             <q-td key="Fri" :props="props" >
-              <q-btn size="md" :class="props.row.Fri.color" :label="props.row.Fri.date1" @click="toggleColor(props.row.Fri)"/>
+              <q-btn size="md" :class="props.row.Fri.color" :label="`${props.row.Fri.date1.format('DD')}`" @click="toggleColor(props.row.Fri)"/>
             </q-td>
             <q-td key="Sat" :props="props" >
-              <q-btn size="md" :class="props.row.Sat.color" :label="props.row.Sat.date1" @click="toggleColor(props.row.Sat)"/>
+              <q-btn size="md" :class="props.row.Sat.color" :label="`${props.row.Sat.date1.format('DD')}`" @click="toggleColor(props.row.Sat)"/>
             </q-td>
           </q-tr>
       </q-table>
-    </div><!---****************** END OF DATE NAVIGATION *****************----------->
+    </div><!---****************** END OF DATE NAVIGATION *****************-->
     <div class="row no-wrap">
       <q-table
         :data="month"
@@ -133,25 +133,25 @@
         dense >
           <q-tr slot="body" slot-scope="props" :props="props">
             <q-td key="Sun" :props="props" >
-              <q-btn size="md" :class="props.row.Sun.color" :label="props.row.Sun.date1" @click="toggleColor(props.row.Sun)"/>
+              <q-btn size="md" :class="props.row.Sun.color" :label="`${props.row.Sun.date1.format('DD')}`" @click="toggleColor(props.row.Sun)"/>
             </q-td>
             <q-td key="Mon" :props="props">
-              <q-btn size="md" :class="props.row.Mon.color" :label="props.row.Mon.date1" @click="toggleColor(props.row.Mon)"/>
+              <q-btn size="md" :class="props.row.Mon.color" :label="`${props.row.Mon.date1.format('DD')}`" @click="toggleColor(props.row.Mon)"/>
             </q-td>
             <q-td key="Tue" :props="props" >
-              <q-btn size="md" :class="props.row.Tue.color" :label="props.row.Tue.date1" @click="toggleColor(props.row.Tue)"/>
+              <q-btn size="md" :class="props.row.Tue.color" :label="`${props.row.Tue.date1.format('DD')}`" @click="toggleColor(props.row.Tue)"/>
             </q-td>
             <q-td key="Wed" :props="props" >
-              <q-btn size="md" :class="props.row.Wed.color" :label="props.row.Wed.date1" @click="toggleColor(props.row.Wed)"/>
+              <q-btn size="md" :class="props.row.Wed.color" :label="`${props.row.Wed.date1.format('DD')}`" @click="toggleColor(props.row.Wed)"/>
             </q-td>
             <q-td key="Thu" :props="props" >
-              <q-btn size="md" :class="props.row.Thu.color" :label="props.row.Thu.date1" @click="toggleColor(props.row.Thu)"/>
+              <q-btn size="md" :class="props.row.Thu.color" :label="`${props.row.Thu.date1.format('DD')}`" @click="toggleColor(props.row.Thu)"/>
             </q-td>
             <q-td key="Fri" :props="props" >
-              <q-btn size="md" :class="props.row.Fri.color" :label="props.row.Fri.date1" @click="toggleColor(props.row.Fri)"/>
+              <q-btn size="md" :class="props.row.Fri.color" :label="`${props.row.Fri.date1.format('DD')}`" @click="toggleColor(props.row.Fri)"/>
             </q-td>
             <q-td key="Sat" :props="props" >
-              <q-btn size="md" :class="props.row.Sat.color" :label="props.row.Sat.date1" @click="toggleColor(props.row.Sat)"/>
+              <q-btn size="md" :class="props.row.Sat.color" :label="`${props.row.Sat.date1.format('DD')}`" @click="toggleColor(props.row.Sat)"/>
             </q-td>
           </q-tr>
       </q-table>
@@ -175,6 +175,7 @@
             v-model="filter"
             class="col-6"
           />
+          <q-btn :label="`${dateA.substr(0,10)} : ${dateB.substr(0,10)}`" />
         </template>
         <template slot="top-right" slot-scope="props">
           <q-table-columns
@@ -442,6 +443,8 @@ export default {
   props: ['user'],
   data () {
     return {
+      dateA: 'test',
+      dateB: '',
       expenseModal: false,
       lockAccount: true,
       lockCategory: true,
@@ -1168,7 +1171,38 @@ export default {
     },
     toggleColor (cell) {
       console.log('click', cell)
-      console.log(_.size(this.$data.month[0]))
+      // console.log(_.size(this.$data.month[0]), this.$data.month) // not sure why significance of size
+      // this just toggles button color. the date value will be used for search. // two values will
+      // is this cell greater than or less than or equal to dateA
+      const dayDiff = moment(cell.date1.toISOString()).dayOfYear() - moment(this.$data.dateA).dayOfYear()
+      console.log('diff', dayDiff)
+      if (dayDiff === 0) {
+        // do nothing?
+      } else if (dayDiff < 0) {
+        // check if this is dateB
+        if ((moment(cell.date1.toISOString()).dayOfYear() - moment(this.$data.dateB).dayOfYear()) === 0) {
+          cell.color = 'bg-deep-purple-1'
+          this.$data.dateB = ''
+        } else {
+          cell.color = 'bg-deep-purple-3'
+          this.$data.dateB = cell.date1.toISOString()
+          for(let n = -1; n > dayDiff; n--) {
+            // find week array and toggle color between the two dates
+          }
+        }
+      } else {
+        const diff2 = moment(cell.date1.toISOString()).dayOfYear() - moment(this.$data.dateB).dayOfYear()
+        if (diff2) {
+          cell.color = 'bg-deep-purple-3'
+          this.$data.dateB = cell.date1.toISOString(true)
+          for(let n = 1; n < dayDiff; n++) {
+            // find week array and toggle color between the two dates
+          }
+        } else {
+          cell.color = 'bg-deep-purple-1'
+          this.$data.dateB = ''
+        }
+      }
       if (cell.color === 'bg-deep-purple-1') {
         cell.color = 'bg-deep-purple-3'
       } else {
@@ -1184,11 +1218,12 @@ export default {
         let c = ''
         if (ima.day(n).format('ddd') === moment().format('ddd')) {
           c = 'bg-deep-purple-3'
+          this.$data.dateA = ima.day(n).toISOString()
         } else {
           c = 'bg-deep-purple-1'
         }
         // create object key=dayofweek, day: date, color
-        week[ima.day(n).format('ddd')] = {date1: ima.format('DD'), color: c} // ima.format('DD-MMM') // would ima.day(n).format() be better?
+        week[ima.day(n).format('ddd')] = {date1: moment(ima.day(n).toISOString()), color: c} // ima.format('DD-MMM') // would ima.day(n).format() be better?
         this.$data.columns.push({
           name: ima.format('ddd'),
           required: false,
@@ -1248,7 +1283,7 @@ export default {
     },
     async getTransactionsByDate (startDate, endDate) {
       /**********vvvvvvvv Create Method for the creation of query string vvvvvvvvvv********/
-      startDate = moment('09/July/19') // first run- using moment obj
+      startDate = moment(this.$data.dateA) // .toISOString(true) // first run- using moment obj  // true: prevents utc conversion
       // startDate.subtract(1, 'Days')
       let queryStr = '{'
       const dateSelection = ''
