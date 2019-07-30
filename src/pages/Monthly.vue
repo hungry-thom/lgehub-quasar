@@ -1191,23 +1191,29 @@ export default {
           }
         }
       } else {
+        console.log('greater than')
         const diff2 = moment(cell.date1.toISOString()).dayOfYear() - moment(this.$data.dateB).dayOfYear()
-        if (diff2) {
+        console.log(diff2)
+        if (diff2 || isNaN(diff2)) {
+          console.log('true')
           cell.color = 'bg-deep-purple-3'
           this.$data.dateB = cell.date1.toISOString(true)
           for(let n = 1; n < dayDiff; n++) {
             // find week array and toggle color between the two dates
           }
         } else {
+          console.log('false')
           cell.color = 'bg-deep-purple-1'
           this.$data.dateB = ''
         }
       }
+      /*
       if (cell.color === 'bg-deep-purple-1') {
         cell.color = 'bg-deep-purple-3'
       } else {
         cell.color = 'bg-deep-purple-1'
       }
+      */
       // this.$data.month[__index]
     },
     generateWeek () {
@@ -1337,6 +1343,7 @@ export default {
         tableRow['capital'] = 0
         tableRow['inventory'] = 0
         tableRow['<='] = 0
+        tableRow['=>'] = 0
         // console.log(transaction)
         transaction.transItems.forEach(transList => {
           if (paymentCol === 'payable') {
@@ -1344,6 +1351,7 @@ export default {
             tableRow['<='] += transList.cost
           } else {
             tableRow[paymentCol] -= transList.cost
+            tableRow['=>'] -= transList.cost
           }
           /********** expense ***********/
           tableRow['expense'] -= transList.cost
@@ -1356,11 +1364,13 @@ export default {
               tableRow['<='] += transList.gst
             } else {
               tableRow[paymentCol] -= transList.gst
+              // tableRow['=>'] += transList.gst
             }
           }
           /********** Inventory ********/
           if (transList.add2Inventory) {
             tableRow['inventory'] += transList.cost
+            tableRow['=>'] += transList.cost
             tableRow['capital'] += transList.cost
             tableRow['<='] += transList.cost
           }
