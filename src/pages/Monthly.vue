@@ -191,8 +191,8 @@
             <q-td class="bg-green-1">{{ total.inventory || '-' }}</q-td>
             <q-td class="bg-green-1">{{ total.cash || '-' }}</q-td>
             <q-td class="bg-green-1">{{ total.equipment || '-' }}</q-td>
-            <q-td class="bg-green-1">{{ total.assets }}</q-td>
-            <q-td class="bg-deep-purple-1">{{ total.liabilities }}</q-td>
+            <q-td class="bg-green-1">{{ total['=>'] }}</q-td>
+            <q-td class="bg-deep-purple-1">{{ total['<='] }}</q-td>
             <q-td class="bg-purple-1">{{ total.payable || '-' }}</q-td>
             <q-td class="bg-purple-1">{{ total.expense || '-' }}</q-td>
             <q-td class="bg-deep-purple-1">{{ total.sales || '-' }}</q-td>
@@ -1329,6 +1329,15 @@ export default {
     },
     newParseTransactions (transactions) {
       console.log('cols', this.$data.journalColumns)
+      let totalRow = {}
+      totalRow['payable'] = 0
+      totalRow['cash'] = 0
+      totalRow['expense'] = 0
+      totalRow['prepaid'] = 0
+      totalRow['capital'] = 0
+      totalRow['inventory'] = 0
+      totalRow['<='] = 0
+      totalRow['=>'] = 0
       transactions.forEach(transaction => {
         const tableRow = {}
         // check paymentAcct
@@ -1349,22 +1358,32 @@ export default {
           if (paymentCol === 'payable') {
             tableRow[paymentCol] += transList.cost
             tableRow['<='] += transList.cost
+            totalRow[paymentCol] += transList.cost
+            totalRow['<='] += transList.cost
           } else {
             tableRow[paymentCol] -= transList.cost
             tableRow['=>'] -= transList.cost
+            totalRow[paymentCol] -= transList.cost
+            totalRow['=>'] -= transList.cost
           }
           /********** expense ***********/
           tableRow['expense'] -= transList.cost
           tableRow['<='] -= transList.cost
+          totalRow['expense'] -= transList.cost
+          totalRow['<='] -= transList.cost
           /********** PREPAID GST *******/
           if (transList.taxable === 'yes') {
             tableRow['prepaid'] += transList.gst
+            totalRow['prepaid'] += transList.gst
             if (paymentCol === 'payable') {
               tableRow[paymentCol] += transList.gst
               tableRow['<='] += transList.gst
+              totalRow[paymentCol] += transList.gst
+              totalRow['<='] += transList.gst
             } else {
               tableRow[paymentCol] -= transList.gst
-              // tableRow['=>'] += transList.gst
+              totalRow[paymentCol] -= transList.gst
+              tableRow['=>'] += transList.gst
             }
           }
           /********** Inventory ********/
@@ -1373,6 +1392,10 @@ export default {
             tableRow['=>'] += transList.cost
             tableRow['capital'] += transList.cost
             tableRow['<='] += transList.cost
+            totalRow['inventory'] += transList.cost
+            totalRow['=>'] += transList.cost
+            totalRow['capital'] += transList.cost
+            totalRow['<='] += transList.cost
           }
           /********NET EQUITY  ******/
           if (tableRow['payable']) {
@@ -1387,10 +1410,22 @@ export default {
           tableRow['inventory'] = _.round(tableRow['inventory'],2 )
           tableRow['capital'] = _.round(tableRow['capital'],2 )
           tableRow['<='] = _.round(tableRow['<='],2 )
+          tableRow['=>'] = _.round(tableRow['=>'],2 )
+          // totalRow['<='] += tableRow['<=']
+          // totalRow['=>'] += tableRow['=>']
           tableRow['netEquity'] = _.round(tableRow['netEquity'], 2)
+          totalRow[paymentCol] = _.round(totalRow[paymentCol], 2)
+          totalRow['expense'] = _.round(totalRow['expense'], 2)
+          totalRow['prepaid'] = _.round(totalRow['prepaid'],2 )
+          totalRow['inventory'] = _.round(totalRow['inventory'],2 )
+          totalRow['capital'] = _.round(totalRow['capital'],2 )
+          totalRow['<='] = _.round(totalRow['<='],2 )
+          totalRow['=>'] = _.round(totalRow['<='],2 )
+          totalRow['netEquity'] = _.round(totalRow['netEquity'], 2)
         })
         this.$data.journal.push(tableRow)
       })
+      this.$data.total = totalRow
       console.log('journal', this.$data.journal)
     }
   },
