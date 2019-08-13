@@ -462,6 +462,16 @@ export default {
   methods: {
     onEditItem () {
       const itemInfo = this.$data.modalEditItem
+      delete itemInfo['customLabel']
+      itemInfo.vendors.forEach(ven => {
+        delete ven['__index']
+        delete ven['compBase']
+        delete ven['compQty']
+        delete ven['compUnit']
+        delete ven['compValue']
+        delete ven['customLabel']
+        delete ven['custom']
+      })
       api.service('pricelist').update(itemInfo.id, itemInfo)
       .then(response => {
         console.log('successfully updated item', response)
@@ -482,6 +492,7 @@ export default {
         id: row.id,
         vendors: row.vendors
       }
+      console.log(this.$data.overlayEditItem)
     },
     loadExpenseId (expId) {
       console.log('push1', expId)
@@ -657,12 +668,15 @@ export default {
       console.log('row2', row)
       // update entire item, can't just update stock; row has added comp fields from initial itemPriceSort
       let tmpRow = row
+      delete tmpRow['customLabel']
       tmpRow.vendors.forEach(ven => {
         delete ven['__index']
         delete ven['compBase']
         delete ven['compQty']
         delete ven['compUnit']
         delete ven['compValue']
+        delete ven['customLabel']
+        delete ven['custom']
       })
       api.service('pricelist').update(tmpRow.id, tmpRow).then(response => {
         console.log('added item to pricelist, addstockunit')
