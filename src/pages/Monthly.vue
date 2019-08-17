@@ -1382,8 +1382,9 @@ export default {
               totalRow['<='] += transList.gst
             } else {
               tableRow[paymentCol] -= transList.gst
-              totalRow[paymentCol] -= transList.gst
               tableRow['=>'] += transList.gst
+              totalRow[paymentCol] -= transList.gst
+              totalRow['=>'] += transList.gst
             }
           }
           /********** Inventory ********/
@@ -1420,7 +1421,7 @@ export default {
           totalRow['inventory'] = _.round(totalRow['inventory'],2 )
           totalRow['capital'] = _.round(totalRow['capital'],2 )
           totalRow['<='] = _.round(totalRow['<='],2 )
-          totalRow['=>'] = _.round(totalRow['<='],2 )
+          totalRow['=>'] = _.round(totalRow['=>'],2 )
           totalRow['netEquity'] = _.round(totalRow['netEquity'], 2)
         })
         this.$data.journal.push(tableRow)
