@@ -98,25 +98,25 @@
         end of column select -->
           <q-tr slot="body" slot-scope="props" :props="props">
             <q-td key="Sun" :props="props" >
-              <q-btn size="md" :class="props.row.Sun.color" :label="`${props.row.Sun.date1.format('DD')}`" @click="selectDate(props.row.Sun)"/>
+              <q-btn size="md" dense :label="`${props.row.Sun.date1.format('DD') || '-'}`" @click="selectDate(props.row.Sun)"/>
             </q-td>
             <q-td key="Mon" :props="props">
-              <q-btn size="md" :class="props.row.Mon.color" :label="`${props.row.Mon.date1.format('DD')}`" @click="selectDate(props.row.Mon)"/>
+              <q-btn size="md" dense :label="`${props.row.Mon.date1.format('DD') || '-'}`" @click="selectDate(props.row.Mon)"/>
             </q-td>
             <q-td key="Tue" :props="props" >
-              <q-btn size="md" :class="props.row.Tue.color" :label="`${props.row.Tue.date1.format('DD')}`" @click="selectDate(props.row.Tue)"/>
+              <q-btn size="md" dense :label="`${props.row.Tue.date1.format('DD') || '-'}`" @click="selectDate(props.row.Tue)"/>
             </q-td>
             <q-td key="Wed" :props="props" >
-              <q-btn size="md" :class="props.row.Wed.color" :label="`${props.row.Wed.date1.format('DD')}`" @click="selectDate(props.row.Wed)"/>
+              <q-btn size="md" dense :label="`${props.row.Wed.date1.format('DD') || '-'}`" @click="selectDate(props.row.Wed)"/>
             </q-td>
             <q-td key="Thu" :props="props" >
-              <q-btn size="md" :class="props.row.Thu.color" :label="`${props.row.Thu.date1.format('DD')}`" @click="selectDate(props.row.Thu)"/>
+              <q-btn size="md" dense :class="props.row.Thu.color" :label="`${props.row.Thu.date1.format('DD') || '-'}`" @click="selectDate(props.row.Thu)"/>
             </q-td>
             <q-td key="Fri" :props="props" >
-              <q-btn size="md" :class="props.row.Fri.color" :label="`${props.row.Fri.date1.format('DD')}`" @click="selectDate(props.row.Fri)"/>
+              <q-btn size="md" dense :class="props.row.Fri.color" :label="`${props.row.Fri.date1.format('DD') || '-'}`" @click="selectDate(props.row.Fri)"/>
             </q-td>
             <q-td key="Sat" :props="props" >
-              <q-btn size="md" :class="props.row.Sat.color" :label="`${props.row.Sat.date1.format('DD')}`" @click="selectDate(props.row.Sat)"/>
+              <q-btn size="md" dense :class="props.row.Sat.color" :label="`${props.row.Sat.date1.format('DD') || '-'}`" @click="selectDate(props.row.Sat)"/>
             </q-td>
           </q-tr>
       </q-table>
@@ -130,7 +130,7 @@
         row-key="date1"
         :pagination.sync="pagination"
         hide-bottom
-        dense >
+        dense > <!--
           <q-tr slot="body" slot-scope="props" :props="props">
             <q-td key="Sun" :props="props" >
               <q-btn size="md" :class="props.row.Sun.color" :label="`${props.row.Sun.date1.format('DD')}`" @click="toggleColor(props.row.Sun)"/>
@@ -153,7 +153,7 @@
             <q-td key="Sat" :props="props" >
               <q-btn size="md" :class="props.row.Sat.color" :label="`${props.row.Sat.date1.format('DD')}`" @click="toggleColor(props.row.Sat)"/>
             </q-td>
-          </q-tr>
+          </q-tr> -->
       </q-table>
       <br>        
     </div>
@@ -413,6 +413,7 @@ import {
     QField,
     scroll
 } from 'quasar'
+import { PassThrough } from 'stream';
 
 export default {
   name: 'chat',
@@ -1218,7 +1219,8 @@ export default {
       // this.$data.month[__index]
     },
     selectDate (cell) {
-      // code 
+      console.log('cell', cell)
+      /* code to cycle thouhg weeks
       const week = this.$data.month[0]
       console.log('selDate', this.$data.month[0])
       for (let day in week) {
@@ -1227,7 +1229,8 @@ export default {
           week[day].color = 'bg-deep-purple-1'
         }
       }
-      console.log('cell', cell)
+      */
+
       cell.color = 'bg-deep-purple-3'
       this.getTransactionsByDate(cell.date1.toISOString())
       this.$data.dateA = cell.date1.toISOString()
@@ -1260,6 +1263,36 @@ export default {
       // console.log('journal', this.$data.journal)
       console.log('week', week)
       this.$data.month.push(week)
+    },
+    generateMonth () {
+      const mes = moment()
+      const nextMonth = mes.month() + 1
+      let week = {}
+      this.$data.columns = []
+      let color = 'bg-deep-purple-1'
+      for (mes.date(1); mes.month() < nextMonth; mes.add(1, 'days')) {
+        if (mes.date() === moment().date) {
+          color = 'bg-deep-purple-3'
+        }
+        if (!this.$data.visibleColumns.includes(mes.format('ddd'))) {
+          this.$data.columns[mes.day()] = {// .push({
+            name: mes.format('ddd'),
+            required: false,
+            label: mes.format('ddd'),
+            align: 'center',
+            field: mes.format('ddd'),
+            // classes: 'bg-deep-purple-1'
+          } // )
+          this.visibleColumns[mes.day()] = mes.format('ddd') // .push(mes.format('ddd'))
+        }
+        week[mes.format('ddd')] = {date1: moment(mes.toISOString()), color: color}
+        console.log('week', week)
+        if (mes.day() === 6) {
+          this.$data.month.push(week)
+          week = {}
+        }
+      }
+      console.log('month', this.$data.month)
     },
     generateJournalCols () {
       console.log('journal', this.$data.journal)
@@ -1447,7 +1480,8 @@ export default {
     }
   },
   mounted () {
-    this.generateWeek()
+    // this.generateWeek()
+    this.generateMonth()
     this.generateJournalCols()
     this.loadMonths()
     this.$q.loading.hide()
