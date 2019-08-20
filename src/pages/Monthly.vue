@@ -181,6 +181,12 @@
             <q-td class="bg-deep-purple-1">{{ total.capital || '-' }}</q-td>
             <q-td class="bg-deep-purple-3">{{ total.netEquity || '-' }}</q-td>
         </q-tr>
+        <q-tr slot="body" slot-scope="props" :props="props">
+          <q-td v-for="(col, n) in visibleJournalColumns" :key="col" :props="props" :class="journalColumns[n].classes" @click.native="transactionPopup(props.row.id)">
+            {{ props.row[col] }}
+            <q-tooltip> {{ props.row.vendor}}</q-tooltip>
+          </q-td>
+        </q-tr>
       </q-table>
     </div>
     <q-btn label="newExpense" @click="overlay" />
@@ -390,6 +396,7 @@ import {
   QDatetime,
   QPopover,
   QModal,
+  QTooltip,
     QModalLayout,
     QOptionGroup,
     QField,
@@ -418,6 +425,7 @@ export default {
     QDatetime,
     QPopover,
     QModal,
+    QTooltip,
     QModalLayout,
     QOptionGroup,
     QField,
@@ -736,6 +744,9 @@ export default {
     }
   },
   methods: {
+    transactionPopup(id) {
+      console.log('id', id)
+    },
     addItem () {
       console.log('start',this.$data.newItem.taxable)
       let line = JSON.parse(JSON.stringify(this.$data.newItem))
@@ -1390,6 +1401,8 @@ export default {
         if (['ccardScotia', 'payableAcct'].includes(transaction.paymentAccount)) {
           paymentCol = 'payable'
         }
+        tableRow['vendor'] = transaction.vendor
+        tableRow['id'] = transaction.id
         tableRow[paymentCol] = 0
         tableRow['expense'] = 0
         tableRow['prepaid'] = 0
@@ -1426,9 +1439,9 @@ export default {
               totalRow['<='] += transList.gst
             } else {
               tableRow[paymentCol] -= transList.gst
-              tableRow['=>'] += transList.gst
+              // tableRow['=>'] += transList.gst
               totalRow[paymentCol] -= transList.gst
-              totalRow['=>'] += transList.gst
+              // totalRow['=>'] += transList.gst
             }
           }
           /********** Inventory ********/
