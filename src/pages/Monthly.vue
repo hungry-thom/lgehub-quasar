@@ -97,26 +97,8 @@
         </template>
         end of column select -->
           <q-tr slot="body" slot-scope="props" :props="props">
-            <q-td key="Sun" :props="props" >
-              <q-btn size="md" dense :label="`${props.row.Sun.date1.format('DD') || '-'}`" @click="selectDate(props.row.Sun)"/>
-            </q-td>
-            <q-td key="Mon" :props="props">
-              <q-btn size="md" dense :label="`${props.row.Mon.date1.format('DD') || '-'}`" @click="selectDate(props.row.Mon)"/>
-            </q-td>
-            <q-td key="Tue" :props="props" >
-              <q-btn size="md" dense :label="`${props.row.Tue.date1.format('DD') || '-'}`" @click="selectDate(props.row.Tue)"/>
-            </q-td>
-            <q-td key="Wed" :props="props" >
-              <q-btn size="md" dense :label="`${props.row.Wed.date1.format('DD') || '-'}`" @click="selectDate(props.row.Wed)"/>
-            </q-td>
-            <q-td key="Thu" :props="props" >
-              <q-btn size="md" dense :class="props.row.Thu.color" :label="`${props.row.Thu.date1.format('DD') || '-'}`" @click="selectDate(props.row.Thu)"/>
-            </q-td>
-            <q-td key="Fri" :props="props" >
-              <q-btn size="md" dense :class="props.row.Fri.color" :label="`${props.row.Fri.date1.format('DD') || '-'}`" @click="selectDate(props.row.Fri)"/>
-            </q-td>
-            <q-td key="Sat" :props="props" >
-              <q-btn size="md" dense :class="props.row.Sat.color" :label="`${props.row.Sat.date1.format('DD') || '-'}`" @click="selectDate(props.row.Sat)"/>
+            <q-td v-for="day in visibleColumns" :key="day" :props="props">
+              <q-btn size="md" dense :class="props.row[day].color" :label="`${props.row[day].date1.format('DD')}`" @click="selectDate(props.row[day])"/>
             </q-td>
           </q-tr>
       </q-table>
@@ -1232,8 +1214,8 @@ export default {
       */
 
       cell.color = 'bg-deep-purple-3'
-      this.getTransactionsByDate(cell.date1.toISOString())
-      this.$data.dateA = cell.date1.toISOString()
+      this.getTransactionsByDate(cell.date1.toISOString(true))
+      this.$data.dateA = cell.date1.toISOString(true)
     },
     generateWeek () {
       let ima = moment()
@@ -1269,10 +1251,15 @@ export default {
       const nextMonth = mes.month() + 1
       let week = {}
       this.$data.columns = []
-      let color = 'bg-deep-purple-1'
-      for (mes.date(1); mes.month() < nextMonth; mes.add(1, 'days')) {
-        if (mes.date() === moment().date) {
-          color = 'bg-deep-purple-3'
+      let color = ''
+      let firstOffset = 1 - mes.date(1).day()
+      for (mes.date(firstOffset); mes.month() < nextMonth; mes.add(1, 'days')) {
+        if (mes.date() === moment().date()) {
+          color = 'bg-deep-purple-4'
+        } else if (mes.month() < moment().month()) {
+          color = 'bg-deep-purple-1'
+        } else {
+          color = 'bg-deep-purple-2'
         }
         if (!this.$data.visibleColumns.includes(mes.format('ddd'))) {
           this.$data.columns[mes.day()] = {// .push({
@@ -1291,6 +1278,13 @@ export default {
           this.$data.month.push(week)
           week = {}
         }
+      }
+      if (mes.day() !== 0) {
+        for (let n = mes.day(); n < 7; n++) {
+          week[mes.format('ddd')] = {date1: moment(mes.toISOString(true)), color: 'bg-deep-purple-1'}
+          mes.add(1, 'days')
+        }
+        this.$data.month.push(week)
       }
       console.log('month', this.$data.month)
     },
@@ -1337,6 +1331,7 @@ export default {
       })
     },
     async getTransactionsByDate (startDate, endDate) {
+      this.$data.journal = []
       /**********vvvvvvvv Create Method for the creation of query string vvvvvvvvvv********/
       startDate = moment(startDate) // .toISOString(true) // first run- using moment obj  // true: prevents utc conversion
       // startDate.subtract(1, 'Days')
