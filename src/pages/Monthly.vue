@@ -1,8 +1,8 @@
 
 <template>
   <q-page>
-    <div class="row no-wrap" >
-      <div>
+    <div>
+      <div class="row no-wrap" >
         <div>
           <q-btn color="primary" :label="yearBase" > <!-- base year select -->
             <q-popover>
@@ -19,7 +19,7 @@
           </q-btn>
         </div>
         <div>
-          <q-btn size="sm" :icon="spanIcon" @click="expandSpan" />
+          <!--<q-btn size="sm" :icon="spanIcon" @click="expandSpan" />-->
           <br>
           <q-btn v-if="showSpan" :label="yearSpan" > <!-- span year select -->
             <q-popover>
@@ -77,6 +77,7 @@
           </q-btn>
       </div>
     </div>
+    <div class="row no-wrap">
     <q-table
         :data="month"
         :columns="columns"
@@ -102,8 +103,7 @@
             </q-td>
           </q-tr>
       </q-table>
-    </div><!---****************** END OF DATE NAVIGATION *****************-->
-    <div class="row no-wrap">
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
       <q-table
         :data="month"
         :columns="columns"
@@ -112,31 +112,12 @@
         row-key="date1"
         :pagination.sync="pagination"
         hide-bottom
-        dense > <!--
-          <q-tr slot="body" slot-scope="props" :props="props">
-            <q-td key="Sun" :props="props" >
-              <q-btn size="md" :class="props.row.Sun.color" :label="`${props.row.Sun.date1.format('DD')}`" @click="toggleColor(props.row.Sun)"/>
-            </q-td>
-            <q-td key="Mon" :props="props">
-              <q-btn size="md" :class="props.row.Mon.color" :label="`${props.row.Mon.date1.format('DD')}`" @click="toggleColor(props.row.Mon)"/>
-            </q-td>
-            <q-td key="Tue" :props="props" >
-              <q-btn size="md" :class="props.row.Tue.color" :label="`${props.row.Tue.date1.format('DD')}`" @click="toggleColor(props.row.Tue)"/>
-            </q-td>
-            <q-td key="Wed" :props="props" >
-              <q-btn size="md" :class="props.row.Wed.color" :label="`${props.row.Wed.date1.format('DD')}`" @click="toggleColor(props.row.Wed)"/>
-            </q-td>
-            <q-td key="Thu" :props="props" >
-              <q-btn size="md" :class="props.row.Thu.color" :label="`${props.row.Thu.date1.format('DD')}`" @click="toggleColor(props.row.Thu)"/>
-            </q-td>
-            <q-td key="Fri" :props="props" >
-              <q-btn size="md" :class="props.row.Fri.color" :label="`${props.row.Fri.date1.format('DD')}`" @click="toggleColor(props.row.Fri)"/>
-            </q-td>
-            <q-td key="Sat" :props="props" >
-              <q-btn size="md" :class="props.row.Sat.color" :label="`${props.row.Sat.date1.format('DD')}`" @click="toggleColor(props.row.Sat)"/>
-            </q-td>
-          </q-tr> -->
+        dense >
       </q-table>
+    </div>
+    </div><!---****************** END OF DATE NAVIGATION *****************-->
+    <div>
+      
       <br>        
     </div>
     <div>
@@ -191,7 +172,7 @@
     </div>
     <q-btn label="newExpense" @click="overlay" />
     <br>
-    <!-- //////// START OF MODAL' ////////-->
+    <!-- //////// START OF tranaction MODAL READONLY' ////////-->
     <q-modal v-model="expenseModal" :maximized="boolScreen" :no-backdrop-dismiss="true" >
     <q-modal-layout > <!-- class="q-pa-sm" -->
       <q-toolbar slot="header">
@@ -206,21 +187,15 @@
           @click="toggleFullscreen"
         />
         <q-toolbar-title>
-          Enter/Edit Expense
+          Transaction
         </q-toolbar-title>
       </q-toolbar>
-      <div slot="footer">
-        <div class="q-pa-xs float-right">
-          &nbsp;&nbsp;<q-btn size="md" color="primary" label="Cancel" @click="overlay"/>
-          &nbsp;&nbsp;<q-btn size="md" color="primary" label="Submit" @click="submitExpense"/> <!-- :disable not reading var -->
-        </div>
-      </div>
     <div class="q-pa-sm">
     <div class="row no-wrap" >
-      <q-datetime class="col" minimal color="orange" v-model="transaction.date1" type="date" float-label="Date" :first-day-of-week="0" />&nbsp;&nbsp;
-      <q-input class="col" ref="inputVendor" v-model="transaction.vendor" float-label="Vendor" ></q-input>&nbsp;&nbsp;
-      <q-input class="col" ref="inputtransNum" v-model="transaction.transNum" float-label="Transaction Number"/>&nbsp;&nbsp;
-      <q-input class="col" v-model="transaction.paymentAccount" float-label="Payment Account" ></q-input>
+      <q-datetime class="col" minimal :readonly="true" color="orange" v-model="transaction.date1" type="date" float-label="Date" :first-day-of-week="0" />&nbsp;&nbsp;
+      <q-input class="col" :readonly="true" ref="inputVendor" v-model="transaction.vendor" float-label="Vendor" ></q-input>&nbsp;&nbsp;
+      <q-input class="col" :readonly="true" ref="inputtransNum" v-model="transaction.transNum" float-label="Transaction Number"/>&nbsp;&nbsp;
+      <q-input class="col" :readonly="true" v-model="transaction.paymentAccount" float-label="Payment Account" ></q-input>
     </div>
     <div>
       <br>
@@ -248,59 +223,34 @@
         <q-tr slot="body" slot-scope="props" :props="props">
           <q-td key="qty" :props="props" class="bg-deep-purple-1">
             {{ props.row.qty || '-' }}
-            <q-popup-edit v-model="props.row.qty" title="update" @save="editItemValues(props.row)" :persistent="true" buttons>
-              <q-input v-model="props.row.qty" type="number" />
-            </q-popup-edit>
           </q-td>
           <q-td key="item" :props="props" class="bg-deep-purple-1">
             {{ props.row.item || '-' }}
-            <q-popup-edit v-model="props.row.item" title="Update" :persistent="true" buttons>
-              <q-input v-model="props.row.item" > </q-input>
-            </q-popup-edit>
           </q-td>
           <q-td key="unit" :props="props" class="bg-deep-purple-1" >
             {{ props.row.unit || '-' }}
-            <q-popup-edit v-model="props.row.unit" title="Update" :persistent="true" buttons>
-              <q-input v-model="props.row.unit" />
-            </q-popup-edit>
           </q-td>
           <q-td key="price" :props="props" class="bg-deep-purple-1" >{{ props.row.price || '-' }}</q-td>
           <q-td key="cost" :props="props" class="bg-deep-purple-1" >
             {{ props.row.cost || '-' }}
-            <q-popup-edit v-model="props.row.cost"  title="Update" @save="editCost(props.row)" :persistent="true" buttons>
-              <q-input v-model="props.row.cost" type="number" />
-            </q-popup-edit>
           </q-td>
           <q-td key="gst" :props="props" class="bg-deep-purple-1" >{{ props.row.gst || '-' }}</q-td>
           <q-td key="total" :props="props" class="bg-deep-purple-2" >
             {{ props.row.total || '-' }}
-            <q-popup-edit v-model="props.row.total" title="update" @save="editItemValues(props.row)" :persistent="true" buttons>
-              <q-input v-model="props.row.total" type="number" />
-            </q-popup-edit>
           </q-td>
           <q-td key="expAccount" :props="props">
             {{ props.row.expAccount || '-' }}
-            <q-popup-edit v-model="props.row.expAccount" title="Update" :persistent="true" buttons>
-              <q-input v-model="props.row.expAccount" > </q-input>
-            </q-popup-edit>
           </q-td>
           <q-td key="category" :props="props">
             {{ props.row.category || '-' }}
-            <q-popup-edit v-model="props.row.category" title="Update" :persistent="true" buttons>
-              <q-input v-model="props.row.category" > </q-input>
-            </q-popup-edit>
           </q-td>
           <q-td key="taxable" :props="props">
             {{ props.row.taxable || '-' }}
-            <q-popup-edit v-model="props.row.taxable" title="Update" @save="editItemValues(props.row)" buttons>
-              <q-checkbox v-model="props.row.taxable" label="Taxable" true-value="yes" false-value="no" />
-            </q-popup-edit>
           </q-td>
           <q-td key="expand" :props="props">
             <div class="row items-center justify-between no-wrap">
-              <q-checkbox v-model="props.row.add2Pricelist" checked-icon="attach_money" unchecked-icon="money_off" />
-              <q-checkbox v-model="props.row.add2Inventory" checked-icon="assignment" unchecked-icon="no_sim" class="q-mr-sm" />
-              <q-btn size="sm" round dense color="secondary" icon="delete" @click="deleteItemRow(props.row)" class="q-mx-xs" />
+              <q-checkbox :readonly="true" v-model="props.row.add2Pricelist" checked-icon="attach_money" unchecked-icon="money_off" />
+              <q-checkbox :readonly="true" v-model="props.row.add2Inventory" checked-icon="assignment" unchecked-icon="no_sim" class="q-mr-sm" />
             </div>
           </q-td>
         </q-tr>
@@ -334,36 +284,6 @@
         </q-tr>
       </q-table>
       <br>
-    </div>
-    <br>
-    <div class="row no-wrap">
-      <q-input class="col" ref="newEntry" float-label="Qty" type="number" v-model="newItem.qty" />&nbsp;&nbsp;
-      <q-input class="col" float-label="Item" v-model="newItem.item"> </q-input>&nbsp;&nbsp;
-      <q-input class="col" float-label="Unit" v-model="newItem.unit" > </q-input>&nbsp;&nbsp;
-      <q-input class="col" float-label="Cost" type="number" v-model="newItem.amount" @keyup.enter="addItem" />
-      <div class="q-pt-md">
-        <q-checkbox v-model="newItem.taxable" label="Taxable" true-value="yes" false-value="no" />
-        <br>
-        <q-checkbox v-model="gstIncluded" label="GST Included" true-value="yes" false-value="no" :disable="gstIncludedVisibility" />
-      </div>
-    </div>
-    <div class="row no-wrap">
-      <q-input class="col" float-label="exp Account" v-model="newItem.expAccount" @keyup.enter="addItem" > </q-input>&nbsp;&nbsp;
-      <q-input class="col" float-label="Category" v-model="newItem.category" @keyup.enter="addItem"> </q-input>&nbsp;&nbsp;
-      <div class="q-pt-md">
-        <q-checkbox v-model="newItem.add2Inventory" label="add2Inventory" tabindex=-1 /><br>
-        <q-checkbox v-model="newItem.add2Pricelist" label="add2Pricelist" tabindex=-1 /><br>
-      </div>
-    </div>
-    <br>
-    <div class="row no-wrap">
-      <div class="q-pl-md">
-        &nbsp;&nbsp;<q-btn size="md" color="primary" label="add Item" @click="addItem" />
-      </div>
-      <div class="q-pl-md">
-        <q-checkbox v-model="lockAccount" label="Lock Account" /><br>
-        <q-checkbox v-model="lockCategory" label="Lock Category" /><br>
-      </div>
     </div>
     </div>
   </q-modal-layout>
@@ -746,6 +666,23 @@ export default {
   methods: {
     transactionPopup(id) {
       console.log('id', id)
+      this.$data.transaction = {
+        date1: '',
+        vendor: '',
+        transNum: '',
+        paymentAccount: '',
+        transItems: []
+      }
+      api.service('expenses').find({
+        query: {
+          id: id
+        }
+      })
+      .then(resp => {
+        console.log(resp)
+        this.$data.transaction = resp.data[0]
+        this.$data.expenseModal = !this.$data.expenseModal
+      })
     },
     addItem () {
       console.log('start',this.$data.newItem.taxable)
@@ -1493,6 +1430,7 @@ export default {
     this.generateJournalCols()
     this.loadMonths()
     this.$q.loading.hide()
+    this.$data.dateA = moment().format('DD-MMM-YY')
     this.getTransactionsByDate(moment().toISOString())
     // this.getBlockchain()
     // this.parseTransactions(this.$data.transactions)
