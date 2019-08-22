@@ -88,9 +88,12 @@
             :columns="modalColumns"
             :visible-columns="visibleModalColumns"
             row-key="expDate"
-            :pagination.sync="pagination"
+            :pagination.sync="pagination" 
+            :selection="selection"
+            :selected.sync="selected"
             hide-bottom >
             <q-tr slot="body" slot-scope="props" :props="props">
+              <q-td></q-td>
               <q-td key="expDate" :props="props" >
                 {{ props.row.expDate || '-' }}
               </q-td>
@@ -99,6 +102,9 @@
               </q-td>
               <q-td key="amount" :props="props" >
                 {{ props.row.amount || '-' }}
+              </q-td>
+              <q-td key="paidBox" :props="props">
+                <q-checkbox v-model="props.row.paidBox" @click="clickBox(props.row)"/>
               </q-td>
             </q-tr><!--
             <q-tr slot="bottom-row" slot-scope="props" align="left">
@@ -159,6 +165,8 @@ export default {
   props: ['user'],
   data () {
     return {
+      selection: 'multiple',
+      selected: [],
       transaction: {
           date1: '',
           vendor: '',
@@ -250,8 +258,8 @@ export default {
       visibleColumns: ['vendor', 'total'],
       visibleExpandColumns: ['vendor', 'amount', 'expDate', 'transNum', 'expenseId'],
       modalColumns: [],
-      visibleModalColumns: ['expDate', 'transNum', 'amount'],
-      checkbox: false
+      visibleModalColumns: ['expDate', 'transNum', 'amount', 'paidBox'],
+      invList: []
     }
   },
   computed: {
@@ -265,9 +273,18 @@ export default {
     }
   },
   methods: {
+    clickBox (row) {
+      console.log('r', row)
+    },
     paymentOverlay (vendor) {
       console.log('payment', vendor)
       this.$data.modalColumns = []
+      this.$data.invList = []
+      vendor.invoices.forEach(inv => {
+        inv['paidBox'] = true
+        this.$data.invList.push(inv)
+      })
+      console.log('paidbox', vendor)
       for (let col in vendor.invoices[0]) {
         let tmpCol = {
           name: col,
@@ -288,7 +305,7 @@ export default {
           vendor: vendor.vendor,
           transNum: '',
           paymentAccount: '',
-          transItems: vendor.invoices
+          transItems: this.$data.invList
         }
         this.$data.paymentModal = true
     },
