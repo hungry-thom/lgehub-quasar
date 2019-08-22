@@ -36,6 +36,7 @@
               <q-td key="total" :props="props">
                 {{ props.row.total || '' }}
               </q-td>
+              <q-td><q-btn icon="payment" size="sm" color="secondary" @click="paymentOverlay(props.row)"/></q-td>
             </q-tr>
             <q-tr v-show="props.expand" :props="props">
               <q-td colspan="100%">
@@ -59,6 +60,66 @@
         </q-table>
         <br>
       </div>
+      <div>
+        <!-- //////// START OF tranaction MODAL READONLY' ////////-->
+        <q-modal v-model="paymentModal" :no-backdrop-dismiss="true" >
+        <q-modal-layout > <!-- class="q-pa-sm" -->
+          <q-toolbar slot="header">
+            <q-btn
+              flat
+              icon="keyboard_backspace"
+              v-close-overlay
+            />
+            <q-toolbar-title>
+              Transaction
+            </q-toolbar-title>
+          </q-toolbar>
+        <div class="q-pa-sm">
+        <div class="row no-wrap" >
+          <q-datetime class="col" minimal color="orange" v-model="transaction.date1" type="date" float-label="Date" :first-day-of-week="0" />&nbsp;&nbsp;
+          <q-input class="col" :readonly="true" ref="inputVendor" v-model="transaction.vendor" float-label="Vendor" ></q-input>&nbsp;&nbsp;
+          <q-input class="col" ref="inputtransNum" v-model="transaction.transNum" float-label="Transaction Number"/>&nbsp;&nbsp;
+          <q-input class="col" v-model="transaction.paymentAccount" float-label="Payment Account" ></q-input>
+        </div>
+        <div>
+          <br>
+          <q-table
+            :data="transaction.transItems"
+            :columns="modalColumns"
+            :visible-columns="visibleModalColumns"
+            row-key="expDate"
+            :pagination.sync="pagination"
+            hide-bottom >
+            <q-tr slot="body" slot-scope="props" :props="props">
+              <q-td key="expDate" :props="props" >
+                {{ props.row.expDate || '-' }}
+              </q-td>
+              <q-td key="transNum" :props="props" >
+                {{ props.row.transNum || '-' }}
+              </q-td>
+              <q-td key="amount" :props="props" >
+                {{ props.row.amount || '-' }}
+              </q-td>
+            </q-tr><!--
+            <q-tr slot="bottom-row" slot-scope="props" align="left">
+                <q-td></q-td>
+                <q-td></q-td>
+                <q-td></q-td>
+                <q-td></q-td>
+                <q-td class="bg-deep-purple-2">{{ subTotal || '-' }}</q-td>
+                <q-td class="bg-deep-purple-2">{{ gstTotal || '-' }}</q-td>
+                <q-td class="bg-deep-purple-3">{{ grandTotal || '-' }}</q-td>
+                <q-td></q-td>
+                <q-td></q-td>
+            </q-tr>-->
+          </q-table>
+          <br>
+        </div>
+        </div>
+      </q-modal-layout>
+      </q-modal>
+      <!-- //////  END OF MODAL  //////// -->
+      </div>
   </q-page>
 </template>
 
@@ -74,7 +135,10 @@ import {
   QSearch,
   QPopupEdit,
   QCheckbox,
-  QTableColumns
+  QTableColumns,
+  QModal,
+  QModalLayout,
+  QDatetime
 } from 'quasar'
 
 export default {
@@ -87,11 +151,22 @@ export default {
     QSearch,
     QPopupEdit,
     QCheckbox,
-    QTableColumns
+    QTableColumns,
+    QModal,
+    QModalLayout,
+    QDatetime
   },
   props: ['user'],
   data () {
     return {
+      transaction: {
+          date1: '',
+          vendor: '',
+          transNum: '',
+          paymentAccount: '',
+          transItems: []
+        },
+      paymentModal: false,
       message: '',
       payables: [],
       vendorList: [],
@@ -173,7 +248,10 @@ export default {
         }
       ],
       visibleColumns: ['vendor', 'total'],
-      visibleExpandColumns: ['vendor', 'amount', 'expDate', 'transNum', 'expenseId']
+      visibleExpandColumns: ['vendor', 'amount', 'expDate', 'transNum', 'expenseId'],
+      modalColumns: [],
+      visibleModalColumns: ['expDate', 'transNum', 'amount'],
+      checkbox: false
     }
   },
   computed: {
@@ -187,6 +265,33 @@ export default {
     }
   },
   methods: {
+    paymentOverlay (vendor) {
+      console.log('payment', vendor)
+      this.$data.modalColumns = []
+      for (let col in vendor.invoices[0]) {
+        let tmpCol = {
+          name: col,
+          required: false,
+          label: col,
+          align: 'left',
+          field: col,
+          sortable: true
+        }
+        if (this.$data.visibleModalColumns.includes(col)) {
+          this.$data.modalColumns[this.$data.visibleModalColumns.indexOf(col)] = tmpCol
+        } else {
+          this.$data.modalColumns.push(tmpCol)
+        }
+      }
+      this.$data.transaction = {
+          date1: moment().toISOString(true),
+          vendor: vendor.vendor,
+          transNum: '',
+          paymentAccount: '',
+          transItems: vendor.invoices
+        }
+        this.$data.paymentModal = true
+    },
     isSent (message) {
       return (message.userId === this.user._id)
     },
