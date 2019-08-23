@@ -74,12 +74,24 @@
               Transaction
             </q-toolbar-title>
           </q-toolbar>
+          <div slot="footer">
+            <div class="q-pa-xs float-right">
+              &nbsp;&nbsp;<q-btn size="md" color="primary" :label="paymentTotal" />
+              &nbsp;&nbsp;<q-btn size="md" color="primary" label="Submit" /> <!-- :disable not reading var -->
+            </div>
+          </div>
         <div class="q-pa-sm">
         <div class="row no-wrap" >
           <q-datetime class="col" minimal color="orange" v-model="transaction.date1" type="date" float-label="Date" :first-day-of-week="0" />&nbsp;&nbsp;
           <q-input class="col" :readonly="true" ref="inputVendor" v-model="transaction.vendor" float-label="Vendor" ></q-input>&nbsp;&nbsp;
           <q-input class="col" ref="inputtransNum" v-model="transaction.transNum" float-label="Transaction Number"/>&nbsp;&nbsp;
           <q-input class="col" v-model="transaction.paymentAccount" float-label="Payment Account" ></q-input>
+        </div>
+        <div class="row no-wrap" >
+          <q-item>
+            <q-item-side icon="mail" />
+            <q-item-main :label="paymentTotal" label-lines="1" />
+          </q-item>
         </div>
         <div>
           <br>
@@ -90,10 +102,12 @@
             row-key="expDate"
             :pagination.sync="pagination" 
             selection="multiple"
-            :selected.sync="selected"
+            :selected.sync="transaction.selected"
             hide-bottom >
             <q-tr slot="body" slot-scope="props" :props="props">
-              <q-td key="selected"><q-checkbox v-model="props.selected"/></q-td>
+              <q-td key="selected">
+                <q-checkbox v-model="props.selected"/>
+              </q-td>
               <q-td key="expDate" :props="props" >
                 {{ props.row.expDate || '-' }}
               </q-td>
@@ -104,22 +118,16 @@
                 {{ props.row.amount || '-' }}
               </q-td>
               <q-td key="paidBox" :props="props">
-                <div>
-                  <q-checkbox v-model="props.row.paidBox" @input="clickBox(props)"/>
-                </div>
+                <q-checkbox v-model="props.row.paidBox" @input="clickBox(props)"/>
               </q-td>
-            </q-tr><!--
+            </q-tr>
             <q-tr slot="bottom-row" slot-scope="props" align="left">
                 <q-td></q-td>
                 <q-td></q-td>
                 <q-td></q-td>
+                <q-td class="bg-deep-purple-3">{{ vendorTotal || '-' }}</q-td>
                 <q-td></q-td>
-                <q-td class="bg-deep-purple-2">{{ subTotal || '-' }}</q-td>
-                <q-td class="bg-deep-purple-2">{{ gstTotal || '-' }}</q-td>
-                <q-td class="bg-deep-purple-3">{{ grandTotal || '-' }}</q-td>
-                <q-td></q-td>
-                <q-td></q-td>
-            </q-tr>-->
+            </q-tr>
           </q-table>
           <br>
         </div>
@@ -168,13 +176,14 @@ export default {
   data () {
     return {
       selection: 'multiple',
-      selected: [],
+      tselected: [],
       transaction: {
           date1: '',
           vendor: '',
           transNum: '',
           paymentAccount: '',
-          transItems: []
+          transItems: [],
+          selected: []
         },
       paymentModal: false,
       message: '',
@@ -265,6 +274,23 @@ export default {
     }
   },
   computed: {
+    vendorTotal () {
+      const invoices = this.$data.transaction.transItems
+      let gTotal = 0
+      invoices.forEach(inv => {
+        gTotal += inv.amount
+      })
+      return _.round(gTotal, 2)
+    },
+    paymentTotal () {
+      const invoices = this.$data.transaction.selected
+      let payTotal = 0
+      invoices.forEach(inv => {
+        payTotal += inv.amount
+      })
+      const str = `Total: $${_.round(payTotal, 2)}`
+      return str
+    },
     grandTotal () {
       let payables = this.$data.vendorList
       let gTotal = 0
@@ -275,6 +301,9 @@ export default {
     }
   },
   methods: {
+    submitPayment () {
+      // code
+    },
     clickBox (row) {
       console.log('r', row)
       // paidBox doesn't render new value on click, need to refresh modal
@@ -310,7 +339,8 @@ export default {
           vendor: vendor.vendor,
           transNum: '',
           paymentAccount: '',
-          transItems: this.$data.invList
+          transItems: this.$data.invList,
+          selected: []
         }
         this.$data.paymentModal = true
     },
