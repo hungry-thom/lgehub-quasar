@@ -89,11 +89,11 @@
             :visible-columns="visibleModalColumns"
             row-key="expDate"
             :pagination.sync="pagination" 
-            :selection="selection"
+            selection="multiple"
             :selected.sync="selected"
             hide-bottom >
             <q-tr slot="body" slot-scope="props" :props="props">
-              <q-td></q-td>
+              <q-td key="selected"><q-checkbox v-model="props.selected"/></q-td>
               <q-td key="expDate" :props="props" >
                 {{ props.row.expDate || '-' }}
               </q-td>
@@ -104,7 +104,9 @@
                 {{ props.row.amount || '-' }}
               </q-td>
               <q-td key="paidBox" :props="props">
-                <q-checkbox v-model="props.row.paidBox" @click="clickBox(props.row)"/>
+                <div>
+                  <q-checkbox v-model="props.row.paidBox" @input="clickBox(props)"/>
+                </div>
               </q-td>
             </q-tr><!--
             <q-tr slot="bottom-row" slot-scope="props" align="left">
@@ -275,6 +277,9 @@ export default {
   methods: {
     clickBox (row) {
       console.log('r', row)
+      // paidBox doesn't render new value on click, need to refresh modal
+      this.$data.paymentModal = false
+      this.$data.paymentModal = true
     },
     paymentOverlay (vendor) {
       console.log('payment', vendor)
