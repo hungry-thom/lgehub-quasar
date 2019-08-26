@@ -76,8 +76,8 @@
           </q-toolbar>
           <div slot="footer">
             <div class="q-pa-xs float-right">
-              &nbsp;&nbsp;<q-btn size="md" color="primary" :label="paymentTotal" />
-              &nbsp;&nbsp;<q-btn size="md" color="primary" label="Submit" /> <!-- :disable not reading var -->
+              &nbsp;&nbsp;<q-btn size="md" color="primary" :label="paymentTotal.str" />
+              &nbsp;&nbsp;<q-btn size="md" color="primary" label="Submit" @click="submitPayment(transaction)"/> <!-- :disable not reading var -->
             </div>
           </div>
         <div class="q-pa-sm">
@@ -85,13 +85,7 @@
           <q-datetime class="col" minimal color="orange" v-model="transaction.date1" type="date" float-label="Date" :first-day-of-week="0" />&nbsp;&nbsp;
           <q-input class="col" :readonly="true" ref="inputVendor" v-model="transaction.vendor" float-label="Vendor" ></q-input>&nbsp;&nbsp;
           <q-input class="col" ref="inputtransNum" v-model="transaction.transNum" float-label="Transaction Number"/>&nbsp;&nbsp;
-          <q-input class="col" v-model="transaction.paymentAccount" float-label="Payment Account" ></q-input>
-        </div>
-        <div class="row no-wrap" >
-          <q-item>
-            <q-item-side icon="mail" />
-            <q-item-main :label="paymentTotal" label-lines="1" />
-          </q-item>
+          <q-input class="col" v-model="transaction.paymentAccount" float-label="Payment Account" ><q-autocomplete :static-data="{field: 'value', list: paymentTypes}" /></q-input>
         </div>
         <div>
           <br>
@@ -154,7 +148,8 @@ import {
   QTableColumns,
   QModal,
   QModalLayout,
-  QDatetime
+  QDatetime,
+  QAutocomplete
 } from 'quasar'
 
 export default {
@@ -170,7 +165,8 @@ export default {
     QTableColumns,
     QModal,
     QModalLayout,
-    QDatetime
+    QDatetime,
+    QAutocomplete
   },
   props: ['user'],
   data () {
@@ -185,6 +181,32 @@ export default {
           transItems: [],
           selected: []
         },
+      paymentTypes: [
+        {
+          value: 'cashMS',
+          label: 'cashMS'
+        },
+        {
+          value: 'cashHR',
+          label: 'cashHR'
+        },
+        {
+          value: 'ccardScotia',
+          label: 'ccardScotia'
+        },
+        {
+          value: 'checkAtl#',
+          label: 'checkAtl#'
+        },
+        {
+          value: 'cashAtl',
+          label: 'cashAtl'
+        },
+        {
+          value: 'payableAcct',
+          label: 'payableAcct'
+        }
+      ],
       paymentModal: false,
       message: '',
       payables: [],
@@ -269,8 +291,7 @@ export default {
       visibleColumns: ['vendor', 'total'],
       visibleExpandColumns: ['vendor', 'amount', 'expDate', 'transNum', 'expenseId'],
       modalColumns: [],
-      visibleModalColumns: ['expDate', 'transNum', 'amount', 'paidBox'],
-      invList: []
+      visibleModalColumns: ['expDate', 'transNum', 'amount', 'paidBox']
     }
   },
   computed: {
@@ -289,7 +310,10 @@ export default {
         payTotal += inv.amount
       })
       const str = `Total: $${_.round(payTotal, 2)}`
-      return str
+      return {
+        str: str,
+        num: _.round(payTotal, 2)
+      }
     },
     grandTotal () {
       let payables = this.$data.vendorList
@@ -301,8 +325,78 @@ export default {
     }
   },
   methods: {
-    submitPayment () {
-      // code
+    submitPayment (transaction) {
+      console.log('submit', transaction)
+      if (transaction.selected.length === 0) {
+        this.$q.notify({
+          message: `No invoices selected`,
+          timeout: 3000,
+          position: 'center'
+        })
+      } else {
+        for (let select of transaction.selected) {
+          // console.log('sel', select)
+          // console.log('patched1', select)
+          select.paid = transaction.date1
+          api.service('payable').patch(select.id, {
+            paid: transaction.date1
+          })
+          console.log('patched2', select) // not printing to console?
+        }
+        transaction['amount'] = this.paymentTotal.num
+        
+        let cleanTransactionData = JSON.parse(JSON.stringify(transaction))
+        delete cleanTransactionData['transItems']
+        cleanTransactionData['table'] = 'payable'
+        api.service('audit').create(cleanTransactionData).then(resp => {
+          console.log('audit Success', resp)
+          cleanTransactionData['expenseId'] = resp.id
+          if (cleanTransactionData.paymentAccount.includes('checkAtl#')) {
+            console.log('amt',cleanTransactionData)
+            this.updateChecks(cleanTransactionData)
+          }
+        })
+        this.loadData()
+        this.$data.paymentModal = false
+      }
+    },
+    updateChecks (trans) {
+      // service call
+      let checkInfo = {
+        checkDate: trans.date1,
+        checkNum: trans.paymentAccount.substr(9), // 'checkAtl#9999' -> 9999
+        vendor: trans.vendor,
+        amount: trans.amount,
+        cashed: '',
+        transNum: trans.transNum,
+        expenseId: trans.id
+      }
+      api.service('checks').find({
+        query: {
+          checkNum: checkInfo.checkNum,
+          vendor: checkInfo.vendor
+        }
+      })
+      .then(queryCheck => {
+        if (queryCheck.data.length > 0) {
+          const existingCheck = queryCheck.data[0]
+          checkInfo.amount += existingCheck.amount
+          api.service('checks').update(existingCheck.id, checkInfo) // api.update replaces entire object
+        } else {
+          api.service('checks').create(checkInfo).then((response) => {
+            // response
+            console.log('checkAddedTODB', response)
+          }).catch((err) => {
+            // error
+            console.log(`Error: ${err}`)
+            this.$q.notify({
+              message: `Checks Error: ${err}`,
+              timeout: 3000,
+              position: 'center'
+            })
+          })
+        }
+      })
     },
     clickBox (row) {
       console.log('r', row)
@@ -313,11 +407,6 @@ export default {
     paymentOverlay (vendor) {
       console.log('payment', vendor)
       this.$data.modalColumns = []
-      this.$data.invList = []
-      vendor.invoices.forEach(inv => {
-        inv['paidBox'] = true
-        this.$data.invList.push(inv)
-      })
       console.log('paidbox', vendor)
       for (let col in vendor.invoices[0]) {
         let tmpCol = {
@@ -339,7 +428,7 @@ export default {
           vendor: vendor.vendor,
           transNum: '',
           paymentAccount: '',
-          transItems: this.$data.invList,
+          transItems: vendor.invoices,
           selected: []
         }
         this.$data.paymentModal = true
@@ -379,6 +468,7 @@ export default {
       .then((response) => {
         // we want to combine all payables for each vendor
         console.log(response.data.length)
+        this.$data.vendorList = []
         response.data.forEach(rec => {
           let dex = _.findIndex(this.$data.vendorList, {vendor: rec.vendor})
           if (dex < 0) {
