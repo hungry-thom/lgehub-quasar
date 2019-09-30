@@ -2,33 +2,31 @@
 <template>
   <q-page>
       <div>
-        <br>
-        <q-table
-          :data="month"
-          :columns="columns"
-          :filter="filter"
-          :visible-columns="visibleColumns"
-          row-key="date1"
-          :pagination.sync="pagination"
-          hide-bottom >
-          <template slot="top-left" slot-scope="props">
-            <q-search
-              hide-underline
-              color="secondary"
-              v-model="filter"
-              class="col-6"
-            />
-          </template>
-          <template slot="top-right" slot-scope="props">
-            <q-table-columns
-              color="secondary"
-              class="q-mr-sm"
-              v-model="visibleColumns"
-              :columns="columns"
-            />
-          </template>
-        </q-table>
-        <br>
+        <draggable v-model="myArray" group="people" @start="drag=true" @end="drag=false" @change="log">
+          <div v-for="element in myArray" :key="element.id">{{element.name}}</div>
+        </draggable>
+      </div>
+      <br><br>
+      <div>
+      <draggable v-model="myArray2" group="people" @start="drag=true" @end="drag=false">
+          <div v-for="element in myArray2" :key="element.id">{{element.name}}</div>
+        </draggable>
+      </div>
+      <div>
+        <q-card inline style="width: 350px">
+          <q-card-title>
+            Card Title
+          </q-card-title>
+          <q-card-main>
+            <q-list no-border highlight>
+              <div>
+                <q-item separator v-for="element in myArray" :key="element.id">
+                  <q-item-main :label="element.name" label-lines="1" />
+                </q-item>
+              </div>
+            </q-list>
+          </q-card-main>
+        </q-card>
       </div>
   </q-page>
 </template>
@@ -37,6 +35,7 @@
 import moment from 'moment'
 import api from 'src/api'
 import _ from 'lodash'
+import draggable from 'vuedraggable'
 import {
   QChatMessage,
   QTable,
@@ -45,7 +44,15 @@ import {
   QSearch,
   QPopupEdit,
   QCheckbox,
-  QTableColumns
+  QTableColumns,
+  QCard,
+  QCardTitle,
+  QCardMain,
+  QCardSeparator,
+  QList,
+  QItem,
+  QItemMain,
+  QItemSeparator
 } from 'quasar'
 
 export default {
@@ -58,12 +65,43 @@ export default {
     QSearch,
     QPopupEdit,
     QCheckbox,
-    QTableColumns
+    QTableColumns,
+    draggable,
+    QCard,
+    QCardTitle,
+    QCardMain,
+    QCardSeparator,
+    QList,
+    QItem,
+    QItemMain,
+    QItemSeparator
   },
   props: ['user'],
   data () {
     return {
       message: '',
+      myArray: [
+        {
+          id: 0,
+          name: 'Thom'
+        },
+        {
+          id: 1,
+          name: 'Lauren'
+        },
+        {
+          id: 2,
+          name: 'Peter'
+        },
+        {
+          id: 3,
+          name: 'Jessica'
+        }
+      ],
+      myArray2: [
+        { id: 0, name: 'Hiro'},
+        { id: 1, name: 'Doris'}
+      ],
       messages: [],
       users: [],
       filter: '',
@@ -89,6 +127,9 @@ export default {
   computed: {
   },
   methods: {
+    log (el) {
+      console.log('change1', el)
+    },
     isSent (message) {
       return (message.userId === this.user._id)
     },

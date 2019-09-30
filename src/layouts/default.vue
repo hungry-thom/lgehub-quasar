@@ -68,7 +68,7 @@
           <q-item-main label="PriceList" />
         </q-item>
 
-        <q-item to="/shoppingList" disabled >
+        <q-item to="/shoppingList" >
           <q-item-side icon="shopping_cart" />
           <q-item-main label="Shopping list" />
         </q-item>        
